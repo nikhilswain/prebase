@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import Header from '../components/site/Header.astro';
 import Footer from '../components/site/Footer.astro';
+import SearchDialog from '../components/search/SearchDialog.tsx';
 import { SITE } from '../config';
 
 interface Props {
@@ -85,5 +86,6 @@ const jsonLdBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
       <slot />
     </main>
     <Footer />
+    <SearchDialog client:idle />
   </body>
 </html>

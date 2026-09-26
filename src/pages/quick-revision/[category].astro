@@ -1,0 +1,135 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../components/site/Breadcrumbs.astro';
+import RevisionBoard from '../../components/revision/RevisionBoard.tsx';
+import type { RevisionCard } from '../../components/revision/RevisionBoard.tsx';
+import {
+  getCategory,
+  getItem,
+  getLiveCategories,
+  getRevisionEntries,
+} from '../../lib/content';
+import { collectionJsonLd } from '../../lib/seo';
+
+export function getStaticPaths() {
+  return getLiveCategories()
+    .map((category) => ({
+      params: { category: category.id },
+      props: { categoryId: category.id },
+    }))
+    .filter(
+      (entry) => getRevisionEntries(entry.props.categoryId).length > 0,
+    );
+}
+
+interface Props {
+  categoryId: string;
+}
+
+const { categoryId } = Astro.props;
+const category = getCategory(categoryId);
+const entries = getRevisionEntries(categoryId);
+
+const cards: RevisionCard[] = entries.map((entry) => {
+  const related = entry.related ? getItem(entry.related) : undefined;
+  return {
+    id: entry.id,
+    term: entry.term,
+    short: entry.short,
+    medium: entry.medium,
+    detail: entry.detail,
+    relatedHref: related?.href,
+    relatedTitle: related?.title,
+  };
+});
+
+const others = getLiveCategories().filter((entry) => entry.id !== categoryId);
+
+const jsonLd = collectionJsonLd({
+  title: `${category?.name ?? categoryId} quick revision`,
+  description: `Revise ${category?.name ?? categoryId} with ${cards.length} short, medium and detailed cards.`,
+  path: `/quick-revision/${categoryId}`,
+  items: [],
+});
+---
+
+<BaseLayout
+  title={`${category?.name ?? categoryId} revision`}
+  description={`Revise ${category?.name ?? categoryId} in minutes with ${cards.length} short, medium and detailed interview cards.`}
+  jsonLd={jsonLd}
+>
+  <div class="container-page py-12 sm:py-16">
+    <Breadcrumbs
+      items={[
+        { name: 'Home', href: '/' },
+        { name: 'Quick Revision', href: '/quick-revision' },
+        { name: category?.name ?? categoryId },
+      ]}
+    />
+
+    <header class="mt-6 max-w-2xl">
+      <p class="flex items-center gap-2 font-mono text-[11px] tracking-wide text-ink-3 uppercase">
+        <span
+          class="size-2 rounded-full"
+          style={`background:${category?.accent}`}
+          aria-hidden="true"
+        />
+        Quick Revision
+      </p>
+      <h1 class="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+        {category?.name}
+      </h1>
+      <p class="mt-3 text-base leading-relaxed text-ink-2">
+        {cards.length} cards. Skim them at thirty seconds each, then switch to the
+        one-minute or detailed view for anything that feels shaky. Mark cards as
+        revised and your progress is saved in this browser.
+      </p>
+      <a
+        href={`/${categoryId}`}
+        class="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-accent transition-opacity hover:opacity-80"
+      >
+        Browse all {category?.shortName} topics
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M5 12h14M13 6l6 6-6 6" />
+        </svg>
+      </a>
+    </header>
+
+    <div class="mt-10">
+      <RevisionBoard client:load categoryId={categoryId} entries={cards} />
+    </div>
+
+    <section class="mt-16 border-t border-line pt-8" aria-labelledby="revise-other">
+      <h2 id="revise-other" class="eyebrow">Revise another category</h2>
+      <ul class="mt-4 flex flex-wrap gap-2">
+        {
+          others.map((entry) => (
+            <li>
+              <a
+                href={`/quick-revision/${entry.id}`}
+                class="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3.5 py-1.5 text-sm text-ink-2 transition duration-150 ease-out hover:border-line-strong hover:text-ink"
+              >
+                <span
+                  class="size-2 rounded-full"
+                  style={`background:${entry.accent}`}
+                  aria-hidden="true"
+                />
+                {entry.shortName}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+  </div>
+</BaseLayout>

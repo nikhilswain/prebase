@@ -233,6 +233,12 @@
   background-color: var(--shiki-dark-bg) !important;
 }
 
+[data-revision][data-mode='30s'] [data-level='medium'],
+[data-revision][data-mode='30s'] [data-level='detail'],
+[data-revision][data-mode='1min'] [data-level='detail'] {
+  display: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
