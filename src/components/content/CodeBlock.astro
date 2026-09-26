@@ -1,0 +1,99 @@
+---
+import { Code } from 'astro:components';
+
+interface Props {
+  code: string;
+  language?: string;
+  filename?: string;
+  caption?: string;
+  label?: string;
+}
+
+const {
+  code,
+  language = 'text',
+  filename,
+  caption,
+  label,
+} = Astro.props;
+
+const heading = filename ?? label ?? language;
+---
+
+<figure data-code class="code-frame">
+  <div
+    class="flex items-center justify-between gap-3 border-b border-line bg-surface-2 px-3.5 py-1.5"
+  >
+    <span class="font-mono text-[11px] tracking-wide text-ink-3">
+      {heading}
+    </span>
+    <button
+      type="button"
+      data-copy
+      aria-label="Copy code to clipboard"
+      class="inline-flex items-center gap-1.5 rounded px-1.5 py-0.5 font-mono text-[11px] text-ink-3 transition-colors duration-150 ease-out hover:bg-surface-3 hover:text-ink data-[state=copied]:text-easy"
+    >
+      <svg
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <rect x="9" y="9" width="11" height="11" rx="2"></rect>
+        <path d="M5 15V5a2 2 0 0 1 2-2h8"></path>
+      </svg>
+      <span>Copy</span>
+    </button>
+  </div>
+
+  <Code
+    code={code.trim()}
+    lang={language as any}
+    themes={{ light: 'github-light', dark: 'github-dark' }}
+  />
+
+  {
+    caption && (
+      <figcaption class="border-t border-line bg-surface-2 px-3.5 py-2 text-xs leading-relaxed text-ink-2">
+        {caption}
+      </figcaption>
+    )
+  }
+</figure>
+
+<script is:inline>
+  (() => {
+    if (window.__prepbaseCopy) return;
+    window.__prepbaseCopy = true;
+
+    document.addEventListener('click', async (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const button = target.closest('[data-copy]');
+      if (!button) return;
+
+      const frame = button.closest('[data-code]');
+      const code = frame?.querySelector('pre code')?.textContent ?? '';
+
+      try {
+        await navigator.clipboard.writeText(code);
+      } catch {}
+
+      const label = button.querySelector('span');
+      if (!label) return;
+      const previous = label.textContent;
+      label.textContent = 'Copied';
+      button.dataset.state = 'copied';
+      clearTimeout(button.__copyTimer);
+      button.__copyTimer = setTimeout(() => {
+        label.textContent = previous;
+        delete button.dataset.state;
+      }, 1400);
+    });
+  })();
+</script>

@@ -1,0 +1,92 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Breadcrumbs from '../components/site/Breadcrumbs.astro';
+import CategoryCard from '../components/site/CategoryCard.astro';
+import SearchTrigger from '../components/site/SearchTrigger.astro';
+import { getCategories, getItemsByCategory, getRevisionEntries, getStats } from '../lib/content';
+import { collectionJsonLd } from '../lib/seo';
+import { getItems } from '../lib/content';
+
+const stats = getStats();
+const categories = getCategories();
+const live = categories.filter((category) => category.status === 'live');
+const planned = categories.filter((category) => category.status === 'planned');
+
+const withCounts = live.map((category) => ({
+  category,
+  topicCount: getItemsByCategory(category.id).length,
+  revisionCount: getRevisionEntries(category.id).length,
+}));
+
+const jsonLd = collectionJsonLd({
+  title: 'Explore developer interview topics',
+  description:
+    'Browse every interview topic by category: JavaScript, React, TypeScript, CSS and frontend development.',
+  path: '/explore',
+  items: getItems(),
+});
+---
+
+<BaseLayout
+  title="Explore"
+  description="Browse every interview topic by category: JavaScript, React, TypeScript, CSS and frontend development."
+  jsonLd={jsonLd}
+>
+  <div class="container-page py-12 sm:py-16">
+    <Breadcrumbs items={[{ name: 'Home', href: '/' }, { name: 'Explore' }]} />
+
+    <header class="mt-6">
+      <p class="eyebrow">Knowledge base</p>
+      <h1 class="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+        Explore topics
+      </h1>
+      <p class="mt-3 max-w-2xl text-base leading-relaxed text-ink-2">
+        {stats.topics} topics across {stats.categories} categories. Search
+        anything, or start from a category below.
+      </p>
+      <div class="mt-6 max-w-xl">
+        <SearchTrigger variant="hero" />
+      </div>
+    </header>
+
+    <section class="mt-12" aria-labelledby="live-categories">
+      <h2 id="live-categories" class="eyebrow">Available now</h2>
+      <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {
+          withCounts.map(({ category, topicCount, revisionCount }) => (
+            <CategoryCard
+              category={category}
+              topicCount={topicCount}
+              revisionCount={revisionCount}
+            />
+          ))
+        }
+      </div>
+    </section>
+
+    {
+      planned.length > 0 && (
+        <section class="mt-14" aria-labelledby="planned-categories">
+          <h2 id="planned-categories" class="eyebrow">
+            On the roadmap
+          </h2>
+          <p class="mt-2 max-w-2xl text-sm leading-relaxed text-ink-2">
+            The content model is built to grow. These categories are planned and
+            will be added as topics are written and reviewed.
+          </p>
+          <ul class="mt-5 flex flex-wrap gap-2">
+            {planned.map((category) => (
+              <li class="inline-flex items-center gap-2 rounded-full border border-dashed border-line-strong px-3.5 py-1.5 text-sm text-ink-3">
+                <span
+                  class="size-1.5 rounded-full bg-ink-3"
+                  aria-hidden="true"
+                />
+                {category.name}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+  </div>
+</BaseLayout>

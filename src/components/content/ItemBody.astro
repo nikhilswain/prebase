@@ -1,0 +1,315 @@
+---
+import type { ResolvedItem } from '../../lib/content-types';
+import Section from './Section.astro';
+import Callout from './Callout.astro';
+import List from '../ui/List.astro';
+import CodeBlock from './CodeBlock.astro';
+import ComparisonTable from './ComparisonTable.astro';
+import Disclosure from './Disclosure.astro';
+
+interface Props {
+  item: ResolvedItem;
+}
+
+const { item } = Astro.props;
+
+const paragraphs = (items: string[] | undefined) =>
+  items && items.length > 0 ? items : [];
+---
+
+<div class="space-y-10">
+  {
+    item.type === 'question' && (
+      <>
+        <Section label="Short answer" id="short-answer">
+          <Callout>{item.shortAnswer}</Callout>
+        </Section>
+
+        {paragraphs(item.explanation).length > 0 && (
+          <Section label="Explanation" id="explanation">
+            <div class="space-y-4">
+              {paragraphs(item.explanation).map((text) => (
+                <p class="text-[15px] leading-relaxed text-ink-2">{text}</p>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {item.keyPoints && item.keyPoints.length > 0 && (
+          <Section label="Key points" id="key-points">
+            <List items={item.keyPoints} variant="check" />
+          </Section>
+        )}
+
+        {item.example && (
+          <Section label="Example" id="example">
+            <CodeBlock
+              code={item.example.code}
+              language={item.example.language}
+              filename={item.example.filename}
+              caption={item.example.caption}
+            />
+          </Section>
+        )}
+
+        {item.realWorld && (
+          <Section label="In practice" id="in-practice">
+            <p class="text-[15px] leading-relaxed text-ink-2">{item.realWorld}</p>
+          </Section>
+        )}
+
+        {item.commonMistakes && item.commonMistakes.length > 0 && (
+          <Section label="Common mistakes" id="common-mistakes">
+            <List items={item.commonMistakes} variant="warn" />
+          </Section>
+        )}
+
+        {item.followUps && item.followUps.length > 0 && (
+          <Section
+            label="Interview follow-ups"
+            id="follow-ups"
+            description="Expect these next. Prepare a spoken answer, not a definition."
+          >
+            <List items={item.followUps} variant="arrow" />
+          </Section>
+        )}
+      </>
+    )
+  }
+
+  {
+    item.type === 'concept' && (
+      <>
+        <Section label="Definition" id="definition">
+          <Callout>{item.definition}</Callout>
+        </Section>
+
+        {paragraphs(item.explanation).length > 0 && (
+          <Section label="Explanation" id="explanation">
+            <div class="space-y-4">
+              {paragraphs(item.explanation).map((text) => (
+                <p class="text-[15px] leading-relaxed text-ink-2">{text}</p>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {item.keyPoints && item.keyPoints.length > 0 && (
+          <Section label="Key points" id="key-points">
+            <List items={item.keyPoints} variant="check" />
+          </Section>
+        )}
+
+        {item.example && (
+          <Section label="Example" id="example">
+            <CodeBlock
+              code={item.example.code}
+              language={item.example.language}
+              filename={item.example.filename}
+              caption={item.example.caption}
+            />
+          </Section>
+        )}
+
+        {item.commonMistakes && item.commonMistakes.length > 0 && (
+          <Section label="Common mistakes" id="common-mistakes">
+            <List items={item.commonMistakes} variant="warn" />
+          </Section>
+        )}
+
+        {item.followUps && item.followUps.length > 0 && (
+          <Section label="Interview follow-ups" id="follow-ups">
+            <List items={item.followUps} variant="arrow" />
+          </Section>
+        )}
+      </>
+    )
+  }
+
+  {
+    item.type === 'comparison' && (
+      <>
+        <Section label="At a glance" id="comparison">
+          <ComparisonTable options={item.options} rows={item.rows} />
+        </Section>
+
+        {item.verdict && (
+          <Section label="Verdict" id="verdict">
+            <Callout>{item.verdict}</Callout>
+          </Section>
+        )}
+
+        {item.pickWhen && item.pickWhen.length > 0 && (
+          <Section label="When to use which" id="when-to-use">
+            <div class="space-y-3">
+              {item.pickWhen.map((entry) => (
+                <div class="rounded-lg border border-line bg-surface p-4">
+                  <p class="font-mono text-[13px] font-medium text-ink">
+                    {entry.option}
+                  </p>
+                  <p class="mt-1.5 text-sm leading-relaxed text-ink-2">
+                    {entry.guidance}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {item.example && (
+          <Section label="Example" id="example">
+            <CodeBlock
+              code={item.example.code}
+              language={item.example.language}
+              caption={item.example.caption}
+            />
+          </Section>
+        )}
+      </>
+    )
+  }
+
+  {
+    item.type === 'challenge' && (
+      <>
+        <Section label="The task" id="prompt">
+          <Callout>{item.prompt}</Callout>
+        </Section>
+
+        {item.constraints && item.constraints.length > 0 && (
+          <Section label="Constraints" id="constraints">
+            <List items={item.constraints} variant="check" />
+          </Section>
+        )}
+
+        {item.starterCode && (
+          <Section label="Starter" id="starter">
+            <CodeBlock
+              code={item.starterCode.code}
+              language={item.starterCode.language}
+              filename={item.starterCode.filename}
+            />
+          </Section>
+        )}
+
+        {item.hints && item.hints.length > 0 && (
+          <Section label="Hints" id="hints">
+            <div class="space-y-2">
+              {item.hints.map((hint, index) => (
+                <Disclosure summary={`Hint ${index + 1}`}>
+                  <p class="text-sm leading-relaxed text-ink-2">{hint}</p>
+                </Disclosure>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        <Section label="Solution" id="solution">
+          <Disclosure summary="Reveal solution" hint="Try it first">
+            <div class="space-y-4">
+              <CodeBlock
+                code={item.solution.code.code}
+                language={item.solution.code.language}
+                caption={item.solution.code.caption}
+              />
+              {paragraphs(item.solution.explanation).length > 0 && (
+                <div class="space-y-3">
+                  {paragraphs(item.solution.explanation).map((text) => (
+                    <p class="text-sm leading-relaxed text-ink-2">{text}</p>
+                  ))}
+                </div>
+              )}
+            </div>
+          </Disclosure>
+        </Section>
+      </>
+    )
+  }
+
+  {
+    item.type === 'gotcha' && (
+      <>
+        <Section label="Scenario" id="scenario">
+          <p class="text-[15px] leading-relaxed text-ink-2">{item.scenario}</p>
+        </Section>
+
+        <Section label="The problem" id="problem">
+          <p class="text-[15px] leading-relaxed text-ink-2">{item.problem}</p>
+        </Section>
+
+        {item.example && (
+          <Section label="Example" id="example">
+            <CodeBlock
+              code={item.example.code}
+              language={item.example.language}
+              caption={item.example.caption}
+            />
+          </Section>
+        )}
+
+        {item.fix && (
+          <Section label="The fix" id="fix">
+            <Callout>{item.fix}</Callout>
+          </Section>
+        )}
+
+        {paragraphs(item.explanation).length > 0 && (
+          <Section label="Why it happens" id="why">
+            <div class="space-y-4">
+              {paragraphs(item.explanation).map((text) => (
+                <p class="text-[15px] leading-relaxed text-ink-2">{text}</p>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {item.keyPoints && item.keyPoints.length > 0 && (
+          <Section label="Keep in mind" id="key-points">
+            <List items={item.keyPoints} variant="check" />
+          </Section>
+        )}
+      </>
+    )
+  }
+
+  {
+    item.type === 'cheat-sheet' && (
+      <div class="space-y-10">
+        {item.description && (
+          <p class="text-[15px] leading-relaxed text-ink-2">{item.description}</p>
+        )}
+        {item.sections.map((section) => (
+          <section class="scroll-mt-24">
+            <h2 class="text-base font-semibold tracking-tight">
+              {section.title}
+            </h2>
+            <ul class="mt-3 divide-y divide-line border-y border-line">
+              {section.items.map((entry) => (
+                <li class="grid gap-1.5 py-3 sm:grid-cols-[13rem_1fr] sm:gap-6">
+                  <span class="font-mono text-[13px] text-ink">
+                    {entry.label}
+                  </span>
+                  <span class="min-w-0">
+                    {entry.value && (
+                      <span class="block text-sm leading-relaxed text-ink-2">
+                        {entry.value}
+                      </span>
+                    )}
+                    {entry.code && (
+                      <CodeBlock code={entry.code} language={entry.language} />
+                    )}
+                    {entry.note && (
+                      <span class="mt-1 block text-xs text-ink-3">
+                        {entry.note}
+                      </span>
+                    )}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
+      </div>
+    )
+  }
+</div>

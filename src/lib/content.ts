@@ -116,7 +116,7 @@ function resolve(item: ContentItem): ResolvedItem {
     categoryName: category?.name ?? item.category,
     categoryShortName: category?.shortName ?? item.category,
     accent: category?.accent ?? '#8b8b96',
-  };
+  } as ResolvedItem;
 }
 
 export const items: ResolvedItem[] = allItems.map(resolve);

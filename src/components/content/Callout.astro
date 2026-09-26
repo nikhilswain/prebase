@@ -1,0 +1,28 @@
+---
+interface Props {
+  label?: string;
+  tone?: 'answer' | 'note';
+  class?: string;
+}
+
+const { label, tone = 'answer', class: className } = Astro.props;
+---
+
+<div
+  class:list={[
+    'rounded-lg border border-line bg-surface-2 p-4 sm:p-5',
+    tone === 'answer' && 'border-l-2 border-l-accent',
+    className,
+  ]}
+>
+  {
+    label && (
+      <p class="mb-2 font-mono text-[11px] tracking-wide text-ink-3 uppercase">
+        {label}
+      </p>
+    )
+  }
+  <div class="text-[15px] leading-relaxed text-ink sm:text-base">
+    <slot />
+  </div>
+</div>

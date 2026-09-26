@@ -1,0 +1,134 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../components/site/Breadcrumbs.astro';
+import SectionHeading from '../../components/ui/SectionHeading.astro';
+import ItemCard from '../../components/ui/ItemCard.astro';
+import { getItemsByCategory, getLiveCategories, getRevisionEntries } from '../../lib/content';
+import { collectionJsonLd } from '../../lib/seo';
+import type { Category, ContentType } from '../../lib/content-types';
+
+export function getStaticPaths() {
+  return getLiveCategories().map((category) => ({
+    params: { category: category.id },
+    props: { category },
+  }));
+}
+
+interface Props {
+  category: Category;
+}
+
+const { category } = Astro.props;
+const topics = getItemsByCategory(category.id);
+const revisionCount = getRevisionEntries(category.id).length;
+
+const groups: { type: ContentType; label: string }[] = [
+  { type: 'question', label: 'Interview questions' },
+  { type: 'concept', label: 'Concepts' },
+  { type: 'comparison', label: 'Comparisons' },
+  { type: 'gotcha', label: 'Gotchas' },
+  { type: 'challenge', label: 'Code challenges' },
+  { type: 'cheat-sheet', label: 'Cheat sheets' },
+];
+
+const sections = groups
+  .map((group) => ({
+    ...group,
+    items: topics.filter((topic) => topic.type === group.type),
+  }))
+  .filter((group) => group.items.length > 0);
+
+const others = getLiveCategories().filter((entry) => entry.id !== category.id);
+
+const jsonLd = collectionJsonLd({
+  title: `${category.name} interview topics`,
+  description: category.description,
+  path: `/${category.id}`,
+  items: topics,
+});
+---
+
+<BaseLayout
+  title={category.name}
+  description={category.description}
+  jsonLd={jsonLd}
+>
+  <div class="container-page py-12 sm:py-16">
+    <Breadcrumbs
+      items={[{ name: 'Home', href: '/' }, { name: 'Explore', href: '/explore' }, { name: category.name }]}
+    />
+
+    <header class="mt-6">
+      <p class="flex items-center gap-2 font-mono text-[11px] tracking-wide text-ink-3 uppercase">
+        <span
+          class="size-2 rounded-full"
+          style={`background:${category.accent}`}
+          aria-hidden="true"
+        />
+        Category
+      </p>
+      <h1 class="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+        {category.name}
+      </h1>
+      <p class="mt-3 max-w-2xl text-base leading-relaxed text-ink-2">
+        {category.description}
+      </p>
+
+      <div class="mt-6 flex flex-wrap items-center gap-4">
+        <a
+          href={`/quick-revision/${category.id}`}
+          class="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-accent-ink transition duration-150 ease-out hover:bg-accent-hover active:scale-[0.98]"
+        >
+          Quick Revision
+          <span class="font-mono text-xs opacity-80">
+            {revisionCount} cards
+          </span>
+        </a>
+        <p class="font-mono text-[11px] tracking-wide text-ink-3 uppercase">
+          {topics.length} topics
+        </p>
+      </div>
+    </header>
+
+    <div class="mt-14 space-y-14">
+      {
+        sections.map((section) => (
+          <section class="scroll-mt-24">
+            <SectionHeading
+              title={section.label}
+              description={`${section.items.length} ${section.items.length === 1 ? 'topic' : 'topics'}`}
+            />
+            <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {section.items.map((item) => (
+                <ItemCard item={item} showCategory={false} />
+              ))}
+            </div>
+          </section>
+        ))
+      }
+    </div>
+
+    <section class="mt-16 border-t border-line pt-8" aria-labelledby="other-categories">
+      <h2 id="other-categories" class="eyebrow">Other categories</h2>
+      <ul class="mt-4 flex flex-wrap gap-2">
+        {
+          others.map((entry) => (
+            <li>
+              <a
+                href={`/${entry.id}`}
+                class="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3.5 py-1.5 text-sm text-ink-2 transition duration-150 ease-out hover:border-line-strong hover:text-ink"
+              >
+                <span
+                  class="size-2 rounded-full"
+                  style={`background:${entry.accent}`}
+                  aria-hidden="true"
+                />
+                {entry.shortName}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+  </div>
+</BaseLayout>

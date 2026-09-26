@@ -159,9 +159,11 @@ export interface RevisionFile {
   entries: RevisionEntry[];
 }
 
-export interface ResolvedItem extends BaseItem {
+export interface ResolvedMeta {
   href: string;
   categoryName: string;
   categoryShortName: string;
   accent: string;
 }
+
+export type ResolvedItem = ContentItem & ResolvedMeta;

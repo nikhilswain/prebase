@@ -1,0 +1,33 @@
+---
+interface Props {
+  items: string[];
+  variant?: 'dot' | 'check' | 'warn' | 'arrow';
+  class?: string;
+}
+
+const { items, variant = 'dot', class: className } = Astro.props;
+
+const marker: Record<string, { glyph: string; tone: string }> = {
+  dot: { glyph: '•', tone: 'text-accent' },
+  check: { glyph: '✓', tone: 'text-easy' },
+  warn: { glyph: '×', tone: 'text-hard' },
+  arrow: { glyph: '→', tone: 'text-accent' },
+};
+const { glyph, tone } = marker[variant];
+---
+
+<ul class:list={['space-y-2', className]}>
+  {
+    items.map((item) => (
+      <li class="flex gap-3 text-[15px] leading-relaxed text-ink-2">
+        <span
+          class:list={['mt-px shrink-0 font-mono text-sm select-none', tone]}
+          aria-hidden="true"
+        >
+          {glyph}
+        </span>
+        <span>{item}</span>
+      </li>
+    ))
+  }
+</ul>

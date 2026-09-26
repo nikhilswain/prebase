@@ -1,0 +1,82 @@
+---
+import type { ComparisonOption, ComparisonRow } from '../../lib/content-types';
+
+interface Props {
+  options: ComparisonOption[];
+  rows: ComparisonRow[];
+}
+
+const { options, rows } = Astro.props;
+---
+
+<div class="hidden border border-line md:block">
+  <table class="w-full border-collapse text-sm">
+    <thead>
+      <tr class="border-b border-line bg-surface-2">
+        <th scope="col" class="w-40 px-4 py-3 text-left">
+          <span class="sr-only">Dimension</span>
+        </th>
+        {
+          options.map((option) => (
+            <th scope="col" class="px-4 py-3 text-left align-top">
+              <span class="block font-mono text-[13px] font-medium text-ink">
+                {option.name}
+              </span>
+              {option.summary && (
+                <span class="mt-0.5 block text-xs font-normal text-ink-3">
+                  {option.summary}
+                </span>
+              )}
+            </th>
+          ))
+        }
+      </tr>
+    </thead>
+    <tbody>
+      {
+        rows.map((row) => (
+          <tr class="border-b border-line last:border-b-0">
+            <th
+              scope="row"
+              class="bg-surface px-4 py-3 text-left align-top text-xs font-medium tracking-wide text-ink-3"
+            >
+              {row.label}
+            </th>
+            {row.values.map((value) => (
+              <td class="px-4 py-3 align-top leading-relaxed text-ink-2">
+                {value}
+              </td>
+            ))}
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</div>
+
+<div class="space-y-4 md:hidden">
+  {
+    options.map((option, optionIndex) => (
+      <div class="rounded-lg border border-line bg-surface">
+        <div class="border-b border-line bg-surface-2 px-4 py-2.5">
+          <p class="font-mono text-[13px] font-medium text-ink">{option.name}</p>
+          {option.summary && (
+            <p class="mt-0.5 text-xs text-ink-3">{option.summary}</p>
+          )}
+        </div>
+        <dl class="divide-y divide-line">
+          {rows.map((row) => (
+            <div class="px-4 py-2.5">
+              <dt class="text-[11px] tracking-wide text-ink-3 uppercase">
+                {row.label}
+              </dt>
+              <dd class="mt-1 text-sm leading-relaxed text-ink-2">
+                {row.values[optionIndex]}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    ))
+  }
+</div>

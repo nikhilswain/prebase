@@ -1,0 +1,48 @@
+---
+interface Props {
+  summary: string;
+  open?: boolean;
+  hint?: string;
+  class?: string;
+}
+
+const { summary, open = false, hint, class: className } = Astro.props;
+---
+
+<details
+  open={open}
+  class:list={[
+    'group rounded-lg border border-line bg-surface transition-colors',
+    className,
+  ]}
+>
+  <summary
+    class="flex cursor-pointer list-none items-center gap-2.5 rounded-lg px-4 py-3 text-sm font-medium text-ink transition-colors hover:bg-surface-2 [&::-webkit-details-marker]:hidden"
+  >
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      class="shrink-0 text-ink-3 transition-transform duration-150 ease-out group-open:rotate-90"
+    >
+      <path d="m9 6 6 6-6 6"></path>
+    </svg>
+    <span>{summary}</span>
+    {
+      hint && (
+        <span class="ml-auto font-mono text-[11px] font-normal tracking-wide text-ink-3">
+          {hint}
+        </span>
+      )
+    }
+  </summary>
+  <div class="border-t border-line px-4 py-4">
+    <slot />
+  </div>
+</details>

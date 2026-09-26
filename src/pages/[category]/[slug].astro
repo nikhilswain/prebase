@@ -1,0 +1,182 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../components/site/Breadcrumbs.astro';
+import ItemHeader from '../../components/content/ItemHeader.astro';
+import ItemBody from '../../components/content/ItemBody.astro';
+import RelatedTopics from '../../components/content/RelatedTopics.astro';
+import { getCategory, getItems, resolveRelated } from '../../lib/content';
+import { questionJsonLd, techArticleJsonLd } from '../../lib/seo';
+import { REVIEW_STATUS_LABEL } from '../../config';
+import type { ResolvedItem, ReviewStatus } from '../../lib/content-types';
+
+export function getStaticPaths() {
+  return getItems().map((item) => ({
+    params: { category: item.category, slug: item.slug },
+    props: { item },
+  }));
+}
+
+interface Props {
+  item: ResolvedItem;
+}
+
+const { item } = Astro.props;
+const category = getCategory(item.category);
+const related = resolveRelated(item);
+
+const reviewTone: Record<ReviewStatus, string> = {
+  verified: 'text-easy',
+  'community-reviewed': 'text-accent',
+  unreviewed: 'text-medium',
+};
+
+const status = item.reviewStatus ?? 'unreviewed';
+const statusLabel = REVIEW_STATUS_LABEL[status] ?? status;
+const updatedLabel = item.updated
+  ? new Date(`${item.updated}T00:00:00Z`).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      timeZone: 'UTC',
+    })
+  : undefined;
+
+const jsonLd: Record<string, unknown>[] = [
+  techArticleJsonLd(item) as unknown as Record<string, unknown>,
+];
+
+const question = questionJsonLd(item);
+if (question) {
+  jsonLd.push(question as unknown as Record<string, unknown>);
+}
+
+const noindex = status === 'unreviewed' && item.generated === true;
+---
+
+<BaseLayout
+  title={item.title}
+  description={item.summary}
+  ogType="article"
+  noindex={noindex}
+  jsonLd={jsonLd}
+>
+  <div class="container-page py-10 sm:py-14">
+    <Breadcrumbs
+      items={[
+        { name: 'Home', href: '/' },
+        { name: category?.name ?? item.categoryName, href: `/${item.category}` },
+        { name: item.title },
+      ]}
+    />
+
+    <div class="mt-7 grid gap-12 lg:grid-cols-[minmax(0,1fr)_15rem] lg:gap-16">
+      <div class="min-w-0">
+        <ItemHeader item={item} />
+        <div class="mt-10">
+          <ItemBody item={item} />
+        </div>
+      </div>
+
+      <aside class="lg:sticky lg:top-20 lg:self-start">
+        <div class="space-y-8">
+          <RelatedTopics items={related} />
+
+          <section aria-labelledby="details-heading">
+            <h2 id="details-heading" class="eyebrow">Details</h2>
+            <dl class="mt-3 space-y-2.5 text-sm">
+              <div class="flex items-center justify-between gap-3">
+                <dt class="text-ink-3">Review</dt>
+                <dd class="flex items-center gap-1.5 text-ink-2">
+                  <span
+                    class:list={['size-1.5 rounded-full bg-current', reviewTone[status]]}
+                    aria-hidden="true"
+                  />
+                  <span class={reviewTone[status]}>{statusLabel}</span>
+                  {item.generated && (
+                    <span class="text-ink-3">· AI-assisted</span>
+                  )}
+                </dd>
+              </div>
+              {
+                updatedLabel && (
+                  <div class="flex items-center justify-between gap-3">
+                    <dt class="text-ink-3">Updated</dt>
+                    <dd class="text-ink-2">{updatedLabel}</dd>
+                  </div>
+                )
+              }
+              {
+                item.difficulty && (
+                  <div class="flex items-center justify-between gap-3">
+                    <dt class="text-ink-3">Difficulty</dt>
+                    <dd class="text-ink-2 capitalize">{item.difficulty}</dd>
+                  </div>
+                )
+              }
+            </dl>
+
+            {
+              item.sources && item.sources.length > 0 && (
+                <div class="mt-5 border-t border-line pt-4">
+                  <h3 class="text-[11px] font-medium tracking-wide text-ink-3 uppercase">
+                    Sources
+                  </h3>
+                  <ul class="mt-2 space-y-1.5">
+                    {item.sources.map((source) => (
+                      <li>
+                        {source.url ? (
+                          <a
+                            href={source.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="link-underline text-sm text-ink-2"
+                          >
+                            {source.label}
+                          </a>
+                        ) : (
+                          <span class="text-sm text-ink-2">{source.label}</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )
+            }
+          </section>
+
+          <section
+            class="rounded-lg border border-line bg-surface-2 p-4"
+            aria-labelledby="revise-heading"
+          >
+            <h2 id="revise-heading" class="text-sm font-medium text-ink">
+              Revise this category
+            </h2>
+            <p class="mt-1.5 text-xs leading-relaxed text-ink-2">
+              Skim the {category?.shortName ?? item.categoryName} revision cards
+              before you move on.
+            </p>
+            <a
+              href={`/quick-revision/${item.category}`}
+              class="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-accent transition-opacity hover:opacity-80"
+            >
+              Open Quick Revision
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
+            </a>
+          </section>
+        </div>
+      </aside>
+    </div>
+  </div>
+</BaseLayout>
