@@ -5,8 +5,10 @@ import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
+const siteUrl = process.env.SITE_URL ?? 'https://prepbase.ze-ro.workers.dev';
+
 export default defineConfig({
-  site: 'https://prepbase.dev',
+  site: siteUrl,
   trailingSlash: 'never',
   integrations: [react(), sitemap()],
   markdown: {

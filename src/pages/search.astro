@@ -22,7 +22,7 @@ const topics = getFeatured(8).map((item) => ({
 const jsonLd: Record<string, unknown> = {
   '@context': 'https://schema.org',
   '@type': 'WebPage',
-  name: `Search ${SITE.domain}`,
+  name: `Search ${SITE.name}`,
   description:
     'Search every interview topic, question, concept, comparison, cheat sheet and revision card.',
   url: new URL('/search', SITE.url).href,

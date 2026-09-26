@@ -27,7 +27,7 @@ const {
   jsonLd,
 } = Astro.props;
 
-const pageTitle = home ? SITE.title ?? `${SITE.name} — developer interview knowledge base` : title ? `${title} · ${SITE.name}` : SITE.name;
+const pageTitle = home ? SITE.title ?? `${SITE.name} - developer interview knowledge base` : title ? `${title} · ${SITE.name}` : SITE.name;
 const canonical = new URL(Astro.url.pathname, SITE.url).href;
 const ogImage = new URL(image, SITE.url).href;
 const keywordList = keywords

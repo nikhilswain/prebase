@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://prepbase.dev/sitemap-index.xml

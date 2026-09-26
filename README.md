@@ -66,6 +66,7 @@ src/
     questions | comparisons | challenges | cheat-sheets
     tags/              Tag index and per-tag listing
     contribute.astro   Content guide
+    robots.txt.ts      Generated robots.txt with the correct sitemap URL
     search-index.json.ts  Static search index endpoint
 ```
 
@@ -119,8 +120,15 @@ JSON-LD (`TechArticle`, `Question`, `CollectionPage`, `BreadcrumbList`) and a
 sitemap. `robots.txt` points at the sitemap and the search index is exposed at
 `/search-index.json`.
 
-Update `site` in `astro.config.mjs` and `SITE` in `src/config.ts` when deploying
-to a real domain.
+Set `SITE_URL` in the build environment when deploying:
+
+```bash
+SITE_URL=https://your-domain.com npm run build
+```
+
+It falls back to `https://prepbase.ze-ro.workers.dev`. `astro.config.mjs` and
+`src/config.ts` both read it, so canonical URLs, OpenGraph and Twitter images,
+JSON-LD, `robots.txt` and the sitemap all follow automatically.
 
 ## Notes
 

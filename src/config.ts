@@ -1,8 +1,15 @@
+const DEFAULT_SITE_URL = 'https://prepbase.ze-ro.workers.dev';
+
+export const SITE_URL = (import.meta.env.SITE ?? DEFAULT_SITE_URL).replace(
+  /\/$/,
+  '',
+);
+
 export const SITE = {
   name: 'prepbase',
-  domain: 'prepbase.dev',
-  url: 'https://prepbase.dev',
-  title: 'prepbase — revise for developer interviews',
+  url: SITE_URL,
+  domain: new URL(SITE_URL).host,
+  title: 'prepbase - revise for developer interviews',
   tagline: 'Everything you need to revise for a developer interview.',
   description:
     'A fast, structured interview knowledge base covering JavaScript, React, TypeScript, CSS, frontend development and more. Search, understand, revise, move on.',
