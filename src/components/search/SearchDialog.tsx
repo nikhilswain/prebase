@@ -310,10 +310,22 @@ export default function SearchDialog() {
                 open
               </span>
             </span>
-            <span className="font-mono">
-              {query && results.length > 0
-                ? `${results.length} result${results.length === 1 ? '' : 's'}`
-                : 'Search across every topic'}
+            <span className="flex items-center gap-3">
+              {query && results.length > 0 && (
+                <span className="font-mono">
+                  {results.length} result{results.length === 1 ? '' : 's'}
+                </span>
+              )}
+              {query ? (
+                <a
+                  href={`/search?q=${encodeURIComponent(query)}`}
+                  className="font-medium text-accent transition-opacity hover:opacity-80"
+                >
+                  All results →
+                </a>
+              ) : (
+                <span className="font-mono">Search across every topic</span>
+              )}
             </span>
           </div>
         </div>

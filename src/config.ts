@@ -6,6 +6,16 @@ export const SITE = {
   tagline: 'Everything you need to revise for a developer interview.',
   description:
     'A fast, structured interview knowledge base covering JavaScript, React, TypeScript, CSS, frontend development and more. Search, understand, revise, move on.',
+  keywords: [
+    'developer interview questions',
+    'frontend interview preparation',
+    'JavaScript interview questions',
+    'React interview questions',
+    'TypeScript interview questions',
+    'CSS interview questions',
+    'interview revision notes',
+    'coding interview practice',
+  ],
   locale: 'en',
   ogImage: '/og.png',
 } as const;
@@ -28,9 +38,11 @@ export const FOOTER_GROUPS: { title: string; links: NavItem[] }[] = [
     title: 'Learn',
     links: [
       { label: 'Explore topics', href: '/explore' },
+      { label: 'Search', href: '/search' },
       { label: 'Quick Revision', href: '/quick-revision' },
       { label: 'Cheat Sheets', href: '/cheat-sheets' },
       { label: 'Comparisons', href: '/comparisons' },
+      { label: 'Tags', href: '/tags' },
     ],
   },
   {

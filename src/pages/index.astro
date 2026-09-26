@@ -5,7 +5,7 @@ import CategoryCard from '../components/site/CategoryCard.astro';
 import SectionHeading from '../components/ui/SectionHeading.astro';
 import ItemCard from '../components/ui/ItemCard.astro';
 import TopicRow from '../components/ui/TopicRow.astro';
-import { SITE } from '../config';
+import { websiteJsonLd } from '../lib/seo';
 import {
   getFeatured,
   getItemsByCategory,
@@ -35,14 +35,7 @@ const categoryStats = categories.map((category) => ({
   revisionCount: getRevisionEntries(category.id).length,
 }));
 
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'WebSite',
-  name: SITE.name,
-  url: SITE.url,
-  description: SITE.description,
-  inLanguage: 'en',
-};
+const jsonLd = websiteJsonLd();
 ---
 
 <BaseLayout home jsonLd={jsonLd}>

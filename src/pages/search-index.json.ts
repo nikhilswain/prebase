@@ -6,5 +6,6 @@ export const GET: APIRoute = () =>
     headers: {
       'content-type': 'application/json; charset=utf-8',
       'cache-control': 'public, max-age=3600',
+      'x-robots-tag': 'noindex',
     },
   });

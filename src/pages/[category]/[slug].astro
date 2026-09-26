@@ -50,6 +50,12 @@ if (question) {
   jsonLd.push(question as unknown as Record<string, unknown>);
 }
 
+const keywords = [
+  ...(item.tags ?? []),
+  `${item.categoryName} interview questions`,
+  `${item.categoryShortName} interview`,
+].join(', ');
+
 const noindex = status === 'unreviewed' && item.generated === true;
 ---
 
@@ -58,6 +64,7 @@ const noindex = status === 'unreviewed' && item.generated === true;
   description={item.summary}
   ogType="article"
   noindex={noindex}
+  keywords={keywords}
   jsonLd={jsonLd}
 >
   <div class="container-page py-10 sm:py-14">

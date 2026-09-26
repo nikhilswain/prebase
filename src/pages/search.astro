@@ -1,0 +1,61 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Breadcrumbs from '../components/site/Breadcrumbs.astro';
+import SearchResults from '../components/search/SearchResults.tsx';
+import { getFeatured, getLiveCategories, getTypeLabel } from '../lib/content';
+import { SITE } from '../config';
+
+const categories = getLiveCategories().map((category) => ({
+  name: category.name,
+  href: `/${category.id}`,
+  accent: category.accent,
+}));
+
+const topics = getFeatured(8).map((item) => ({
+  title: item.title,
+  href: item.href,
+  summary: item.summary,
+  typeLabel: getTypeLabel(item.type),
+  accent: item.accent,
+}));
+
+const jsonLd: Record<string, unknown> = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: `Search ${SITE.domain}`,
+  description:
+    'Search every interview topic, question, concept, comparison, cheat sheet and revision card.',
+  url: new URL('/search', SITE.url).href,
+  isPartOf: { '@type': 'WebSite', name: SITE.name, url: SITE.url },
+};
+---
+
+<BaseLayout
+  title="Search"
+  description="Search every interview topic, question, concept, comparison, cheat sheet and revision card in the prepbase knowledge base."
+  keywords="search interview topics, search interview questions, find JavaScript React TypeScript CSS topics"
+  jsonLd={jsonLd}
+>
+  <div class="container-page py-12 sm:py-16">
+    <Breadcrumbs items={[{ name: 'Home', href: '/' }, { name: 'Search' }]} />
+
+    <header class="mt-6 max-w-2xl">
+      <p class="eyebrow">Find anything</p>
+      <h1 class="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+        Search the knowledge base
+      </h1>
+      <p class="mt-3 text-base leading-relaxed text-ink-2">
+        Results cover questions, concepts, comparisons, code examples, cheat
+        sheets and revision cards, grouped so you can move on quickly.
+      </p>
+    </header>
+
+    <div class="mt-8">
+      <SearchResults
+        client:load
+        categories={categories}
+        topics={topics}
+      />
+    </div>
+  </div>
+</BaseLayout>
