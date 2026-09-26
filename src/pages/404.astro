@@ -1,51 +1,131 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import SearchTrigger from '../components/site/SearchTrigger.astro';
-import { getLiveCategories } from '../lib/content';
+import SectionHeading from '../components/ui/SectionHeading.astro';
+import TopicRow from '../components/ui/TopicRow.astro';
+import { getFeatured, getItemsByType, getLiveCategories, getRevisionCount } from '../lib/content';
 
 const categories = getLiveCategories();
+const popular = getFeatured(6);
+const revisionCount = getRevisionCount();
+
+const shortcuts = [
+  {
+    title: 'Quick Revision',
+    description: `Skim a whole category in minutes. ${revisionCount} cards.`,
+    href: '/quick-revision',
+  },
+  {
+    title: 'Cheat Sheets',
+    description: `${getItemsByType('cheat-sheet').length} dense references to scan before an interview.`,
+    href: '/cheat-sheets',
+  },
+  {
+    title: 'Interview Mode',
+    description: 'Answer out loud, reveal the model answer, track what you missed.',
+    href: '/interview',
+  },
+];
 ---
 
 <BaseLayout
   title="Page not found"
-  description="That page does not exist. Search the knowledge base or start from a category."
+  description="That page does not exist. Search the knowledge base or start from a topic or category."
   noindex
 >
-  <div class="container-page flex min-h-[60vh] flex-col justify-center py-20">
-    <p class="eyebrow">404</p>
+  <div class="container-page py-16 sm:py-20">
+    <p class="eyebrow">Error 404</p>
     <h1 class="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
       That page is not here
     </h1>
     <p class="mt-3 max-w-xl text-base leading-relaxed text-ink-2">
-      The link may be old, or the topic may have moved. Search for it, or pick a
-      category to keep going.
+      The link may be old or the topic may have moved. Search for it, or pick up
+      from one of the topics below.
     </p>
 
     <div class="mt-8 max-w-xl">
       <SearchTrigger variant="hero" />
     </div>
 
-    <ul class="mt-8 flex flex-wrap gap-2">
-      {
-        categories.map((category) => (
-          <li>
-            <a
-              href={`/${category.id}`}
-              class="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3.5 py-1.5 text-sm text-ink-2 transition duration-150 ease-out hover:border-line-strong hover:text-ink"
-            >
-              <span
-                class="size-2 rounded-full"
-                style={`background:${category.accent}`}
-                aria-hidden="true"
-              />
-              {category.shortName}
-            </a>
-          </li>
-        ))
-      }
-    </ul>
+    <div class="mt-12 grid gap-10 lg:grid-cols-[1.2fr_1fr] lg:gap-16">
+      <section aria-labelledby="popular-topics">
+        <SectionHeading
+          eyebrow="Jump back in"
+          title="Popular topics"
+          href="/explore"
+          linkLabel="All topics"
+        />
+        <div class="mt-4 border-t border-line">
+          {popular.map((item, index) => <TopicRow item={item} index={index + 1} />)}
+        </div>
+      </section>
 
-    <p class="mt-8 text-sm">
+      <div class="space-y-10">
+        <section aria-labelledby="browse-categories">
+          <h2 id="browse-categories" class="eyebrow">Browse categories</h2>
+          <ul class="mt-4 flex flex-wrap gap-2">
+            {
+              categories.map((category) => (
+                <li>
+                  <a
+                    href={`/${category.id}`}
+                    class="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3.5 py-1.5 text-sm text-ink-2 transition duration-150 ease-out hover:border-line-strong hover:text-ink"
+                  >
+                    <span
+                      class="size-2 rounded-full"
+                      style={`background:${category.accent}`}
+                      aria-hidden="true"
+                    />
+                    {category.shortName}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </section>
+
+        <section aria-labelledby="quick-links">
+          <h2 id="quick-links" class="eyebrow">Shortcuts</h2>
+          <ul class="mt-4 space-y-3">
+            {
+              shortcuts.map((shortcut) => (
+                <li>
+                  <a
+                    href={shortcut.href}
+                    class="group flex items-center gap-3 rounded-lg border border-line bg-surface p-4 transition duration-150 ease-out hover:border-line-strong hover:shadow-sm"
+                  >
+                    <span class="min-w-0 flex-1">
+                      <span class="block text-sm font-medium text-ink transition-colors group-hover:text-accent">
+                        {shortcut.title}
+                      </span>
+                      <span class="mt-0.5 block text-xs leading-relaxed text-ink-3">
+                        {shortcut.description}
+                      </span>
+                    </span>
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                      class="shrink-0 text-ink-3 transition duration-150 ease-out group-hover:translate-x-0.5 group-hover:text-accent"
+                    >
+                      <path d="M5 12h14M13 6l6 6-6 6" />
+                    </svg>
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </section>
+      </div>
+    </div>
+
+    <p class="mt-12 text-sm">
       <a href="/" class="link-underline text-ink-2">Back to home</a>
     </p>
   </div>

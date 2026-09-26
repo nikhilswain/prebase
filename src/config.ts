@@ -1,4 +1,4 @@
-const DEFAULT_SITE_URL = 'https://prepbase.ze-ro.workers.dev';
+const DEFAULT_SITE_URL = 'https://prebase.ze-ro.workers.dev';
 
 export const SITE_URL = (import.meta.env.SITE ?? DEFAULT_SITE_URL).replace(
   /\/$/,

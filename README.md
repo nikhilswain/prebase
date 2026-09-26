@@ -53,12 +53,15 @@ In the Cloudflare dashboard (Workers Builds) set:
 | `SITE_URL` | your production URL |
 
 Without a Wrangler config the Worker deploys with no assets attached and every
-route returns 404, so keep `wrangler.jsonc` in sync with the Worker name.
+route returns 404. The `name` in `wrangler.jsonc` must match the Worker in the
+dashboard exactly, otherwise `wrangler deploy` creates a second Worker and the
+existing URL keeps serving the old build.
 
-Verify the config without deploying:
+Test the exact production behaviour locally before pushing:
 
 ```bash
-npm run build && npx wrangler deploy --dry-run
+npm run build
+npx wrangler dev --port 8788   # then curl http://localhost:8788/abc
 ```
 
 ## Project structure
@@ -155,7 +158,7 @@ Set `SITE_URL` in the build environment when deploying:
 SITE_URL=https://your-domain.com npm run build
 ```
 
-It falls back to `https://prepbase.ze-ro.workers.dev`. `astro.config.mjs` and
+It falls back to `https://prebase.ze-ro.workers.dev`. `astro.config.mjs` and
 `src/config.ts` both read it, so canonical URLs, OpenGraph and Twitter images,
 JSON-LD, `robots.txt` and the sitemap all follow automatically.
 
