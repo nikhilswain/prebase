@@ -65,6 +65,22 @@ const jsonLdBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
     <meta name="keywords" content={keywordList} />
     <meta name="generator" content={Astro.generator} />
     {noindex ? <meta name="robots" content="noindex, nofollow" /> : <meta name="robots" content="index, follow, max-image-preview:large" />}
+    {
+      import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION && (
+        <meta
+          name="google-site-verification"
+          content={import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION}
+        />
+      )
+    }
+    {
+      import.meta.env.PUBLIC_BING_SITE_VERIFICATION && (
+        <meta
+          name="msvalidate.01"
+          content={import.meta.env.PUBLIC_BING_SITE_VERIFICATION}
+        />
+      )
+    }
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fafafa" />
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0a0a0d" />
 

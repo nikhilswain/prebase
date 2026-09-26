@@ -42,6 +42,7 @@ const jsonLd = collectionJsonLd({
   ]}
   items={items}
   jsonLd={jsonLd}
+  noindex={items.length < 3}
   placeholder={`Filter “${tag}” topics…`}
   emptyLabel="No matching topics for this tag yet."
 >

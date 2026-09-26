@@ -19,6 +19,7 @@ interface Props {
   jsonLd?: Record<string, unknown>;
   placeholder?: string;
   emptyLabel?: string;
+  noindex?: boolean;
 }
 
 const {
@@ -30,12 +31,18 @@ const {
   jsonLd,
   placeholder,
   emptyLabel,
+  noindex = false,
 } = Astro.props;
 
 const lite = toLiteItems(items);
 ---
 
-<BaseLayout title={title} description={description} jsonLd={jsonLd}>
+<BaseLayout
+  title={title}
+  description={description}
+  jsonLd={jsonLd}
+  noindex={noindex}
+>
   <div class="container-page py-10 sm:py-12">
     <Breadcrumbs items={crumbs} />
 
