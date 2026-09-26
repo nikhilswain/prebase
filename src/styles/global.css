@@ -2,6 +2,16 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@custom-variant can-hover {
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      @slot;
+    }
+  }
+}
+
+@custom-variant hover-media (@media (hover: hover) and (pointer: fine));
+
 @theme inline {
   --color-canvas: var(--canvas);
   --color-surface: var(--surface);
@@ -42,15 +52,15 @@
 }
 
 :root {
-  --canvas: #fafafa;
+  --canvas: #f0f0f4;
   --surface: #ffffff;
-  --surface-2: #f4f4f5;
-  --surface-3: #ececee;
-  --line: #e7e7ea;
-  --line-strong: #d3d3d9;
-  --ink: #16161a;
-  --ink-2: #52525b;
-  --ink-3: #8c8c96;
+  --surface-2: #e9e9ee;
+  --surface-3: #dedee5;
+  --line: #e4e4ea;
+  --line-strong: #cfcfd9;
+  --ink: #191920;
+  --ink-2: #55555f;
+  --ink-3: #7d7d87;
   --accent: #5b5bd6;
   --accent-hover: #4b4bca;
   --accent-soft: #eef0ff;
@@ -66,23 +76,23 @@
 }
 
 .dark {
-  --canvas: #0a0a0d;
-  --surface: #121217;
-  --surface-2: #191920;
-  --surface-3: #212129;
-  --line: #26262e;
-  --line-strong: #37373f;
-  --ink: #f2f2f4;
-  --ink-2: #a9a9b3;
-  --ink-3: #74747f;
-  --accent: #8f8fff;
-  --accent-hover: #a4a4ff;
-  --accent-soft: #1a1a2e;
-  --accent-line: #2f2f52;
-  --accent-ink: #0a0a0d;
-  --easy: #4ade80;
-  --medium: #fbbf24;
-  --hard: #f87171;
+  --canvas: #17171b;
+  --surface: #1e1e23;
+  --surface-2: #26262d;
+  --surface-3: #2f2f37;
+  --line: #2b2b33;
+  --line-strong: #3d3d47;
+  --ink: #ededf0;
+  --ink-2: #a4a4ae;
+  --ink-3: #7f7f89;
+  --accent: #9a9aff;
+  --accent-hover: #aeaeff;
+  --accent-soft: #20203a;
+  --accent-line: #34345e;
+  --accent-ink: #15151b;
+  --easy: #5ee08a;
+  --medium: #f6c453;
+  --hard: #f98a8a;
   color-scheme: dark;
 }
 
@@ -93,6 +103,7 @@
 
   html {
     scroll-behavior: smooth;
+    scrollbar-gutter: stable;
     -webkit-text-size-adjust: 100%;
     text-rendering: optimizeLegibility;
   }
@@ -196,6 +207,169 @@
   }
 }
 
+@keyframes enter-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes enter-rise {
+  from {
+    transform: translateY(8px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes header-elevate {
+  to {
+    box-shadow: var(--shadow-sm);
+    border-color: var(--line-strong);
+  }
+}
+
+/* Header separates from the page as you scroll. Pure CSS scroll timeline, so
+   it costs no JS and runs off the main thread. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: scroll()) {
+    [data-header] {
+      animation: header-elevate linear both;
+      animation-timeline: scroll();
+      animation-range: 0 72px;
+    }
+  }
+}
+
+@keyframes vt-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes copy-pop {
+  0% {
+    transform: scale(0.92);
+  }
+  60% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Route changes. Cross-document View Transitions are CSS-only: no client-side
+   router, so every inline script keeps working. Browsers without support (or
+   with reduced motion) just navigate instantly. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+
+  ::view-transition-old(root) {
+    animation: 150ms var(--ease-out) both vt-fade-out;
+  }
+
+  ::view-transition-new(root) {
+    animation: 200ms var(--ease-out) both vt-fade-in;
+  }
+}
+
+/* Copy button acknowledges the click with a small pop. */
+[data-copy][data-state='copied'] {
+  animation: copy-pop 220ms var(--ease-out);
+}
+
+@layer utilities {
+  /* One-time mount entrance. Stagger with --enter-delay; "both" keeps it
+     hidden through the delay so groups cascade instead of flashing. */
+  .enter {
+    animation: enter-up 460ms var(--ease-out) both;
+    animation-delay: var(--enter-delay, 0ms);
+  }
+
+  /* Transform-only variant for above-the-fold hero copy: it stays fully
+     rendered (no opacity), so it never delays first paint or LCP. */
+  .enter-rise {
+    animation: enter-rise 420ms var(--ease-out) both;
+    animation-delay: var(--enter-delay, 0ms);
+  }
+
+  /* Filtered list entrance. Faster than .enter because it fires on a control
+     the user is actively driving; the stagger is capped in the component. */
+  .enter-list {
+    animation: enter-up 300ms var(--ease-out) both;
+    animation-delay: var(--enter-delay, 0ms);
+  }
+
+  /* Scroll reveal: the hidden state is applied by JS only to elements that
+     start off-screen, so there is no flash and no-JS/reduced-motion stays
+     visible. */
+  [data-reveal] {
+    transition:
+      opacity 560ms var(--ease-out),
+      transform 560ms var(--ease-out);
+  }
+
+  [data-reveal][data-reveal-hidden] {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@media print {
+  [data-reveal][data-reveal-hidden] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* Smooth, native accordion. Progressive: browsers without ::details-content
+   fall back to the instant open/close they already had. */
+@supports selector(::details-content) {
+  :root {
+    interpolate-size: allow-keywords;
+  }
+
+  details::details-content {
+    block-size: 0;
+    content-visibility: hidden;
+    transition:
+      block-size 240ms var(--ease-out),
+      content-visibility 240ms allow-discrete;
+  }
+
+  details[open]::details-content {
+    block-size: auto;
+    content-visibility: visible;
+  }
+
+  details[open] > .disclosure-body {
+    animation: fade-in 260ms var(--ease-out) both;
+  }
+}
+
 .astro-code {
   border: 1px solid var(--line) !important;
   border-radius: var(--radius-md);
@@ -233,10 +407,27 @@
   background-color: var(--shiki-dark-bg) !important;
 }
 
+/* Quick Revision depth levels. Instead of snapping `display`, each level is a
+   grid row that collapses to 0fr, so the card's height animates and the cards
+   below it slide rather than jump. */
+.revision-level {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition:
+    grid-template-rows 260ms var(--ease-out),
+    opacity 200ms var(--ease-out);
+}
+
+.revision-level > * {
+  overflow: hidden;
+}
+
 [data-revision][data-mode='30s'] [data-level='medium'],
 [data-revision][data-mode='30s'] [data-level='detail'],
 [data-revision][data-mode='1min'] [data-level='detail'] {
-  display: none;
+  grid-template-rows: 0fr;
+  opacity: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -246,10 +437,13 @@
 
   *,
   *::before,
-  *::after {
+  *::after,
+  details::details-content {
     animation-duration: 0.001ms !important;
+    animation-delay: 0s !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+    transition-delay: 0s !important;
     scroll-behavior: auto !important;
   }
 }

@@ -195,7 +195,7 @@ export default function SearchResults({
                     <li key={result.id}>
                       <a
                         href={result.href}
-                        className="group flex items-center gap-3 py-3"
+                        className="group flex items-center gap-3 py-3 transition-colors duration-150 ease-out hover:bg-surface-2"
                       >
                         <span
                           className="size-1.5 shrink-0 rounded-full"
@@ -223,7 +223,7 @@ export default function SearchResults({
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           aria-hidden="true"
-                          className="shrink-0 text-ink-3 transition group-hover:translate-x-0.5 group-hover:text-accent"
+                          className="shrink-0 text-ink-3 transition group-hover:text-accent hover-media:group-hover:translate-x-0.5"
                         >
                           <path d="M5 12h14M13 6l6 6-6 6" />
                         </svg>

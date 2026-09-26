@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 
 export interface RevisionCard {
   id: string;
@@ -46,6 +46,7 @@ export default function RevisionBoard({
   const [mode, setMode] = useState<Mode>('30s');
   const [revised, setRevised] = useState<string[]>([]);
   const [hideRevised, setHideRevised] = useState(false);
+  const [listAnimated, setListAnimated] = useState(false);
   const storageKey = `prepbase:revision:${categoryId}`;
 
   useEffect(() => {
@@ -81,7 +82,7 @@ export default function RevisionBoard({
 
   return (
     <div data-revision data-mode={mode}>
-      <div className="sticky top-14 z-30 -mx-5 mb-6 border-b border-line bg-canvas/85 px-5 py-3 backdrop-blur-md">
+      <div className="sticky top-14 z-30 -mx-5 mb-5 border-b border-line bg-canvas/85 px-5 py-2.5 backdrop-blur-md">
         <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
           <div
             role="group"
@@ -95,7 +96,7 @@ export default function RevisionBoard({
                 onClick={() => setMode(entry.key)}
                 aria-pressed={mode === entry.key}
                 title={entry.hint}
-                className={`rounded-md px-3 py-1.5 text-[13px] transition-colors duration-150 ease-out ${
+                className={`rounded-md px-3 py-1.5 text-[13px] transition duration-150 ease-out active:scale-[0.97] ${
                   mode === entry.key
                     ? 'bg-surface-2 font-medium text-ink'
                     : 'text-ink-3 hover:text-ink'
@@ -116,8 +117,8 @@ export default function RevisionBoard({
               aria-label="Revision progress"
             >
               <div
-                className="h-full rounded-full bg-accent transition-[width] duration-300 ease-out"
-                style={{ width: `${percent}%` }}
+                className="h-full origin-left rounded-full bg-accent transition-transform duration-300 ease-out"
+                style={{ transform: `scaleX(${percent / 100})` }}
               />
             </div>
             <span className="shrink-0 font-mono text-[11px] tabular-nums text-ink-3">
@@ -128,9 +129,12 @@ export default function RevisionBoard({
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setHideRevised((value) => !value)}
+              onClick={() => {
+                setListAnimated(true);
+                setHideRevised((value) => !value);
+              }}
               aria-pressed={hideRevised}
-              className={`rounded-md border px-2.5 py-1.5 text-[12px] transition-colors duration-150 ease-out ${
+              className={`rounded-md border px-2.5 py-1.5 text-[12px] transition duration-150 ease-out active:scale-[0.97] ${
                 hideRevised
                   ? 'border-accent-line bg-accent-soft text-accent'
                   : 'border-line text-ink-3 hover:text-ink'
@@ -142,7 +146,7 @@ export default function RevisionBoard({
               type="button"
               onClick={() => persist([])}
               disabled={doneCount === 0}
-              className="rounded-md border border-line px-2.5 py-1.5 text-[12px] text-ink-3 transition-colors duration-150 ease-out hover:text-ink disabled:opacity-40"
+              className="rounded-md border border-line px-2.5 py-1.5 text-[12px] text-ink-3 transition duration-150 ease-out active:scale-[0.97] hover:text-ink disabled:opacity-40"
             >
               Reset
             </button>
@@ -158,14 +162,24 @@ export default function RevisionBoard({
           </p>
         </div>
       ) : (
-        <ol className="space-y-3">
-          {visible.map((entry) => {
+        <ol
+          key={listAnimated ? String(hideRevised) : 'initial'}
+          className="grid items-start gap-3 lg:grid-cols-2"
+        >
+          {visible.map((entry, index) => {
             const isRevised = revisedSet.has(entry.id);
             return (
               <li
                 key={entry.id}
                 id={entry.id}
-                className={`scroll-mt-36 rounded-lg border p-4 transition-colors duration-150 ease-out sm:p-5 ${
+                style={
+                  listAnimated
+                    ? ({
+                        '--enter-delay': `${Math.min(index, 8) * 30}ms`,
+                      } as CSSProperties)
+                    : undefined
+                }
+                className={`${listAnimated ? 'enter-list' : ''} scroll-mt-36 rounded-lg border p-3.5 transition-colors duration-150 ease-out sm:p-4 ${
                   isRevised
                     ? 'border-line bg-surface-2/60'
                     : 'border-line bg-surface'
@@ -188,10 +202,10 @@ export default function RevisionBoard({
                         ? `Mark ${entry.term} as not revised`
                         : `Mark ${entry.term} as revised`
                     }
-                    className={`grid size-7 shrink-0 place-items-center rounded-full border transition-colors duration-150 ease-out ${
+                    className={`grid size-7 shrink-0 place-items-center rounded-full border transition duration-150 ease-out active:scale-90 ${
                       isRevised
                         ? 'border-easy/40 bg-easy/10 text-easy'
-                        : 'border-line text-ink-3 hover:border-line-strong hover:text-ink'
+                        : 'border-line text-ink-3 can-hover:border-line-strong can-hover:text-ink'
                     }`}
                   >
                     <CheckIcon />
@@ -203,21 +217,23 @@ export default function RevisionBoard({
                 </p>
 
                 {entry.medium && (
-                  <p
-                    data-level="medium"
-                    className="mt-3 text-sm leading-relaxed text-ink-2"
-                  >
-                    {entry.medium}
-                  </p>
+                  <div data-level="medium" className="revision-level">
+                    <div>
+                      <p className="mt-3 text-sm leading-relaxed text-ink-2">
+                        {entry.medium}
+                      </p>
+                    </div>
+                  </div>
                 )}
 
                 {entry.detail && (
-                  <p
-                    data-level="detail"
-                    className="mt-3 border-t border-line pt-3 text-sm leading-relaxed text-ink-2"
-                  >
-                    {entry.detail}
-                  </p>
+                  <div data-level="detail" className="revision-level">
+                    <div>
+                      <p className="mt-3 border-t border-line pt-3 text-sm leading-relaxed text-ink-2">
+                        {entry.detail}
+                      </p>
+                    </div>
+                  </div>
                 )}
 
                 {entry.relatedHref && (

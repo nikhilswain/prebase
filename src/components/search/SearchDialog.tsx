@@ -40,7 +40,7 @@ function ResultRow({
       onMouseEnter={() => onActivate(index)}
       onMouseDown={(event) => event.preventDefault()}
       onClick={() => onSelect(result.href)}
-      className={`flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 ${
+      className={`flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 transition-colors duration-100 ease-out ${
         active ? 'bg-surface-2' : 'bg-transparent'
       }`}
     >

@@ -41,31 +41,34 @@ const jsonLd = websiteJsonLd();
 <BaseLayout home jsonLd={jsonLd}>
   <section class="relative overflow-hidden">
     <div
-      class="pointer-events-none absolute inset-x-0 -top-52 h-96 opacity-[0.08] blur-3xl"
+      class="enter-rise pointer-events-none absolute inset-x-0 -top-52 h-96 opacity-[0.08] blur-3xl"
       style="background: radial-gradient(closest-side, var(--accent), transparent)"
       aria-hidden="true"
     >
     </div>
-    <div class="container-page relative pt-16 pb-12 sm:pt-24 sm:pb-16">
-      <p class="eyebrow">Developer interview knowledge base</p>
+    <div class="container-page relative pt-12 pb-10 sm:pt-16 sm:pb-12">
+      <p class="enter-rise eyebrow" style="--enter-delay:40ms">Developer interview knowledge base</p>
       <h1
-        class="mt-4 max-w-3xl text-4xl leading-[1.08] font-semibold tracking-tight sm:text-5xl"
+        class="enter-rise mt-3 max-w-3xl text-4xl leading-[1.08] font-semibold tracking-tight sm:text-5xl"
+        style="--enter-delay:80ms"
       >
         Everything you need to revise for a developer interview.
       </h1>
       <p
-        class="mt-5 max-w-2xl text-base leading-relaxed text-ink-2 sm:text-lg"
+        class="enter-rise mt-4 max-w-2xl text-base leading-relaxed text-ink-2 sm:text-lg"
+        style="--enter-delay:120ms"
       >
         A fast, structured interview knowledge base covering JavaScript, React,
         TypeScript, CSS, frontend development, and more.
       </p>
 
-      <div class="mt-8 max-w-xl">
+      <div class="enter-rise mt-7 max-w-xl" style="--enter-delay:160ms">
         <SearchTrigger variant="hero" />
       </div>
 
       <div
-        class="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-3"
+        class="enter-rise mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-3"
+        style="--enter-delay:200ms"
       >
         <span>Try</span>
         {
@@ -80,12 +83,12 @@ const jsonLd = websiteJsonLd();
         }
       </div>
 
-      <div class="mt-10 flex flex-wrap gap-2">
+      <div class="enter-rise mt-7 flex flex-wrap gap-2" style="--enter-delay:240ms">
         {
           categories.map((category) => (
             <a
               href={`/${category.id}`}
-              class="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3.5 py-1.5 text-sm text-ink-2 transition duration-150 ease-out hover:border-line-strong hover:text-ink"
+              class="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3.5 py-1.5 text-sm text-ink-2 transition duration-150 ease-out can-hover:-translate-y-0.5 can-hover:border-line-strong can-hover:text-ink"
             >
               <span
                 class="size-2 rounded-full"
@@ -99,14 +102,15 @@ const jsonLd = websiteJsonLd();
       </div>
 
       <p
-        class="mt-8 font-mono text-[11px] tracking-wide text-ink-3 uppercase"
+        class="enter-rise mt-6 font-mono text-[11px] tracking-wide text-ink-3 uppercase"
+        style="--enter-delay:280ms"
       >
         {stats.topics} topics · {stats.revision} revision cards · {stats.categories} categories
       </p>
     </div>
   </section>
 
-  <section class="container-page scroll-mt-20 py-12 sm:py-16">
+  <section data-reveal class="container-page scroll-mt-20 py-10 sm:py-12">
     <SectionHeading
       eyebrow="Explore"
       title="Pick a topic and go straight in"
@@ -127,7 +131,7 @@ const jsonLd = websiteJsonLd();
     </div>
   </section>
 
-  <section class="container-page scroll-mt-20 py-12 sm:py-16">
+  <section data-reveal class="container-page scroll-mt-20 py-10 sm:py-12">
     <div class="rounded-xl border border-line bg-surface-2 p-6 sm:p-8">
       <div class="grid gap-8 lg:grid-cols-[1.1fr_1fr] lg:items-start">
         <div>
@@ -167,7 +171,7 @@ const jsonLd = websiteJsonLd();
               <li>
                 <a
                   href={`/quick-revision/${category.id}`}
-                  class="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface px-3.5 py-2.5 transition duration-150 ease-out hover:border-line-strong"
+                  class="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface px-3.5 py-2.5 transition duration-150 ease-out can-hover:-translate-y-0.5 can-hover:border-line-strong can-hover:shadow-sm"
                 >
                   <span class="flex items-center gap-2 text-sm text-ink-2">
                     <span
@@ -189,7 +193,7 @@ const jsonLd = websiteJsonLd();
     </div>
   </section>
 
-  <section class="container-page scroll-mt-20 py-12 sm:py-16">
+  <section data-reveal class="container-page scroll-mt-20 py-10 sm:py-12">
     <SectionHeading
       eyebrow="Popular"
       title="Interview questions worth knowing cold"
@@ -202,7 +206,7 @@ const jsonLd = websiteJsonLd();
     </div>
   </section>
 
-  <section class="container-page scroll-mt-20 py-12 sm:py-16">
+  <section data-reveal class="container-page scroll-mt-20 py-10 sm:py-12">
     <div class="grid gap-10 lg:grid-cols-2">
       <div>
         <SectionHeading
@@ -233,7 +237,7 @@ const jsonLd = websiteJsonLd();
     </div>
   </section>
 
-  <section class="container-page scroll-mt-20 py-12 sm:py-16">
+  <section data-reveal class="container-page scroll-mt-20 py-10 sm:py-12">
     <div
       class="flex flex-col gap-6 rounded-xl border border-line bg-surface p-6 sm:p-8 lg:flex-row lg:items-center lg:justify-between"
     >

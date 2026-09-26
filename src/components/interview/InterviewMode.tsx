@@ -47,7 +47,7 @@ function Chip({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm transition duration-150 ease-out ${
+      className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm transition duration-150 ease-out active:scale-[0.97] ${
         active
           ? 'border-accent-line bg-accent-soft font-medium text-accent'
           : 'border-line bg-surface text-ink-2 hover:border-line-strong hover:text-ink'
@@ -345,12 +345,12 @@ export default function InterviewMode({
 
         <div className="mt-3 h-1 overflow-hidden rounded-full bg-surface-3">
           <div
-            className="h-full rounded-full bg-accent transition-[width] duration-300 ease-out"
-            style={{ width: `${progress}%` }}
+            className="h-full origin-left rounded-full bg-accent transition-transform duration-300 ease-out"
+            style={{ transform: `scaleX(${progress / 100})` }}
           />
         </div>
 
-        <div className="mt-6 rounded-xl border border-line bg-surface p-5 sm:p-8">
+        <div className="enter mt-6 rounded-xl border border-line bg-surface p-5 sm:p-8">
           <p className="eyebrow">
             {current.kind === 'concept'
               ? 'Explain this concept'
@@ -371,7 +371,7 @@ export default function InterviewMode({
               </button>
             </div>
           ) : (
-            <div className="mt-6 space-y-6">
+            <div className="enter mt-6 space-y-6">
               <div className="rounded-lg border-l-2 border-l-accent bg-surface-2 p-4 sm:p-5">
                 <p className="eyebrow mb-2">Model answer</p>
                 <p className="text-[15px] leading-relaxed text-ink">
@@ -457,7 +457,7 @@ export default function InterviewMode({
   const percent = attempted === 0 ? 0 : Math.round((knew / attempted) * 100);
 
   return (
-    <div className="rounded-xl border border-line bg-surface p-6 sm:p-8">
+    <div className="enter rounded-xl border border-line bg-surface p-6 sm:p-8">
       <p className="eyebrow">Session complete</p>
       <h2 className="mt-2.5 text-2xl font-semibold tracking-tight">
         {knew} of {attempted} known
@@ -471,8 +471,8 @@ export default function InterviewMode({
 
       <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-surface-3">
         <div
-          className="h-full rounded-full bg-accent"
-          style={{ width: `${percent}%` }}
+          className="h-full origin-left rounded-full bg-accent transition-transform duration-500 ease-out"
+          style={{ transform: `scaleX(${percent / 100})` }}
         />
       </div>
 
@@ -509,7 +509,7 @@ export default function InterviewMode({
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     aria-hidden="true"
-                    className="shrink-0 text-ink-3 transition group-hover:translate-x-0.5 group-hover:text-accent"
+                    className="shrink-0 text-ink-3 transition group-hover:text-accent hover-media:group-hover:translate-x-0.5"
                   >
                     <path d="M5 12h14M13 6l6 6-6 6" />
                   </svg>

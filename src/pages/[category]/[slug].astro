@@ -67,7 +67,7 @@ const noindex = status === 'unreviewed' && item.generated === true;
   keywords={keywords}
   jsonLd={jsonLd}
 >
-  <div class="container-page py-10 sm:py-14">
+  <div class="container-page py-8 sm:py-12">
     <Breadcrumbs
       items={[
         { name: 'Home', href: '/' },
@@ -76,10 +76,10 @@ const noindex = status === 'unreviewed' && item.generated === true;
       ]}
     />
 
-    <div class="mt-7 grid gap-12 lg:grid-cols-[minmax(0,1fr)_15rem] lg:gap-16">
+    <div class="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_15rem] lg:gap-14">
       <article class="min-w-0">
         <ItemHeader item={item} />
-        <div class="mt-10">
+        <div class="mt-8">
           <ItemBody item={item} />
         </div>
       </article>

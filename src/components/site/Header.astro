@@ -10,6 +10,7 @@ const isActive = (href: string) =>
 ---
 
 <header
+  data-header
   class="sticky top-0 z-50 border-b border-line bg-canvas/85 backdrop-blur-md"
 >
   <div class="container-page flex h-14 items-center gap-3">
@@ -63,27 +64,30 @@ const isActive = (href: string) =>
 
   <div
     id="mobile-nav"
-    hidden
-    class="border-t border-line bg-canvas md:hidden"
+    data-open="false"
+    inert
+    class="grid grid-rows-[0fr] overflow-hidden border-t border-line bg-canvas opacity-0 transition-[grid-template-rows,opacity] duration-200 ease-out data-[open=true]:grid-rows-[1fr] data-[open=true]:opacity-100 md:hidden"
   >
-    <nav class="container-page flex flex-col py-2" aria-label="Primary mobile">
-      {
-        NAV.map((item) => (
-          <a
-            href={item.href}
-            aria-current={isActive(item.href) ? 'page' : undefined}
-            class:list={[
-              'rounded-md px-3 py-2.5 text-[15px] transition-colors',
-              isActive(item.href)
-                ? 'bg-surface-2 font-medium text-ink'
-                : 'text-ink-2 hover:bg-surface-2 hover:text-ink',
-            ]}
-          >
-            {item.label}
-          </a>
-        ))
-      }
-    </nav>
+    <div class="min-h-0 overflow-hidden">
+      <nav class="container-page flex flex-col py-2" aria-label="Primary mobile">
+        {
+          NAV.map((item) => (
+            <a
+              href={item.href}
+              aria-current={isActive(item.href) ? 'page' : undefined}
+              class:list={[
+                'rounded-md px-3 py-2.5 text-[15px] transition-colors',
+                isActive(item.href)
+                  ? 'bg-surface-2 font-medium text-ink'
+                  : 'text-ink-2 hover:bg-surface-2 hover:text-ink',
+              ]}
+            >
+              {item.label}
+            </a>
+          ))
+        }
+      </nav>
+    </div>
   </div>
 </header>
 
@@ -93,11 +97,31 @@ const isActive = (href: string) =>
     const panel = document.getElementById('mobile-nav');
     if (!toggle || !panel) return;
 
-    toggle.addEventListener('click', () => {
-      const open = panel.hasAttribute('hidden');
-      panel.toggleAttribute('hidden', !open);
+    const setOpen = (open) => {
+      panel.dataset.open = String(open);
+      panel.toggleAttribute('inert', !open);
       toggle.setAttribute('aria-expanded', String(open));
-      toggle.setAttribute('aria-label', open ? 'Close navigation menu' : 'Open navigation menu');
+      toggle.setAttribute(
+        'aria-label',
+        open ? 'Close navigation menu' : 'Open navigation menu',
+      );
+    };
+
+    toggle.addEventListener('click', () => {
+      setOpen(panel.dataset.open !== 'true');
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && panel.dataset.open === 'true') {
+        setOpen(false);
+        toggle.focus();
+      }
+    });
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth >= 768 && panel.dataset.open === 'true') {
+        setOpen(false);
+      }
     });
   })();
 </script>

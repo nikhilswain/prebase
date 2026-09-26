@@ -12,10 +12,10 @@ const { item, index } = Astro.props;
 
 <a
   href={item.href}
-  class="group flex items-center gap-4 border-b border-line px-1 py-3.5 transition-colors last:border-b-0 hover:bg-surface-2 sm:px-3"
+  class="group flex items-center gap-4 border-b border-line px-1 py-3.5 transition duration-150 ease-out last:border-b-0 can-hover:bg-surface-2 sm:px-3"
 >
   {index !== undefined && (
-    <span class="w-5 shrink-0 font-mono text-xs tabular-nums text-ink-3">
+    <span class="w-5 shrink-0 font-mono text-xs tabular-nums text-ink-3 transition-colors duration-150 ease-out hover-media:group-hover:text-accent">
       {String(index).padStart(2, '0')}
     </span>
   )}
@@ -45,4 +45,18 @@ const { item, index } = Astro.props;
     />
     {item.categoryShortName}
   </span>
+  <svg
+    width="15"
+    height="15"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+    class="shrink-0 -translate-x-1 text-accent opacity-0 transition duration-150 ease-out hover-media:group-hover:translate-x-0 hover-media:group-hover:opacity-100"
+  >
+    <path d="M5 12h14M13 6l6 6-6 6" />
+  </svg>
 </a>

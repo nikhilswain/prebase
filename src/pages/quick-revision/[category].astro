@@ -58,7 +58,7 @@ const jsonLd = collectionJsonLd({
   description={`Revise ${category?.name ?? categoryId} in minutes with ${cards.length} short, medium and detailed interview cards.`}
   jsonLd={jsonLd}
 >
-  <div class="container-page py-12 sm:py-16">
+  <div class="container-page py-10 sm:py-12">
     <Breadcrumbs
       items={[
         { name: 'Home', href: '/' },
@@ -105,11 +105,11 @@ const jsonLd = collectionJsonLd({
       </a>
     </header>
 
-    <div class="mt-10">
+    <div class="mt-8">
       <RevisionBoard client:load categoryId={categoryId} entries={cards} />
     </div>
 
-    <section class="mt-16 border-t border-line pt-8" aria-labelledby="revise-other">
+    <section class="mt-14 border-t border-line pt-8" aria-labelledby="revise-other">
       <h2 id="revise-other" class="eyebrow">Revise another category</h2>
       <ul class="mt-4 flex flex-wrap gap-2">
         {

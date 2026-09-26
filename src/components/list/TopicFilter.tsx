@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
 import type { Difficulty } from '../../lib/content-types';
 
 export interface LiteItem {
@@ -47,6 +47,7 @@ export default function TopicFilter({
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<string>('all');
   const [difficulty, setDifficulty] = useState<Difficulty | 'all'>('all');
+  const [animated, setAnimated] = useState(false);
 
   const categories = useMemo(() => {
     const map = new Map<string, { id: string; name: string; accent: string }>();
@@ -87,6 +88,8 @@ export default function TopicFilter({
         <label className="flex h-10 items-center gap-2.5 rounded-lg border border-line bg-surface px-3.5 focus-within:border-line-strong">
           <SearchIcon />
           <input
+            id="topic-filter"
+            name="topic-filter"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             type="search"
@@ -100,9 +103,12 @@ export default function TopicFilter({
           <div className="flex flex-wrap gap-1.5">
             <button
               type="button"
-              onClick={() => setCategory('all')}
+              onClick={() => {
+                setCategory('all');
+                setAnimated(true);
+              }}
               aria-pressed={category === 'all'}
-              className={`rounded-full border px-3 py-1 text-[13px] transition duration-150 ease-out ${
+              className={`rounded-full border px-3 py-1 text-[13px] transition duration-150 ease-out active:scale-[0.97] ${
                 category === 'all'
                   ? 'border-accent-line bg-accent-soft font-medium text-accent'
                   : 'border-line text-ink-2 hover:border-line-strong hover:text-ink'
@@ -114,9 +120,12 @@ export default function TopicFilter({
               <button
                 key={entry.id}
                 type="button"
-                onClick={() => setCategory(entry.id)}
+                onClick={() => {
+                  setCategory(entry.id);
+                  setAnimated(true);
+                }}
                 aria-pressed={category === entry.id}
-                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[13px] transition duration-150 ease-out ${
+                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[13px] transition duration-150 ease-out active:scale-[0.97] ${
                   category === entry.id
                     ? 'border-accent-line bg-accent-soft font-medium text-accent'
                     : 'border-line text-ink-2 hover:border-line-strong hover:text-ink'
@@ -138,13 +147,14 @@ export default function TopicFilter({
                 <button
                   key={value}
                   type="button"
-                  onClick={() =>
+                  onClick={() => {
                     setDifficulty((current) =>
                       current === value ? 'all' : value,
-                    )
-                  }
+                    );
+                    setAnimated(true);
+                  }}
                   aria-pressed={difficulty === value}
-                  className={`rounded-md border px-2.5 py-1 font-mono text-[11px] uppercase transition duration-150 ease-out ${
+                  className={`rounded-md border px-2.5 py-1 font-mono text-[11px] uppercase transition duration-150 ease-out active:scale-[0.97] ${
                     difficulty === value
                       ? 'border-accent-line bg-accent-soft text-accent'
                       : 'border-line text-ink-3 hover:border-line-strong hover:text-ink-2'
@@ -166,16 +176,33 @@ export default function TopicFilter({
       </div>
 
       {filtered.length === 0 ? (
-        <div className="mt-8 rounded-lg border border-dashed border-line-strong px-5 py-12 text-center">
+        <div
+          className={`mt-8 rounded-lg border border-dashed border-line-strong px-5 py-12 text-center ${
+            animated ? 'enter-list' : ''
+          }`}
+        >
           <p className="text-sm text-ink-2">{emptyLabel}</p>
         </div>
       ) : (
-        <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((item) => (
-            <li key={item.id}>
+        <ul
+          key={animated ? `${category}|${difficulty}` : 'initial'}
+          className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+        >
+          {filtered.map((item, index) => (
+            <li
+              key={item.id}
+              style={
+                animated
+                  ? ({
+                      '--enter-delay': `${Math.min(index, 9) * 32}ms`,
+                    } as CSSProperties)
+                  : undefined
+              }
+              className={animated ? 'enter-list' : undefined}
+            >
               <a
                 href={item.href}
-                className="group flex h-full flex-col gap-2.5 rounded-lg border border-line bg-surface p-4 transition duration-150 ease-out hover:border-line-strong hover:shadow-sm sm:p-5"
+                className="group flex h-full flex-col gap-2.5 rounded-lg border border-line bg-surface p-4 transition duration-150 ease-out can-hover:-translate-y-0.5 can-hover:border-line-strong can-hover:shadow-md sm:p-5"
               >
                 <span className="flex items-center gap-2.5">
                   <span className="font-mono text-[11px] tracking-wide text-ink-3 uppercase">

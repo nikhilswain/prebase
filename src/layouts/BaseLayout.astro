@@ -104,5 +104,58 @@ const jsonLdBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
     </main>
     <Footer />
     <SearchDialog client:idle />
+
+    <script is:inline>
+      (() => {
+        if (window.__prepbaseReveal) return;
+        window.__prepbaseReveal = true;
+
+        const targets = document.querySelectorAll('[data-reveal]');
+        if (!targets.length) return;
+
+        const reduce = window.matchMedia(
+          '(prefers-reduced-motion: reduce)',
+        ).matches;
+        if (reduce) return;
+
+        const viewport = window.innerHeight;
+        const pending = new Set();
+
+        targets.forEach((el) => {
+          // Anything already on screen is left alone: no first-paint or LCP cost.
+          if (el.getBoundingClientRect().top < viewport * 0.9) return;
+          el.setAttribute('data-reveal-hidden', '');
+          pending.add(el);
+        });
+
+        if (!pending.size) return;
+
+        let ticking = false;
+
+        const reveal = () => {
+          ticking = false;
+          const limit = window.innerHeight * 0.9;
+          for (const el of pending) {
+            if (el.getBoundingClientRect().top >= limit) continue;
+            el.removeAttribute('data-reveal-hidden');
+            pending.delete(el);
+          }
+          if (!pending.size) {
+            window.removeEventListener('scroll', onScroll);
+            window.removeEventListener('resize', onScroll);
+          }
+        };
+
+        const onScroll = () => {
+          if (ticking) return;
+          ticking = true;
+          requestAnimationFrame(reveal);
+        };
+
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onScroll, { passive: true });
+        reveal();
+      })();
+    </script>
   </body>
 </html>

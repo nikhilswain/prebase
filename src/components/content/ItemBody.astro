@@ -17,7 +17,7 @@ const paragraphs = (items: string[] | undefined) =>
   items && items.length > 0 ? items : [];
 ---
 
-<div class="space-y-10">
+<div class="space-y-8">
   {
     item.type === 'question' && (
       <>
@@ -274,7 +274,7 @@ const paragraphs = (items: string[] | undefined) =>
 
   {
     item.type === 'cheat-sheet' && (
-      <div class="space-y-10">
+      <div class="space-y-8">
         {item.description && (
           <p class="text-[15px] leading-relaxed text-ink-2">{item.description}</p>
         )}

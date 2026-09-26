@@ -12,11 +12,11 @@ const { category, topicCount, revisionCount } = Astro.props;
 
 <a
   href={`/${category.id}`}
-  class="group relative flex flex-col gap-3 rounded-lg border border-line bg-surface p-5 transition duration-150 ease-out hover:border-line-strong hover:shadow-sm"
+  class="group relative flex flex-col gap-3 rounded-lg border border-line bg-surface p-5 transition duration-150 ease-out can-hover:-translate-y-0.5 can-hover:border-line-strong can-hover:shadow-md"
 >
   <div class="flex items-center gap-2.5">
     <span
-      class="size-2.5 rounded-full"
+      class="size-2.5 rounded-full transition-transform duration-150 ease-out hover-media:group-hover:scale-125"
       style={`background:${category.accent}`}
       aria-hidden="true"
     />
@@ -31,7 +31,7 @@ const { category, topicCount, revisionCount } = Astro.props;
       stroke-linecap="round"
       stroke-linejoin="round"
       aria-hidden="true"
-      class="ml-auto shrink-0 text-ink-3 transition duration-150 ease-out group-hover:translate-x-0.5 group-hover:text-accent"
+      class="ml-auto shrink-0 text-ink-3 transition duration-150 ease-out group-hover:text-accent hover-media:group-hover:translate-x-0.5"
     >
       <path d="M5 12h14M13 6l6 6-6 6" />
     </svg>
