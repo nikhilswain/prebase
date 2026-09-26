@@ -1,15 +1,274 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { getStats } from '../lib/content';
+import SearchTrigger from '../components/site/SearchTrigger.astro';
+import CategoryCard from '../components/site/CategoryCard.astro';
+import SectionHeading from '../components/ui/SectionHeading.astro';
+import ItemCard from '../components/ui/ItemCard.astro';
+import TopicRow from '../components/ui/TopicRow.astro';
+import { SITE } from '../config';
+import {
+  getFeatured,
+  getItemsByCategory,
+  getItemsByType,
+  getLiveCategories,
+  getRevisionEntries,
+  getStats,
+} from '../lib/content';
 
 const stats = getStats();
+const categories = getLiveCategories();
+const featured = getFeatured(6);
+const cheatSheets = getItemsByType('cheat-sheet');
+const challenges = getItemsByType('challenge');
+
+const quickLinks = [
+  { label: 'closures', href: '/javascript/closures' },
+  { label: 'event loop', href: '/javascript/event-loop' },
+  { label: 'useEffect', href: '/react/useeffect' },
+  { label: 'generics', href: '/typescript/generics' },
+  { label: 'specificity', href: '/css/specificity' },
+];
+
+const categoryStats = categories.map((category) => ({
+  category,
+  topicCount: getItemsByCategory(category.id).length,
+  revisionCount: getRevisionEntries(category.id).length,
+}));
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: SITE.name,
+  url: SITE.url,
+  description: SITE.description,
+  inLanguage: 'en',
+};
 ---
 
-<BaseLayout home>
-  <section class="container-page py-20">
-    <h1 class="text-4xl font-semibold">prepbase</h1>
-    <p class="mt-3 text-ink-2">
-      {stats.topics} topics · {stats.categories} categories · {stats.revision} revision cards
-    </p>
+<BaseLayout home jsonLd={jsonLd}>
+  <section class="relative overflow-hidden">
+    <div
+      class="pointer-events-none absolute inset-x-0 -top-52 h-96 opacity-[0.08] blur-3xl"
+      style="background: radial-gradient(closest-side, var(--accent), transparent)"
+      aria-hidden="true"
+    >
+    </div>
+    <div class="container-page relative pt-16 pb-12 sm:pt-24 sm:pb-16">
+      <p class="eyebrow">Developer interview knowledge base</p>
+      <h1
+        class="mt-4 max-w-3xl text-4xl leading-[1.08] font-semibold tracking-tight sm:text-5xl"
+      >
+        Everything you need to revise for a developer interview.
+      </h1>
+      <p
+        class="mt-5 max-w-2xl text-base leading-relaxed text-ink-2 sm:text-lg"
+      >
+        A fast, structured interview knowledge base covering JavaScript, React,
+        TypeScript, CSS, frontend development, and more.
+      </p>
+
+      <div class="mt-8 max-w-xl">
+        <SearchTrigger variant="hero" />
+      </div>
+
+      <div
+        class="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-3"
+      >
+        <span>Try</span>
+        {
+          quickLinks.map((link) => (
+            <a
+              href={link.href}
+              class="rounded-md px-1.5 py-0.5 font-mono text-[13px] text-ink-2 transition-colors hover:bg-surface-2 hover:text-accent"
+            >
+              {link.label}
+            </a>
+          ))
+        }
+      </div>
+
+      <div class="mt-10 flex flex-wrap gap-2">
+        {
+          categories.map((category) => (
+            <a
+              href={`/${category.id}`}
+              class="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3.5 py-1.5 text-sm text-ink-2 transition duration-150 ease-out hover:border-line-strong hover:text-ink"
+            >
+              <span
+                class="size-2 rounded-full"
+                style={`background:${category.accent}`}
+                aria-hidden="true"
+              />
+              {category.shortName}
+            </a>
+          ))
+        }
+      </div>
+
+      <p
+        class="mt-8 font-mono text-[11px] tracking-wide text-ink-3 uppercase"
+      >
+        {stats.topics} topics · {stats.revision} revision cards · {stats.categories} categories
+      </p>
+    </div>
+  </section>
+
+  <section class="container-page scroll-mt-20 py-12 sm:py-16">
+    <SectionHeading
+      eyebrow="Explore"
+      title="Pick a topic and go straight in"
+      description="Every topic is a focused page with a short answer, an explanation, examples, follow-up questions and related material."
+      href="/explore"
+      linkLabel="All topics"
+    />
+    <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        categoryStats.map(({ category, topicCount, revisionCount }) => (
+          <CategoryCard
+            category={category}
+            topicCount={topicCount}
+            revisionCount={revisionCount}
+          />
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="container-page scroll-mt-20 py-12 sm:py-16">
+    <div class="rounded-xl border border-line bg-surface-2 p-6 sm:p-8">
+      <div class="grid gap-8 lg:grid-cols-[1.1fr_1fr] lg:items-start">
+        <div>
+          <p class="eyebrow">Quick Revision</p>
+          <h2 class="mt-2 text-xl font-semibold tracking-tight sm:text-2xl">
+            Revise a whole category in a few minutes
+          </h2>
+          <p class="mt-3 max-w-lg text-sm leading-relaxed text-ink-2">
+            Each card gives you a thirty-second version, a one-minute
+            explanation and a deeper dive. Skim the category, then open the
+            topics that need work.
+          </p>
+          <a
+            href="/quick-revision"
+            class="mt-6 inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-accent-ink transition duration-150 ease-out hover:bg-accent-hover active:scale-[0.98]"
+          >
+            Start revising
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M5 12h14M13 6l6 6-6 6" />
+            </svg>
+          </a>
+        </div>
+
+        <ul class="grid gap-2 sm:grid-cols-2">
+          {
+            categoryStats.map(({ category, revisionCount }) => (
+              <li>
+                <a
+                  href={`/quick-revision/${category.id}`}
+                  class="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface px-3.5 py-2.5 transition duration-150 ease-out hover:border-line-strong"
+                >
+                  <span class="flex items-center gap-2 text-sm text-ink-2">
+                    <span
+                      class="size-2 rounded-full"
+                      style={`background:${category.accent}`}
+                      aria-hidden="true"
+                    />
+                    {category.shortName}
+                  </span>
+                  <span class="font-mono text-[11px] text-ink-3">
+                    {revisionCount} cards
+                  </span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="container-page scroll-mt-20 py-12 sm:py-16">
+    <SectionHeading
+      eyebrow="Popular"
+      title="Interview questions worth knowing cold"
+      description="Short answers first, then the depth. Practice the follow-ups out loud."
+      href="/questions"
+      linkLabel="All questions"
+    />
+    <div class="mt-6 border-t border-line">
+      {featured.map((item, index) => <TopicRow item={item} index={index + 1} />)}
+    </div>
+  </section>
+
+  <section class="container-page scroll-mt-20 py-12 sm:py-16">
+    <div class="grid gap-10 lg:grid-cols-2">
+      <div>
+        <SectionHeading
+          eyebrow="Cheat Sheets"
+          title="Scan the essentials"
+          href="/cheat-sheets"
+          linkLabel="All cheat sheets"
+        />
+        <div class="mt-6 space-y-3">
+          {
+            cheatSheets.map((item) => (
+              <ItemCard item={item} showCategory />
+            ))
+          }
+        </div>
+      </div>
+      <div>
+        <SectionHeading
+          eyebrow="Code Challenges"
+          title="Practice with intent"
+          href="/challenges"
+          linkLabel="All challenges"
+        />
+        <div class="mt-6 space-y-3">
+          {challenges.map((item) => <ItemCard item={item} showCategory />)}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="container-page scroll-mt-20 py-12 sm:py-16">
+    <div
+      class="flex flex-col gap-6 rounded-xl border border-line bg-surface p-6 sm:p-8 lg:flex-row lg:items-center lg:justify-between"
+    >
+      <div class="max-w-xl">
+        <p class="eyebrow">Open content</p>
+        <h2 class="mt-2 text-xl font-semibold tracking-tight sm:text-2xl">
+          Questions live in plain JSON, not in the code
+        </h2>
+        <p class="mt-3 text-sm leading-relaxed text-ink-2">
+          Anyone can add or edit a topic without touching application code.
+          Every entry records its review status and sources, so AI-generated and
+          community content stay clearly separated from verified material.
+        </p>
+      </div>
+      <div class="flex shrink-0 flex-wrap gap-3">
+        <a
+          href="/contribute"
+          class="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-accent-ink transition duration-150 ease-out hover:bg-accent-hover active:scale-[0.98]"
+        >
+          Contributing guide
+        </a>
+        <a
+          href="/interview"
+          class="inline-flex items-center gap-2 rounded-lg border border-line bg-surface-2 px-4 py-2.5 text-sm font-medium text-ink transition duration-150 ease-out hover:border-line-strong active:scale-[0.98]"
+        >
+          Try Interview Mode
+        </a>
+      </div>
+    </div>
   </section>
 </BaseLayout>

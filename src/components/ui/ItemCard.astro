@@ -1,0 +1,47 @@
+---
+import type { ResolvedItem } from '../../lib/content-types';
+import { getTypeLabel } from '../../lib/content';
+import DifficultyBadge from './DifficultyBadge.astro';
+
+interface Props {
+  item: ResolvedItem;
+  showCategory?: boolean;
+}
+
+const { item, showCategory = true } = Astro.props;
+---
+
+<a
+  href={item.href}
+  class="group flex flex-col gap-2.5 rounded-lg border border-line bg-surface p-4 transition duration-150 ease-out hover:border-line-strong hover:shadow-sm sm:p-5"
+>
+  <div class="flex items-center gap-2.5">
+    <span class="font-mono text-[11px] tracking-wide text-ink-3 uppercase">
+      {getTypeLabel(item.type)}
+    </span>
+    {
+      showCategory && (
+        <span class="flex items-center gap-1.5 text-[11px] text-ink-3">
+          <span
+            class="size-1.5 rounded-full"
+            style={`background:${item.accent}`}
+            aria-hidden="true"
+          />
+          {item.categoryShortName}
+        </span>
+      )
+    }
+  </div>
+
+  <h3
+    class="text-[15px] leading-snug font-medium tracking-tight text-ink transition-colors group-hover:text-accent"
+  >
+    {item.title}
+  </h3>
+
+  <p class="line-clamp-2 text-sm leading-relaxed text-ink-2">{item.summary}</p>
+
+  <div class="mt-auto flex items-center gap-3 pt-1.5">
+    <DifficultyBadge difficulty={item.difficulty} />
+  </div>
+</a>

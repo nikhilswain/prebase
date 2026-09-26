@@ -1,40 +1,76 @@
 ---
 interface Props {
+  variant?: 'compact' | 'hero';
   class?: string;
 }
-const { class: className } = Astro.props;
+
+const { variant = 'compact', class: className } = Astro.props;
+const isHero = variant === 'hero';
 ---
 
-<button
-  type="button"
-  data-search-trigger
-  aria-label="Search the knowledge base"
-  class:list={[
-    'group flex h-9 items-center gap-2 rounded-md border border-line bg-surface-2 px-2.5 text-sm text-ink-3 transition-colors duration-150 ease-out hover:border-line-strong hover:text-ink-2 md:w-60 md:justify-start',
-    className,
-  ]}
->
-  <svg
-    width="15"
-    height="15"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="2"
-    stroke-linecap="round"
-    aria-hidden="true"
-    class="shrink-0"
-  >
-    <circle cx="11" cy="11" r="7"></circle>
-    <path d="m20 20-3.2-3.2"></path>
-  </svg>
-  <span class="hidden md:inline">Search</span>
-  <kbd
-    class="ml-auto hidden items-center gap-0.5 rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[10px] leading-4 text-ink-3 md:flex"
-  >
-    <span class="text-[12px] leading-none">⌘</span>K
-  </kbd>
-</button>
+{
+  isHero ? (
+    <button
+      type="button"
+      data-search-trigger
+      aria-label="Search the knowledge base"
+      class:list={[
+        'group flex h-13 w-full items-center gap-3 rounded-xl border border-line bg-surface px-4 text-left shadow-xs transition duration-150 ease-out hover:border-line-strong hover:shadow-sm active:scale-[0.995] sm:px-5',
+        className,
+      ]}
+    >
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        aria-hidden="true"
+        class="shrink-0 text-ink-3 transition-colors group-hover:text-accent"
+      >
+        <circle cx="11" cy="11" r="7" />
+        <path d="m20 20-3.2-3.2" />
+      </svg>
+      <span class="text-[15px] text-ink-3">
+        Search topics, questions, code examples…
+      </span>
+      <kbd class="ml-auto hidden items-center gap-0.5 rounded-md border border-line bg-surface-2 px-2 py-1 font-mono text-[11px] leading-4 text-ink-3 sm:flex">
+        <span class="text-[13px] leading-none">⌘</span>K
+      </kbd>
+    </button>
+  ) : (
+    <button
+      type="button"
+      data-search-trigger
+      aria-label="Search the knowledge base"
+      class:list={[
+        'group flex h-9 items-center gap-2 rounded-md border border-line bg-surface-2 px-2.5 text-sm text-ink-3 transition-colors duration-150 ease-out hover:border-line-strong hover:text-ink-2 md:w-60 md:justify-start',
+        className,
+      ]}
+    >
+      <svg
+        width="15"
+        height="15"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        aria-hidden="true"
+        class="shrink-0"
+      >
+        <circle cx="11" cy="11" r="7" />
+        <path d="m20 20-3.2-3.2" />
+      </svg>
+      <span class="hidden md:inline">Search</span>
+      <kbd class="ml-auto hidden items-center gap-0.5 rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[10px] leading-4 text-ink-3 md:flex">
+        <span class="text-[12px] leading-none">⌘</span>K
+      </kbd>
+    </button>
+  )
+}
 
 <script is:inline>
   (() => {
@@ -44,16 +80,15 @@ const { class: className } = Astro.props;
     };
 
     document.querySelectorAll('[data-search-trigger]').forEach((btn) => {
+      if (btn.dataset.bound === 'true') return;
+      btn.dataset.bound = 'true';
       btn.addEventListener('click', open);
     });
 
     if (!window.__prepbaseSearchHotkey) {
       window.__prepbaseSearchHotkey = true;
       document.addEventListener('keydown', (event) => {
-        if (
-          (event.metaKey || event.ctrlKey) &&
-          event.key.toLowerCase() === 'k'
-        ) {
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
           event.preventDefault();
           open();
         }
@@ -61,3 +96,4 @@ const { class: className } = Astro.props;
     }
   })();
 </script>
+

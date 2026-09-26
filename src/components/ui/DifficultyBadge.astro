@@ -1,0 +1,31 @@
+---
+import type { Difficulty } from '../../lib/content-types';
+
+interface Props {
+  difficulty?: Difficulty;
+  class?: string;
+}
+
+const { difficulty, class: className } = Astro.props;
+
+const tone = {
+  easy: 'text-easy',
+  medium: 'text-medium',
+  hard: 'text-hard',
+} as const;
+---
+
+{
+  difficulty && (
+    <span
+      class:list={[
+        'inline-flex items-center gap-1.5 font-mono text-[11px] tracking-wide uppercase',
+        tone[difficulty],
+        className,
+      ]}
+    >
+      <span class="size-1.5 rounded-full bg-current" aria-hidden="true" />
+      {difficulty}
+    </span>
+  )
+}

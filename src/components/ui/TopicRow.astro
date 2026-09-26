@@ -1,0 +1,48 @@
+---
+import type { ResolvedItem } from '../../lib/content-types';
+import { getTypeLabel } from '../../lib/content';
+
+interface Props {
+  item: ResolvedItem;
+  index?: number;
+}
+
+const { item, index } = Astro.props;
+---
+
+<a
+  href={item.href}
+  class="group flex items-center gap-4 border-b border-line px-1 py-3.5 transition-colors last:border-b-0 hover:bg-surface-2 sm:px-3"
+>
+  {index !== undefined && (
+    <span class="w-5 shrink-0 font-mono text-xs tabular-nums text-ink-3">
+      {String(index).padStart(2, '0')}
+    </span>
+  )}
+  <span class="min-w-0 flex-1">
+    <span
+      class="block truncate text-[15px] font-medium tracking-tight text-ink transition-colors group-hover:text-accent"
+    >
+      {item.title}
+    </span>
+    <span class="mt-0.5 hidden truncate text-sm text-ink-2 sm:block">
+      {item.summary}
+    </span>
+  </span>
+  <span
+    class="hidden shrink-0 font-mono text-[11px] tracking-wide text-ink-3 uppercase md:block"
+  >
+    {getTypeLabel(item.type)}
+  </span>
+  <span
+    class="flex shrink-0 items-center gap-1.5 text-[11px] text-ink-3"
+    style={`--dot:${item.accent}`}
+  >
+    <span
+      class="size-1.5 rounded-full"
+      style={`background:${item.accent}`}
+      aria-hidden="true"
+    />
+    {item.categoryShortName}
+  </span>
+</a>

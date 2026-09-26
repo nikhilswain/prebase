@@ -1,0 +1,47 @@
+---
+import type { Category } from '../../lib/content-types';
+
+interface Props {
+  category: Category;
+  topicCount: number;
+  revisionCount: number;
+}
+
+const { category, topicCount, revisionCount } = Astro.props;
+---
+
+<a
+  href={`/${category.id}`}
+  class="group relative flex flex-col gap-3 rounded-lg border border-line bg-surface p-5 transition duration-150 ease-out hover:border-line-strong hover:shadow-sm"
+>
+  <div class="flex items-center gap-2.5">
+    <span
+      class="size-2.5 rounded-full"
+      style={`background:${category.accent}`}
+      aria-hidden="true"
+    />
+    <h3 class="font-medium tracking-tight text-ink">{category.name}</h3>
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      class="ml-auto shrink-0 text-ink-3 transition duration-150 ease-out group-hover:translate-x-0.5 group-hover:text-accent"
+    >
+      <path d="M5 12h14M13 6l6 6-6 6" />
+    </svg>
+  </div>
+
+  <p class="line-clamp-3 text-sm leading-relaxed text-ink-2">
+    {category.description}
+  </p>
+
+  <p class="mt-auto font-mono text-[11px] tracking-wide text-ink-3">
+    {topicCount} topics · {revisionCount} revision cards
+  </p>
+</a>
