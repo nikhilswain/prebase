@@ -65,35 +65,3 @@ const heading = filename ?? label ?? language;
     )
   }
 </figure>
-
-<script is:inline>
-  (() => {
-    if (window.__prepbaseCopy) return;
-    window.__prepbaseCopy = true;
-
-    document.addEventListener('click', async (event) => {
-      const target = event.target;
-      if (!(target instanceof Element)) return;
-      const button = target.closest('[data-copy]');
-      if (!button) return;
-
-      const frame = button.closest('[data-code]');
-      const code = frame?.querySelector('pre code')?.textContent ?? '';
-
-      try {
-        await navigator.clipboard.writeText(code);
-      } catch {}
-
-      const label = button.querySelector('span');
-      if (!label) return;
-      const previous = label.textContent;
-      label.textContent = 'Copied';
-      button.dataset.state = 'copied';
-      clearTimeout(button.__copyTimer);
-      button.__copyTimer = setTimeout(() => {
-        label.textContent = previous;
-        delete button.dataset.state;
-      }, 1400);
-    });
-  })();
-</script>

@@ -51,6 +51,9 @@ const { class: className } = Astro.props;
 
 <script is:inline>
   (() => {
+    if (window.__prepbaseThemeToggle) return;
+    window.__prepbaseThemeToggle = true;
+
     const sync = () => {
       const dark = document.documentElement.classList.contains('dark');
       document
@@ -58,16 +61,23 @@ const { class: className } = Astro.props;
         .forEach((el) => el.setAttribute('aria-pressed', String(dark)));
     };
 
-    document.querySelectorAll('[data-theme-toggle]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const dark = document.documentElement.classList.toggle('dark');
-        try {
-          localStorage.setItem('prepbase-theme', dark ? 'dark' : 'light');
-        } catch {}
-        sync();
+    const bind = () => {
+      document.querySelectorAll('[data-theme-toggle]').forEach((btn) => {
+        if (btn.dataset.bound === 'true') return;
+        btn.dataset.bound = 'true';
+        btn.addEventListener('click', () => {
+          const dark = document.documentElement.classList.toggle('dark');
+          try {
+            localStorage.setItem('prepbase-theme', dark ? 'dark' : 'light');
+          } catch {}
+          sync();
+        });
       });
-    });
+      sync();
+    };
 
-    sync();
+    // Inline scripts run once; page-load fires on first paint and every swap.
+    document.addEventListener('astro:page-load', bind);
+    bind();
   })();
 </script>

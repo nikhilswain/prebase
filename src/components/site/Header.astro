@@ -93,11 +93,13 @@ const isActive = (href: string) =>
 
 <script is:inline>
   (() => {
-    const toggle = document.querySelector('[data-menu-toggle]');
-    const panel = document.getElementById('mobile-nav');
-    if (!toggle || !panel) return;
+    if (window.__prepbaseHeader) return;
+    window.__prepbaseHeader = true;
 
     const setOpen = (open) => {
+      const toggle = document.querySelector('[data-menu-toggle]');
+      const panel = document.getElementById('mobile-nav');
+      if (!toggle || !panel) return;
       panel.dataset.open = String(open);
       panel.toggleAttribute('inert', !open);
       toggle.setAttribute('aria-expanded', String(open));
@@ -107,21 +109,34 @@ const isActive = (href: string) =>
       );
     };
 
-    toggle.addEventListener('click', () => {
-      setOpen(panel.dataset.open !== 'true');
-    });
+    const close = (refocus) => {
+      const panel = document.getElementById('mobile-nav');
+      if (!panel || panel.dataset.open !== 'true') return;
+      setOpen(false);
+      if (refocus) document.querySelector('[data-menu-toggle]')?.focus();
+    };
+
+    const bind = () => {
+      const toggle = document.querySelector('[data-menu-toggle]');
+      if (!toggle || toggle.dataset.bound === 'true') return;
+      toggle.dataset.bound = 'true';
+      toggle.addEventListener('click', () => {
+        const panel = document.getElementById('mobile-nav');
+        setOpen(panel ? panel.dataset.open !== 'true' : false);
+      });
+    };
+
+    // Inline scripts run once; page-load fires on first paint and every swap.
+    document.addEventListener('astro:page-load', bind);
 
     document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && panel.dataset.open === 'true') {
-        setOpen(false);
-        toggle.focus();
-      }
+      if (event.key === 'Escape') close(true);
     });
 
     window.addEventListener('resize', () => {
-      if (window.innerWidth >= 768 && panel.dataset.open === 'true') {
-        setOpen(false);
-      }
+      if (window.innerWidth >= 768) close(false);
     });
+
+    bind();
   })();
 </script>

@@ -74,26 +74,33 @@ const isHero = variant === 'hero';
 
 <script is:inline>
   (() => {
+    if (window.__prepbaseSearchTrigger) return;
+    window.__prepbaseSearchTrigger = true;
+
     const open = () => {
       window.__prepbaseOpenSearch = true;
       window.dispatchEvent(new CustomEvent('prepbase:open-search'));
     };
 
-    document.querySelectorAll('[data-search-trigger]').forEach((btn) => {
-      if (btn.dataset.bound === 'true') return;
-      btn.dataset.bound = 'true';
-      btn.addEventListener('click', open);
+    const bind = () => {
+      document.querySelectorAll('[data-search-trigger]').forEach((btn) => {
+        if (btn.dataset.bound === 'true') return;
+        btn.dataset.bound = 'true';
+        btn.addEventListener('click', open);
+      });
+    };
+
+    // Inline scripts run once; page-load fires on first paint and every swap.
+    document.addEventListener('astro:page-load', bind);
+
+    document.addEventListener('keydown', (event) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        open();
+      }
     });
 
-    if (!window.__prepbaseSearchHotkey) {
-      window.__prepbaseSearchHotkey = true;
-      document.addEventListener('keydown', (event) => {
-        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
-          event.preventDefault();
-          open();
-        }
-      });
-    }
+    bind();
   })();
 </script>
 

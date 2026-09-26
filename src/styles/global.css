@@ -205,6 +205,20 @@
   .link-underline:hover {
     text-decoration-color: var(--accent);
   }
+
+  /* Route-change progress bar. Shown on astro:before-preparation, completed
+     on astro:page-load. Transform only, so it never costs layout. */
+  [data-nav-progress] {
+    transform: scaleX(0);
+    opacity: 0;
+    transition:
+      transform 200ms var(--ease-out),
+      opacity 200ms var(--ease-out);
+  }
+
+  [data-nav-progress][data-active='true'] {
+    opacity: 1;
+  }
 }
 
 @keyframes enter-up {

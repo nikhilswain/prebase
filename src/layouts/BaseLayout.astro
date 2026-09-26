@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import { ClientRouter } from 'astro:transitions';
 import Header from '../components/site/Header.astro';
 import Footer from '../components/site/Footer.astro';
 import SearchDialog from '../components/search/SearchDialog.tsx';
@@ -40,7 +41,7 @@ const jsonLdBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 <html lang={SITE.locale} class="scroll-pt-20">
   <head>
     <meta charset="UTF-8" />
-    <script is:inline>
+    <script is:inline data-astro-rerun>
       (() => {
         try {
           const stored = localStorage.getItem('prepbase-theme');
@@ -59,6 +60,7 @@ const jsonLdBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
     <link rel="canonical" href={canonical} />
+    <ClientRouter />
 
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
@@ -81,8 +83,8 @@ const jsonLdBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
         />
       )
     }
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fafafa" />
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0a0a0d" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f0f0f4" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#17171b" />
 
     <meta property="og:type" content={ogType} />
     <meta property="og:site_name" content={SITE.name} />
@@ -108,6 +110,13 @@ const jsonLdBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
     ))}
   </head>
   <body class="min-h-dvh antialiased">
+    <div
+      data-nav-progress
+      transition:persist="nav-progress"
+      aria-hidden="true"
+      class="pointer-events-none fixed inset-x-0 top-0 z-[200] h-[2px] origin-left bg-accent"
+    >
+    </div>
     <a
       href="#main"
       class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:rounded-md focus:bg-accent focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-accent-ink"
@@ -123,54 +132,134 @@ const jsonLdBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 
     <script is:inline>
       (() => {
-        if (window.__prepbaseReveal) return;
-        window.__prepbaseReveal = true;
+        if (window.__prepbaseCopy) return;
+        window.__prepbaseCopy = true;
 
-        const targets = document.querySelectorAll('[data-reveal]');
-        if (!targets.length) return;
+        // Delegated so it works for code blocks on any page, including pages
+        // reached by client-side navigation where inline scripts do not re-run.
+        document.addEventListener('click', async (event) => {
+          const target = event.target;
+          if (!(target instanceof Element)) return;
+          const button = target.closest('[data-copy]');
+          if (!button) return;
 
-        const reduce = window.matchMedia(
-          '(prefers-reduced-motion: reduce)',
-        ).matches;
-        if (reduce) return;
+          const frame = button.closest('[data-code]');
+          const code = frame?.querySelector('pre code')?.textContent ?? '';
 
-        const viewport = window.innerHeight;
-        const pending = new Set();
+          try {
+            await navigator.clipboard.writeText(code);
+          } catch {}
 
-        targets.forEach((el) => {
-          // Anything already on screen is left alone: no first-paint or LCP cost.
-          if (el.getBoundingClientRect().top < viewport * 0.9) return;
-          el.setAttribute('data-reveal-hidden', '');
-          pending.add(el);
+          const label = button.querySelector('span');
+          if (!label) return;
+          const previous = label.textContent;
+          label.textContent = 'Copied';
+          button.dataset.state = 'copied';
+          clearTimeout(button.__copyTimer);
+          button.__copyTimer = setTimeout(() => {
+            label.textContent = previous;
+            delete button.dataset.state;
+          }, 1400);
         });
+      })();
+    </script>
 
-        if (!pending.size) return;
+    <script is:inline>
+      (() => {
+        if (window.__prepbaseNavProgress) return;
+        window.__prepbaseNavProgress = true;
 
-        let ticking = false;
+        let timer;
 
-        const reveal = () => {
-          ticking = false;
-          const limit = window.innerHeight * 0.9;
-          for (const el of pending) {
-            if (el.getBoundingClientRect().top >= limit) continue;
-            el.removeAttribute('data-reveal-hidden');
-            pending.delete(el);
-          }
-          if (!pending.size) {
-            window.removeEventListener('scroll', onScroll);
-            window.removeEventListener('resize', onScroll);
-          }
+        const start = () => {
+          const bar = document.querySelector('[data-nav-progress]');
+          if (!bar) return;
+          clearTimeout(timer);
+          bar.dataset.active = 'true';
+          bar.style.transform = 'scaleX(0.08)';
+          requestAnimationFrame(() => {
+            bar.style.transform = 'scaleX(0.75)';
+          });
+          timer = setTimeout(() => {
+            bar.style.transform = 'scaleX(0.9)';
+          }, 400);
         };
 
-        const onScroll = () => {
-          if (ticking) return;
-          ticking = true;
-          requestAnimationFrame(reveal);
+        const done = () => {
+          const bar = document.querySelector('[data-nav-progress]');
+          if (!bar) return;
+          clearTimeout(timer);
+          bar.style.transform = 'scaleX(1)';
+          setTimeout(() => {
+            bar.dataset.active = 'false';
+            bar.style.transform = 'scaleX(0)';
+          }, 180);
         };
 
-        window.addEventListener('scroll', onScroll, { passive: true });
-        window.addEventListener('resize', onScroll, { passive: true });
-        reveal();
+        document.addEventListener('astro:before-preparation', start);
+        document.addEventListener('astro:page-load', done);
+      })();
+    </script>
+
+    <script is:inline>
+      (() => {
+        if (window.__prepbaseRevealBound) return;
+        window.__prepbaseRevealBound = true;
+
+        const run = () => {
+          const targets = document.querySelectorAll('[data-reveal]');
+          if (!targets.length) return;
+          if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+          const viewport = window.innerHeight;
+          const pending = new Set();
+
+          targets.forEach((el) => {
+            // Anything already on screen is left alone: no first-paint or LCP cost.
+            if (el.getBoundingClientRect().top < viewport * 0.9) return;
+            el.setAttribute('data-reveal-hidden', '');
+            pending.add(el);
+          });
+
+          if (!pending.size) return;
+
+          let ticking = false;
+
+          const reveal = () => {
+            ticking = false;
+            const limit = window.innerHeight * 0.9;
+            for (const el of pending) {
+              if (el.getBoundingClientRect().top >= limit) continue;
+              el.removeAttribute('data-reveal-hidden');
+              pending.delete(el);
+            }
+            if (!pending.size) {
+              window.removeEventListener('scroll', onScroll);
+              window.removeEventListener('resize', onScroll);
+            }
+          };
+
+          const onScroll = () => {
+            if (ticking) return;
+            ticking = true;
+            requestAnimationFrame(reveal);
+          };
+
+          window.addEventListener('scroll', onScroll, { passive: true });
+          window.addEventListener('resize', onScroll, { passive: true });
+          reveal();
+        };
+
+        // First paint is handled immediately; later navigations fire page-load.
+        let first = true;
+        document.addEventListener('astro:page-load', () => {
+          if (first) {
+            first = false;
+            return;
+          }
+          run();
+        });
+        run();
       })();
     </script>
   </body>
