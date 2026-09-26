@@ -1,0 +1,353 @@
+[
+  {
+    "id": "ts-generics",
+    "slug": "generics",
+    "category": "typescript",
+    "type": "concept",
+    "title": "Generics",
+    "summary": "Types that take parameters, so one function or type can work across many shapes while staying type safe.",
+    "difficulty": "medium",
+    "tags": ["types", "generics", "reuse"],
+    "featured": true,
+    "reviewStatus": "verified",
+    "updated": "2026-08-26",
+    "definition": "A generic is a type parameter. It lets you write a function, interface or class once and have the type checker fill in the concrete type at each call site, preserving the relationship between inputs and outputs.",
+    "explanation": [
+      "Without generics you either duplicate code per type or widen to any and lose safety. A generic keeps the relationship: pass in a T and the return type can reference the same T.",
+      "Type parameters are constraints you can tighten. extends limits what T can be, and default type parameters let callers omit an argument when a sensible default exists.",
+      "The convention is a single uppercase letter for a simple parameter, and a descriptive name such as TValue or TKey when the meaning matters."
+    ],
+    "keyPoints": [
+      "Generics preserve the relationship between parameter and return types",
+      "extends constrains what a type parameter can be",
+      "Inference usually means you do not need to pass the type explicitly",
+      "Type parameters are erased at runtime"
+    ],
+    "example": {
+      "language": "typescript",
+      "caption": "The return type is tied to the element type, so the array is inferred rather than widened.",
+      "code": "function first<T>(items: T[]): T | undefined {\n  return items[0];\n}\n\nconst name = first(['ada', 'grace']); // string | undefined\nconst id = first([1, 2, 3]); // number | undefined"
+    },
+    "commonMistakes": [
+      "Reaching for any when a generic would keep the relationship intact",
+      "Over-constraining a type parameter so it no longer accepts the callers you care about",
+      "Naming type parameters with long names when a single letter is clearer"
+    ],
+    "followUps": [
+      "What does extends do on a type parameter?",
+      "When would you give a type parameter a default?",
+      "How do generics differ from using any?"
+    ],
+    "related": ["ts-utility-types", "ts-narrowing", "ts-interfaces-vs-types", "ts-cheatsheet"]
+  },
+  {
+    "id": "ts-any-vs-unknown",
+    "slug": "any-vs-unknown",
+    "category": "typescript",
+    "type": "comparison",
+    "title": "any vs unknown",
+    "summary": "any switches the type checker off. unknown accepts anything but forces you to narrow before use.",
+    "difficulty": "medium",
+    "tags": ["types", "safety", "narrowing"],
+    "featured": true,
+    "reviewStatus": "verified",
+    "updated": "2026-08-26",
+    "options": [
+      { "name": "any", "summary": "Disables checking for that value" },
+      { "name": "unknown", "summary": "Accepts anything, but must be narrowed before use" }
+    ],
+    "rows": [
+      { "label": "Assignable from", "values": ["Anything", "Anything"] },
+      { "label": "Assignable to", "values": ["Anything", "Only unknown or any"] },
+      { "label": "Property access", "values": ["Allowed, unchecked", "Error until you narrow"] },
+      { "label": "Type safety", "values": ["None, errors surface at runtime", "Preserved, errors surface at compile time"] },
+      { "label": "Good for", "values": ["Escape hatches, incremental migration", "Parsed JSON, external input, catch values"] }
+    ],
+    "verdict": "Prefer unknown for values whose type you do not control, such as JSON, form input or error objects. Use any deliberately and locally when you are migrating code, and treat each one as debt.",
+    "pickWhen": [
+      { "option": "unknown", "guidance": "The safe top type. Narrow it with a type guard before you touch the value." },
+      { "option": "any", "guidance": "Only as an explicit, temporary escape hatch. Never for values you can model." }
+    ],
+    "example": {
+      "language": "typescript",
+      "caption": "unknown forces the guard, so the access is safe and the checked value is typed.",
+      "code": "function readName(input: unknown) {\n  if (typeof input === 'object' && input !== null && 'name' in input) {\n    return (input as { name: string }).name;\n  }\n  return null;\n}"
+    },
+    "related": ["ts-narrowing", "ts-type-guards", "ts-generics", "ts-cheatsheet"]
+  },
+  {
+    "id": "ts-interfaces-vs-types",
+    "slug": "interfaces-vs-types",
+    "category": "typescript",
+    "type": "comparison",
+    "title": "interface vs type",
+    "summary": "Both describe object shapes. Interfaces are open and extensible, type aliases can express anything.",
+    "difficulty": "medium",
+    "tags": ["types", "interfaces"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-24",
+    "options": [
+      { "name": "interface", "summary": "Named object shape, open to extension" },
+      { "name": "type", "summary": "Alias for any type, closed" }
+    ],
+    "rows": [
+      { "label": "Declarations can merge", "values": ["Yes, declaration merging", "No"] },
+      { "label": "Union types", "values": ["No", "Yes"] },
+      { "label": "Primitive aliases", "values": ["No", "Yes"] },
+      { "label": "Mapped and conditional types", "values": ["No", "Yes"] },
+      { "label": "Implements in a class", "values": ["Yes", "Yes for object types"] },
+      { "label": "Extending", "values": ["extends, multiple at once", "Intersection with &"] }
+    ],
+    "verdict": "Interfaces describe object contracts and public APIs where merging may be useful. Type aliases handle everything else, unions, primitives and advanced conditional types. Either works for plain objects, so consistency matters more than the choice.",
+    "pickWhen": [
+      { "option": "interface", "guidance": "Object shapes and public library APIs that benefit from extension or declaration merging." },
+      { "option": "type", "guidance": "Unions, tuples, function types, mapped types and primitives." }
+    ],
+    "example": {
+      "language": "typescript",
+      "caption": "A union is only expressible as a type alias, not an interface.",
+      "code": "interface User {\n  id: string;\n  name: string;\n}\n\ntype Result<T> = { ok: true; value: T } | { ok: false; error: string };"
+    },
+    "related": ["ts-generics", "ts-utility-types", "ts-narrowing"]
+  },
+  {
+    "id": "ts-utility-types",
+    "slug": "utility-types",
+    "category": "typescript",
+    "type": "concept",
+    "title": "Utility Types",
+    "summary": "Built-in type transformations such as Partial, Pick, Omit, Record and ReturnType.",
+    "difficulty": "medium",
+    "tags": ["types", "utility-types"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-22",
+    "definition": "Utility types are generic helpers shipped with TypeScript that transform existing types. They range from object reshaping with Partial and Omit to extraction with ReturnType and Parameters.",
+    "explanation": [
+      "They keep a single source of truth. Deriving a form type from a model with Pick and Partial means the two never drift apart.",
+      "Most are implemented with mapped and conditional types, so you can write your own when the built-ins do not fit.",
+      "They compose. `Partial<Pick<User, 'name' | 'email'>>` reads as an update payload for two fields, which is exactly what it is."
+    ],
+    "keyPoints": [
+      "Partial and Required adjust optionality",
+      "Pick and Omit select or remove keys",
+      "Record builds an object type from a key type",
+      "ReturnType and Parameters extract from functions"
+    ],
+    "example": {
+      "language": "typescript",
+      "caption": "Deriving an update payload and a read model from one source type.",
+      "code": "interface User {\n  id: string;\n  name: string;\n  email: string;\n  role: 'admin' | 'member';\n}\n\ntype UserDraft = Partial<Omit<User, 'id'>>;\ntype UserPreview = Pick<User, 'id' | 'name'>;\ntype UserById = Record<string, User>;\ntype CreateResult = ReturnType<typeof createUser>;"
+    },
+    "related": ["ts-generics", "ts-interfaces-vs-types", "ts-cheatsheet"]
+  },
+  {
+    "id": "ts-narrowing",
+    "slug": "narrowing",
+    "category": "typescript",
+    "type": "concept",
+    "title": "Type Narrowing",
+    "summary": "TypeScript tracks your runtime checks and refines a union to the specific member inside each branch.",
+    "difficulty": "medium",
+    "tags": ["types", "unions", "control-flow"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-23",
+    "definition": "Narrowing is the process where the compiler reduces a broad type to a more specific one based on control flow. After a typeof, in, instanceof or equality check, the type inside that branch is refined automatically.",
+    "explanation": [
+      "The compiler builds a control-flow graph and keeps a narrowed type per branch. That is why reading a union member after a guard is safe without a cast.",
+      "Discriminated unions make this explicit. A shared literal field such as kind or status lets a switch narrow the whole object, which is the most maintainable pattern for variant data.",
+      "Custom type guard functions return a type predicate, which teaches the compiler a rule you cannot express inline."
+    ],
+    "keyPoints": [
+      "typeof, in, instanceof and equality all narrow",
+      "A discriminant field makes unions easy to exhaust",
+      "never in the default branch proves the switch is exhaustive",
+      "Type predicates teach custom guards"
+    ],
+    "example": {
+      "language": "typescript",
+      "caption": "The status field discriminates the union, so amount is only available when succeeded is true.",
+      "code": "type Response =\n  | { status: 'loading' }\n  | { status: 'succeeded'; amount: number }\n  | { status: 'failed'; error: string };\n\nfunction describe(response: Response) {\n  switch (response.status) {\n    case 'loading':\n      return 'Loading';\n    case 'succeeded':\n      return `Amount ${response.amount}`;\n    case 'failed':\n      return response.error;\n  }\n}"
+    },
+    "related": ["ts-type-guards", "ts-any-vs-unknown", "ts-unions-vs-enums"]
+  },
+  {
+    "id": "ts-type-guards",
+    "slug": "type-guards",
+    "category": "typescript",
+    "type": "question",
+    "title": "What is a type guard?",
+    "summary": "An expression that tells the compiler a value is of a narrower type, either inline or through a type predicate function.",
+    "difficulty": "medium",
+    "tags": ["types", "narrowing", "functions"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-21",
+    "shortAnswer": "A type guard is a check the compiler understands and uses to narrow a type. Inline guards use typeof, instanceof, in or an equality comparison. A custom guard is a function whose return type is a type predicate such as value is User, which narrows the argument at the call site.",
+    "explanation": [
+      "Inline guards cover most cases and need no extra code. Custom guards are worth writing when the same check is repeated or when the rule is more involved than a single operator.",
+      "A predicate is a promise you make to the compiler. If the runtime check does not actually verify the claim, the narrowing is unsound and bugs slip through the type system.",
+      "Assertion functions such as assertIsUser(value): asserts value is User narrow by throwing, which suits validation at the boundaries of your program."
+    ],
+    "keyPoints": [
+      "typeof for primitives, instanceof for classes",
+      "in for property presence",
+      "value is T predicates create reusable guards",
+      "Predicates are unchecked promises, so keep them honest"
+    ],
+    "example": {
+      "language": "typescript",
+      "caption": "The predicate narrows the value to User wherever the guard returns true.",
+      "code": "function isUser(value: unknown): value is User {\n  return (\n    typeof value === 'object' &&\n    value !== null &&\n    'id' in value &&\n    typeof (value as { id: unknown }).id === 'string'\n  );\n}\n\nconst data: unknown = JSON.parse(raw);\nif (isUser(data)) {\n  data.id; // string\n}"
+    },
+    "related": ["ts-narrowing", "ts-any-vs-unknown", "ts-generics"]
+  },
+  {
+    "id": "ts-unions-vs-enums",
+    "slug": "unions-vs-enums",
+    "category": "typescript",
+    "type": "comparison",
+    "title": "Union types vs enums",
+    "summary": "String unions are plain values with zero runtime cost. Enums add runtime objects with their own quirks.",
+    "difficulty": "easy",
+    "tags": ["types", "unions", "enums"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-20",
+    "options": [
+      { "name": "Union type", "summary": "A set of literal values" },
+      { "name": "enum", "summary": "A named runtime object" }
+    ],
+    "rows": [
+      { "label": "Runtime output", "values": ["Nothing, erased", "A real object emitted"] },
+      { "label": "Values at runtime", "values": ["Plain strings or numbers", "Members of the generated object"] },
+      { "label": "Works with JSON", "values": ["Directly", "Needs mapping"] },
+      { "label": "Exhaustiveness", "values": ["Supported with switch and never", "Supported but easy to miss numeric members"] },
+      { "label": "Reverse mapping", "values": ["Not applicable", "Numeric enums generate a reverse map"] }
+    ],
+    "verdict": "Prefer string literal unions for most application code. They are erased at compile time, interoperate with plain data and JSON, and compose well with narrowing. Reach for a const object with as const when you need the values to exist at runtime.",
+    "pickWhen": [
+      { "option": "Union type", "guidance": "The default. Use it for statuses, variants and any set of literal values." },
+      { "option": "enum", "guidance": "When you specifically want a named runtime object, and you accept the extra emitted code." }
+    ],
+    "example": {
+      "language": "typescript",
+      "caption": "The union is erased, while the const object keeps runtime values available under the same names.",
+      "code": "type Status = 'idle' | 'loading' | 'error';\n\nconst STATUS = {\n  idle: 'idle',\n  loading: 'loading',\n  error: 'error',\n} as const;"
+    },
+    "related": ["ts-narrowing", "ts-type-guards", "ts-interfaces-vs-types"]
+  },
+  {
+    "id": "ts-gotcha-array-index",
+    "slug": "gotcha-array-index",
+    "category": "typescript",
+    "type": "gotcha",
+    "title": "Array indexing is typed as always defined",
+    "summary": "By default arr[0] is typed as T, even though the array may be empty. The index signature hides real undefined values.",
+    "difficulty": "medium",
+    "tags": ["types", "arrays", "safety", "gotcha"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-19",
+    "scenario": "You read an element from an array and pass it somewhere that expects a value, trusting the type system to have caught the empty case.",
+    "problem": "TypeScript types a numeric index access as T rather than T | undefined unless noUncheckedIndexedAccess is enabled. The compiler therefore lets you use a value that can genuinely be undefined at runtime, and the error only appears in production.",
+    "example": {
+      "language": "typescript",
+      "caption": "The type says string, but the runtime value is undefined.",
+      "code": "const names: string[] = [];\nconst first = names[0]; // typed string, actually undefined\n\nfirst.toUpperCase(); // runtime TypeError"
+    },
+    "fix": "Enable noUncheckedIndexedAccess in tsconfig so every index access includes undefined and must be checked. As an alternative, use .at(0) which is already typed as T | undefined, or validate the length before indexing.",
+    "keyPoints": [
+      "Default index access ignores undefined",
+      "noUncheckedIndexedAccess closes the gap",
+      "Array.prototype.at is typed as possibly undefined already",
+      "The same applies to Record index access"
+    ],
+    "related": ["ts-narrowing", "ts-any-vs-unknown", "ts-type-guards"]
+  },
+  {
+    "id": "ts-challenge-typed-get",
+    "slug": "challenge-typed-get",
+    "category": "typescript",
+    "type": "challenge",
+    "title": "Type a safe object getter",
+    "summary": "Write a get function that returns the value at a key and stays type safe for the key it was given.",
+    "difficulty": "medium",
+    "tags": ["types", "generics", "exercise"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-25",
+    "prompt": "Implement a generic get function that takes an object and a key of that object, and returns the value at that key with the correct type. Calling it with a key the object does not have must be a compile error.",
+    "constraints": [
+      "The key must be constrained to the keys of the object",
+      "The return type must match the property type",
+      "Return undefined when the key is missing at runtime"
+    ],
+    "hints": [
+      "Constrain the key parameter to keyof T.",
+      "Index the object type with the key parameter for the return type."
+    ],
+    "solution": {
+      "code": {
+        "language": "typescript",
+        "code": "function get<T extends object, K extends keyof T>(\n  source: T,\n  key: K\n): T[K] | undefined {\n  return source[key];\n}\n\nconst user = { id: '1', name: 'Ada', active: true };\n\nconst name = get(user, 'name'); // string | undefined\nget(user, 'missing'); // compile error"
+      },
+      "explanation": [
+        "K extends keyof T ties the key to the object, so unknown keys are rejected at compile time.",
+        "Indexing T with K gives the exact property type, so the caller gets string for name and boolean for active without any casts."
+      ]
+    },
+    "related": ["ts-generics", "ts-narrowing", "ts-utility-types"]
+  },
+  {
+    "id": "ts-cheatsheet",
+    "slug": "typescript-cheat-sheet",
+    "category": "typescript",
+    "type": "cheat-sheet",
+    "title": "TypeScript Cheat Sheet",
+    "summary": "Utility types, narrowing, generics and the compiler flags that keep code honest.",
+    "difficulty": "medium",
+    "tags": ["reference", "cheat-sheet"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-26",
+    "description": "The TypeScript concepts and flags that come up most in interviews and code review.",
+    "sections": [
+      {
+        "title": "Utility types",
+        "items": [
+          { "label": "Partial<T>", "value": "All properties optional" },
+          { "label": "Required<T>", "value": "All properties required" },
+          { "label": "Pick<T, K>", "value": "Keep only the listed keys" },
+          { "label": "Omit<T, K>", "value": "Remove the listed keys" },
+          { "label": "Record<K, V>", "value": "Object type from a key type" },
+          { "label": "ReturnType<F>", "value": "Return type of a function" }
+        ]
+      },
+      {
+        "title": "Narrowing",
+        "items": [
+          { "label": "typeof", "value": "Primitive checks" },
+          { "label": "instanceof", "value": "Class checks" },
+          { "label": "'key' in value", "value": "Property presence" },
+          { "label": "value is T", "value": "Custom type predicate" },
+          { "label": "never", "value": "Proves exhaustive switches" }
+        ]
+      },
+      {
+        "title": "Safe defaults",
+        "items": [
+          { "label": "unknown over any", "value": "Keeps checking on external input" },
+          { "label": "String unions over enums", "value": "No runtime cost" },
+          { "label": "as const", "value": "Literal types and readonly" },
+          { "label": "satisfies", "value": "Check a type without widening it" }
+        ]
+      },
+      {
+        "title": "Compiler flags",
+        "items": [
+          { "label": "strict", "value": "Enables the strict family" },
+          { "label": "noUncheckedIndexedAccess", "value": "Index access includes undefined" },
+          { "label": "exactOptionalPropertyTypes", "value": "Optional means absent, not undefined" },
+          { "label": "verbatimModuleSyntax", "value": "Predictable import elision" }
+        ]
+      }
+    ],
+    "related": ["ts-utility-types", "ts-generics", "ts-any-vs-unknown", "ts-narrowing"]
+  }
+]

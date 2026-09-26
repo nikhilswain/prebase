@@ -1,0 +1,391 @@
+[
+  {
+    "id": "fe-rendering-pipeline",
+    "slug": "rendering-pipeline",
+    "category": "frontend",
+    "type": "concept",
+    "title": "The Browser Rendering Pipeline",
+    "summary": "Parse, style, layout, paint and composite. Which stage a property touches decides how expensive it is.",
+    "difficulty": "medium",
+    "tags": ["rendering", "performance", "browser"],
+    "featured": true,
+    "reviewStatus": "verified",
+    "updated": "2026-08-28",
+    "definition": "The rendering pipeline is the sequence of steps the browser runs to turn DOM and CSS into pixels: construct the DOM and CSSOM, build the render tree, compute layout, paint and finally composite layers on the GPU.",
+    "explanation": [
+      "Changing geometry, such as width or top, invalidates layout and forces the browser to recompute positions. Changing a color invalidates paint but not layout. Changing transform or opacity can skip both and only re-composite.",
+      "That is why performance advice keeps repeating the same point: animate transform and opacity, because they are handled in the compositing step and can run off the main thread.",
+      "Compositing splits the page into layers and draws them on the GPU. Layer count is a trade-off: too few and animations are expensive, too many and memory and compositing cost grow."
+    ],
+    "keyPoints": [
+      "DOM and CSSOM, render tree, layout, paint, composite",
+      "Layout and paint are main-thread work",
+      "Transform and opacity can be composited only",
+      "Reading layout after writing can force synchronous reflow"
+    ],
+    "example": {
+      "language": "css",
+      "caption": "Animating transform keeps the work in compositing, animating left triggers layout every frame.",
+      "code": "/* cheap: composited */\n.card { transition: transform 200ms ease-out; }\n.card:hover { transform: translateY(-4px); }\n\n/* expensive: layout every frame */\n.card { transition: top 200ms ease-out; }\n.card:hover { top: -4px; }"
+    },
+    "commonMistakes": [
+      "Animating layout properties such as width, height, top or margin",
+      "Reading offsetHeight inside a loop of style writes, causing layout thrashing",
+      "Promoting too many elements to their own layer and increasing memory use"
+    ],
+    "related": ["fe-critical-rendering-path", "fe-layout-thrashing", "fe-core-web-vitals", "fe-cheatsheet"]
+  },
+  {
+    "id": "fe-ssr-ssg-isr",
+    "slug": "ssr-vs-ssg-vs-isr",
+    "category": "frontend",
+    "type": "comparison",
+    "title": "SSR vs SSG vs ISR",
+    "summary": "When the HTML is generated: per request, at build time, or at build time then refreshed in the background.",
+    "difficulty": "medium",
+    "tags": ["rendering", "performance", "seo", "architecture"],
+    "featured": true,
+    "reviewStatus": "verified",
+    "updated": "2026-08-29",
+    "options": [
+      { "name": "SSR", "summary": "Rendered on each request" },
+      { "name": "SSG", "summary": "Rendered once at build time" },
+      { "name": "ISR", "summary": "Static, refreshed after a revalidate window" }
+    ],
+    "rows": [
+      { "label": "HTML generated", "values": ["Per request on the server", "At build time", "At build time, then regenerated in the background"] },
+      { "label": "Data freshness", "values": ["Always current", "Frozen at build", "Fresh within the revalidate window"] },
+      { "label": "Time to first byte", "values": ["Server dependent", "Fastest, served from cache", "Fast, served from cache"] },
+      { "label": "Server cost", "values": ["Highest, compute per request", "Lowest", "Low, background regeneration"] },
+      { "label": "Best for", "values": ["Personalised or live data", "Content that rarely changes", "Large content sites with occasional updates"] }
+    ],
+    "verdict": "These are not exclusive. Most real applications mix them per route: static for marketing and docs, ISR for content that updates occasionally, and SSR for dashboards and anything personalised.",
+    "pickWhen": [
+      { "option": "SSR", "guidance": "When the response depends on the request, such as a user session, and the data must be current." },
+      { "option": "SSG", "guidance": "For content that is the same for everyone and rarely changes. This knowledge base is a static site." },
+      { "option": "ISR", "guidance": "For large content sites where a rebuild per change is too slow but per-request rendering is wasteful." }
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "The same application can choose a strategy per route.",
+      "code": "export async function getStaticProps() {\n  return { props: { doc }, revalidate: 60 };\n}\n\nexport const dynamic = 'force-dynamic';"
+    },
+    "commonMistakes": [
+      "Using SSR for everything and paying server cost for content that never changes",
+      "Using SSG for personalised pages and leaking one user's data to the cache",
+      "Assuming ISR gives strong consistency, when it serves stale content for the window"
+    ],
+    "followUps": [
+      "Where does hydration fit into each strategy?",
+      "How does ISR decide when to regenerate?",
+      "Which strategy would you pick for a dashboard, and why?"
+    ],
+    "related": ["fe-hydration", "fe-spa-vs-mpa", "fe-core-web-vitals", "fe-code-splitting"]
+  },
+  {
+    "id": "fe-spa-vs-mpa",
+    "slug": "spa-vs-mpa",
+    "category": "frontend",
+    "type": "comparison",
+    "title": "SPA vs MPA",
+    "summary": "One document that swaps views with JavaScript, versus many documents the browser navigates between.",
+    "difficulty": "easy",
+    "tags": ["architecture", "navigation"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-20",
+    "options": [
+      { "name": "SPA", "summary": "Single document, client-side routing" },
+      { "name": "MPA", "summary": "Multiple documents, server navigation" }
+    ],
+    "rows": [
+      { "label": "Navigation", "values": ["Handled in JavaScript", "Full document request per page"] },
+      { "label": "First load", "values": ["Larger JS payload, then fast transitions", "Smaller per page, server rendered HTML"] },
+      { "label": "SEO", "values": ["Requires rendering strategy and care", "Works with plain HTML"] },
+      { "label": "State across pages", "values": ["Preserved in memory", "Reset unless persisted"] },
+      { "label": "Best for", "values": ["Highly interactive app-like UIs", "Content, marketing, docs, commerce"] }
+    ],
+    "verdict": "The line has blurred. Frameworks now combine server rendering with client navigation and partial hydration, which gives MPA-style first loads with SPA-style transitions. Choose based on how interactive the experience actually is.",
+    "pickWhen": [
+      { "option": "SPA", "guidance": "When the product is an application with heavy client interaction and shared in-memory state." },
+      { "option": "MPA", "guidance": "When content, SEO and fast first loads dominate, which is most websites including this one." }
+    ],
+    "related": ["fe-ssr-ssg-isr", "fe-hydration", "fe-code-splitting"]
+  },
+  {
+    "id": "fe-hydration",
+    "slug": "hydration",
+    "category": "frontend",
+    "type": "concept",
+    "title": "Hydration",
+    "summary": "Attaching client behaviour to server-rendered HTML, and why shipping less of it is usually the goal.",
+    "difficulty": "medium",
+    "tags": ["hydration", "ssr", "performance", "islands"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-26",
+    "definition": "Hydration is the process where client-side JavaScript runs over server-rendered HTML, reconciling the existing DOM with the component tree so event handlers and state start working. Until hydration finishes, the page is visible but not interactive.",
+    "explanation": [
+      "During hydration the framework walks the tree and attaches listeners. On large pages this can take seconds on a slow device, producing a window where clicks do nothing. The interval between first paint and interactivity is a key metric.",
+      "The response is to hydrate less. Islands architecture hydrates only the interactive regions and leaves the rest as static HTML, which is the model this site uses: the search dialog and interview mode are islands, everything else is HTML.",
+      "Other strategies include progressive hydration, which hydrates components as they become visible, and resumability, which serialises state so the client can continue without re-running the component tree."
+    ],
+    "keyPoints": [
+      "Visible first, interactive later",
+      "The gap between paint and interactivity is the cost",
+      "Islands hydrate only interactive regions",
+      "Static HTML with no JavaScript cannot have hydration bugs"
+    ],
+    "example": {
+      "language": "astro",
+      "caption": "Only the interactive island ships JavaScript, the surrounding page stays static HTML.",
+      "code": "---\nimport SearchDialog from '../components/SearchDialog.tsx';\n---\n\n<article>The content is plain HTML.</article>\n<SearchDialog client:idle />"
+    },
+    "related": ["fe-ssr-ssg-isr", "fe-spa-vs-mpa", "fe-code-splitting", "fe-core-web-vitals"]
+  },
+  {
+    "id": "fe-core-web-vitals",
+    "slug": "core-web-vitals",
+    "category": "frontend",
+    "type": "concept",
+    "title": "Core Web Vitals",
+    "summary": "LCP, INP and CLS: loading, responsiveness and visual stability, measured from real users.",
+    "difficulty": "medium",
+    "tags": ["performance", "metrics", "web-vitals"],
+    "featured": true,
+    "reviewStatus": "verified",
+    "updated": "2026-08-30",
+    "definition": "Core Web Vitals are three field metrics that capture user experience. Largest Contentful Paint measures loading, Interaction to Next Paint measures responsiveness, and Cumulative Layout Shift measures visual stability.",
+    "explanation": [
+      "They are field metrics, taken from real sessions, not lab numbers from a single machine. Lab tools help you diagnose but the score that matters comes from the field.",
+      "LCP looks at when the largest visible element renders. It improves with faster servers and caches, prioritised critical resources, and avoiding client-side rendering of the main content.",
+      "INP is the delay between a user interaction and the next paint, so it captures long tasks and heavy event handlers. Breaking up long tasks and yielding back to the browser is the main lever.",
+      "CLS is caused by content that moves after paint. Reserving space with explicit dimensions on images and embeds is the most common fix."
+    ],
+    "keyPoints": [
+      "LCP: loading, aim for under 2.5 seconds",
+      "INP: responsiveness, aim for under 200 milliseconds",
+      "CLS: stability, aim for under 0.1",
+      "They are field metrics, so measure real users"
+    ],
+    "example": {
+      "language": "html",
+      "caption": "Explicit dimensions reserve space so the image cannot shift layout when it loads.",
+      "code": "<img src='/hero.avif' width='1200' height='630' alt='Preview' fetchpriority='high' />"
+    },
+    "commonMistakes": [
+      "Optimising lab scores and ignoring field data",
+      "Shipping images without width and height and causing layout shift",
+      "Running long synchronous work in a single task and hurting INP",
+      "Lazy loading the hero image, which delays LCP"
+    ],
+    "related": ["fe-rendering-pipeline", "fe-layout-thrashing", "fe-code-splitting", "fe-ssr-ssg-isr"]
+  },
+  {
+    "id": "fe-critical-rendering-path",
+    "slug": "critical-rendering-path",
+    "category": "frontend",
+    "type": "question",
+    "title": "What is the critical rendering path?",
+    "summary": "The work the browser must finish before it can paint the first frame.",
+    "difficulty": "hard",
+    "tags": ["rendering", "performance", "css"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-22",
+    "shortAnswer": "The critical rendering path is the sequence from receiving HTML to painting the first pixels: parsing HTML into the DOM, fetching and parsing CSS into the CSSOM, combining them into a render tree, then layout and paint. Blocking resources on that path delay first paint.",
+    "explanation": [
+      "CSS is render blocking. The browser will not paint until it has the CSSOM, because it cannot know how elements look. This makes CSS on the critical path more urgent than most JavaScript.",
+      "JavaScript is parser blocking unless deferred or async. A plain script tag stops HTML parsing while it downloads and runs, which delays everything after it, including the DOM it might depend on.",
+      "The standard improvements are to inline critical CSS, defer or async non-essential scripts, preload fonts and hero resources, and keep the initial HTML small enough to stream a first paint quickly."
+    ],
+    "keyPoints": [
+      "DOM plus CSSOM produce the render tree",
+      "CSS blocks rendering, generally script blocks parsing",
+      "defer and async change how scripts block",
+      "Fewer critical resources means a faster first paint"
+    ],
+    "example": {
+      "language": "html",
+      "caption": "The CSS is critical, the analytics script is not, so one blocks and the other defers.",
+      "code": "<link rel='stylesheet' href='/critical.css' />\n<script src='/analytics.js' defer></script>"
+    },
+    "followUps": [
+      "Why does CSS block rendering?",
+      "What is the difference between defer and async?",
+      "How would you reduce the critical path for a content site?"
+    ],
+    "related": ["fe-rendering-pipeline", "fe-core-web-vitals", "fe-code-splitting"]
+  },
+  {
+    "id": "fe-layout-thrashing",
+    "slug": "gotcha-layout-thrashing",
+    "category": "frontend",
+    "type": "gotcha",
+    "title": "Layout thrashing",
+    "summary": "Interleaving style reads and writes forces the browser to recompute layout over and over in one frame.",
+    "difficulty": "hard",
+    "tags": ["performance", "rendering", "dom", "gotcha"],
+    "reviewStatus": "verified",
+    "updated": "2026-08-24",
+    "scenario": "You loop over a list, read each element's height, then immediately set a new style on it. The page stutters even though the work per item seems tiny.",
+    "problem": "Reading a geometric property such as offsetHeight forces the browser to flush pending style and layout changes immediately to return an accurate number. Writing a style in the same loop invalidates layout again, so the next read forces another flush. The result is a forced synchronous layout on every iteration instead of a single layout at the end of the frame.",
+    "example": {
+      "language": "javascript",
+      "caption": "Each iteration reads then writes, forcing a synchronous layout every time.",
+      "code": "items.forEach((el) => {\n  const height = el.offsetHeight; // read, forces layout\n  el.style.height = height + 10 + 'px'; // write, invalidates\n});"
+    },
+    "fix": "Batch reads and writes into separate phases. Read every value you need first, then apply all the writes. If you must alternate, do the writes inside requestAnimationFrame so they land in the render step and produce a single layout. Caching measured values is often enough on its own.",
+    "keyPoints": [
+      "Reads of geometry force a layout flush",
+      "Alternating reads and writes multiplies layout cost",
+      "Batch all reads, then all writes",
+      "FastDOM or requestAnimationFrame helps structure the phases"
+    ],
+    "related": ["fe-rendering-pipeline", "fe-core-web-vitals", "fe-critical-rendering-path"]
+  },
+  {
+    "id": "fe-debounce-throttle",
+    "slug": "debounce-vs-throttle",
+    "category": "frontend",
+    "type": "question",
+    "title": "What is the difference between debounce and throttle?",
+    "summary": "Debounce waits for a pause, throttle guarantees a steady rate.",
+    "difficulty": "medium",
+    "tags": ["performance", "events", "timing"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-21",
+    "shortAnswer": "Debounce delays the call until the events stop arriving for a given wait, so a burst produces one call at the end. Throttle limits the call to at most once per interval, so a burst produces calls at a steady rate. Use debounce for search input and throttle for scroll or resize handlers that need regular updates.",
+    "explanation": [
+      "Both are implemented with timers and closures. The debounce timer resets on every call, while the throttle timer ignores calls until the interval elapses.",
+      "A leading option fires on the first event instead of the last, which is useful when you want immediate feedback before the final value settles.",
+      "Neither reduces the underlying work if the handler is expensive. They only reduce how often it runs, so a genuinely heavy handler still needs to be made cheaper or moved off the main thread."
+    ],
+    "keyPoints": [
+      "Debounce collapses a burst to one trailing call",
+      "Throttle enforces a maximum call rate",
+      "Both rely on closures to hold the timer",
+      "Leading and trailing options change which call fires"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "A trailing debounce waits for the typing to stop before searching.",
+      "code": "function debounce(fn, wait) {\n  let timer;\n  return (...args) => {\n    clearTimeout(timer);\n    timer = setTimeout(() => fn(...args), wait);\n  };\n}\n\nconst search = debounce((value) => fetchResults(value), 300);"
+    },
+    "related": ["fe-challenge-debounce", "js-closures", "fe-core-web-vitals"]
+  },
+  {
+    "id": "fe-code-splitting",
+    "slug": "code-splitting",
+    "category": "frontend",
+    "type": "concept",
+    "title": "Code Splitting and Lazy Loading",
+    "summary": "Ship less JavaScript up front by splitting it into chunks that load when they are needed.",
+    "difficulty": "medium",
+    "tags": ["performance", "bundling", "javascript"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-19",
+    "definition": "Code splitting breaks a JavaScript bundle into smaller chunks. Dynamic import() marks a boundary, so the chunk is fetched only when that code path runs, which keeps the initial payload small.",
+    "explanation": [
+      "Route-based splitting is the highest leverage change, because users rarely visit every route on the first load. Loading a heavy editor, chart or modal only when it opens is the second.",
+      "Splitting has a cost. Too many tiny chunks mean more requests and worse compression, so the goal is a handful of well-chosen boundaries rather than one chunk per component.",
+      "Tree shaking removes unused exports at build time and works with splitting. Both depend on code being written as ES modules so the bundler can see the import graph."
+    ],
+    "keyPoints": [
+      "Dynamic import creates a split point",
+      "Split by route first, then by heavy interaction",
+      "Too many chunks hurts more than it helps",
+      "Tree shaking needs static ES module imports"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "The editor chunk is only downloaded when the user opens it.",
+      "code": "async function openEditor() {\n  const { Editor } = await import('./Editor.js');\n  return new Editor();\n}"
+    },
+    "related": ["fe-ssr-ssg-isr", "fe-hydration", "fe-core-web-vitals", "fe-critical-rendering-path"]
+  },
+  {
+    "id": "fe-challenge-debounce",
+    "slug": "challenge-debounce",
+    "category": "frontend",
+    "type": "challenge",
+    "title": "Implement debounce",
+    "summary": "Write a debounce function with a trailing call and a cancel method.",
+    "difficulty": "medium",
+    "tags": ["javascript", "timing", "exercise", "closures"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-25",
+    "prompt": "Implement a debounce helper that takes a function and a wait time and returns a debounced version. It must call the function with the latest arguments after the calls stop, and expose a cancel method that clears any pending call.",
+    "constraints": [
+      "Preserve the arguments of the most recent call",
+      "Expose cancel() to drop a pending invocation",
+      "Preserve the this value of the caller"
+    ],
+    "hints": [
+      "Store the timer in the closure.",
+      "Return an object or attach cancel to the returned function."
+    ],
+    "solution": {
+      "code": {
+        "language": "javascript",
+        "code": "function debounce(fn, wait) {\n  let timer = null;\n\n  function debounced(...args) {\n    const context = this;\n    clearTimeout(timer);\n    timer = setTimeout(() => {\n      timer = null;\n      fn.apply(context, args);\n    }, wait);\n  }\n\n  debounced.cancel = () => {\n    clearTimeout(timer);\n    timer = null;\n  };\n\n  return debounced;\n}"
+      },
+      "explanation": [
+        "The timer lives in the closure, so it survives between calls and can be cleared by the next one.",
+        "Capturing this and args before the timeout ensures the delayed call runs with the original receiver and the latest arguments.",
+        "This is the canonical closure interview question in disguise, which is why it appears in both JavaScript and frontend interviews."
+      ]
+    },
+    "related": ["fe-debounce-throttle", "js-closures", "react-gotcha-stale-closure"]
+  },
+  {
+    "id": "fe-cheatsheet",
+    "slug": "frontend-cheat-sheet",
+    "category": "frontend",
+    "type": "cheat-sheet",
+    "title": "Frontend Cheat Sheet",
+    "summary": "Rendering, rendering strategies, metrics and caching at a glance.",
+    "difficulty": "medium",
+    "tags": ["reference", "cheat-sheet", "performance"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-30",
+    "description": "The frontend fundamentals and performance numbers that come up most in interviews.",
+    "sections": [
+      {
+        "title": "Rendering pipeline",
+        "items": [
+          { "label": "Steps", "value": "DOM and CSSOM, render tree, layout, paint, composite" },
+          { "label": "Layout triggers", "value": "width, height, top, margin, font size" },
+          { "label": "Paint only", "value": "color, background, box-shadow" },
+          { "label": "Composited", "value": "transform, opacity, filter" }
+        ]
+      },
+      {
+        "title": "Rendering strategies",
+        "items": [
+          { "label": "SSR", "value": "Per request, always fresh, most server cost" },
+          { "label": "SSG", "value": "At build time, fastest, frozen data" },
+          { "label": "ISR", "value": "Static with background revalidation" },
+          { "label": "CSR", "value": "Rendered in the browser, weakest first paint" }
+        ]
+      },
+      {
+        "title": "Core Web Vitals",
+        "items": [
+          { "label": "LCP", "value": "Under 2.5s", "note": "Loading" },
+          { "label": "INP", "value": "Under 200ms", "note": "Responsiveness" },
+          { "label": "CLS", "value": "Under 0.1", "note": "Visual stability" }
+        ]
+      },
+      {
+        "title": "Loading and caching",
+        "items": [
+          { "label": "fetchpriority", "value": "Raise the hero, lower the rest" },
+          { "label": "loading=lazy", "value": "Below the fold images only", "note": "Never the LCP image" },
+          { "label": "defer", "value": "Run after parsing, in order" },
+          { "label": "async", "value": "Run as soon as ready, out of order" },
+          { "label": "Cache-Control", "value": "Long max-age with hashed filenames" }
+        ]
+      }
+    ],
+    "related": ["fe-rendering-pipeline", "fe-core-web-vitals", "fe-ssr-ssg-isr", "fe-hydration"]
+  }
+]

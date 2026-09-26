@@ -1,0 +1,104 @@
+{
+  "category": "typescript",
+  "intro": "TypeScript's type system, condensed to the points interviewers probe.",
+  "entries": [
+    {
+      "id": "rev-ts-structural",
+      "category": "typescript",
+      "term": "Structural typing",
+      "short": "Types are compatible by shape, not by name.",
+      "medium": "If a value has the required properties, it is assignable to the type, regardless of what it was declared as. This is why interfaces with the same members are interchangeable.",
+      "detail": "Excess property checks only fire on fresh object literals, which is why passing a literal with extra keys errors while passing a variable with extra keys does not.",
+      "tags": ["types"]
+    },
+    {
+      "id": "rev-ts-inference",
+      "category": "typescript",
+      "term": "Inference",
+      "short": "TypeScript works out types from how values are used.",
+      "medium": "You rarely annotate variables, you annotate boundaries such as function parameters and return types when they are not obvious. Inference flows forward, so an early widening can propagate.",
+      "detail": "as const stops widening and produces literal and readonly types. satisfies validates a value against a type without widening it, which keeps the literal types intact.",
+      "tags": ["types"]
+    },
+    {
+      "id": "rev-ts-generics",
+      "category": "typescript",
+      "term": "Generics",
+      "short": "Type parameters that preserve the relationship between inputs and outputs.",
+      "medium": "A generic keeps type safety across many shapes without duplicating code. extends constrains the parameter, and defaults let callers omit it. Inference means you rarely pass the type explicitly.",
+      "detail": "Generics are erased at runtime. The point is not runtime behaviour but keeping the compiler able to relate a returned value to what was passed in, which any cannot do.",
+      "related": "ts-generics",
+      "tags": ["types", "generics"]
+    },
+    {
+      "id": "rev-ts-narrowing",
+      "category": "typescript",
+      "term": "Narrowing",
+      "short": "The compiler refines a union as your runtime checks run.",
+      "medium": "typeof, instanceof, in and equality comparisons narrow a type inside a branch. A discriminant field makes switches exhaustive, and never in the default branch proves you covered every case.",
+      "detail": "Narrowing is flow sensitive, so reassigning a variable can widen it back. Custom type guards return a predicate such as value is User to teach the compiler a rule it cannot infer.",
+      "related": "ts-narrowing",
+      "tags": ["types", "narrowing"]
+    },
+    {
+      "id": "rev-ts-guards",
+      "category": "typescript",
+      "term": "Type guards",
+      "short": "Checks the compiler uses to narrow a type.",
+      "medium": "Inline guards use typeof, instanceof, in or equality. A custom guard is a function returning value is T. An assertion function returns asserts value is T and narrows by throwing.",
+      "detail": "A predicate is an unchecked promise. If the runtime logic does not truly verify the type, the narrowing is unsound and bugs pass the compiler. Keep guards as strict as the type they claim.",
+      "related": "ts-type-guards",
+      "tags": ["types", "narrowing"]
+    },
+    {
+      "id": "rev-ts-any-unknown",
+      "category": "typescript",
+      "term": "any vs unknown",
+      "short": "any disables checking. unknown keeps it and forces narrowing.",
+      "medium": "Both accept any value, but unknown cannot be used without a check. Use unknown for external input such as JSON or error values, and any only as a deliberate, temporary escape hatch.",
+      "detail": "Every any is a hole in the type system that shifts a compile error to a runtime error. unknown, never and properly typed boundaries keep the compiler meaningful.",
+      "related": "ts-any-vs-unknown",
+      "tags": ["types", "safety"]
+    },
+    {
+      "id": "rev-ts-utility",
+      "category": "typescript",
+      "term": "Utility types",
+      "short": "Built-in generic transformations of existing types.",
+      "medium": "Partial and Required adjust optionality. Pick and Omit select keys. Record builds an object type from a key type. ReturnType and Parameters extract from function types.",
+      "detail": "Most are implemented with mapped and conditional types, so you can write your own. Deriving types from a single source of truth is the main reason to reach for them.",
+      "related": "ts-utility-types",
+      "tags": ["types", "utility-types"]
+    },
+    {
+      "id": "rev-ts-unions-enums",
+      "category": "typescript",
+      "term": "Unions vs enums",
+      "short": "String unions cost nothing at runtime, enums emit an object.",
+      "medium": "Prefer literal unions for application code because they are erased, work with JSON and narrow cleanly. Use a const object with as const when the values must exist at runtime.",
+      "detail": "Numeric enums generate a reverse mapping and can surprise people when the value is logged. Unions keep the runtime data as plain strings, which is easier to serialise and debug.",
+      "related": "ts-unions-vs-enums",
+      "tags": ["types", "unions"]
+    },
+    {
+      "id": "rev-ts-interfaces-types",
+      "category": "typescript",
+      "term": "interface vs type",
+      "short": "Interfaces are open and extendable, type aliases can express anything.",
+      "medium": "Interfaces support declaration merging and describe object contracts. Type aliases cover unions, tuples, primitives and conditional types. Either works for plain objects.",
+      "detail": "Pick interfaces when you want a public API that consumers can extend. Pick type aliases when you need a union or a mapped type, which interfaces cannot express.",
+      "related": "ts-interfaces-vs-types",
+      "tags": ["types", "interfaces"]
+    },
+    {
+      "id": "rev-ts-strict",
+      "category": "typescript",
+      "term": "Strict flags worth enabling",
+      "short": "strict, noUncheckedIndexedAccess and exactOptionalPropertyTypes.",
+      "medium": "strict turns on the strict family including strictNullChecks. noUncheckedIndexedAccess makes index access include undefined. exactOptionalPropertyTypes separates missing from defined-as-undefined.",
+      "detail": "strictNullChecks is the single highest-value flag because it eliminates a large class of runtime errors. The others close specific gaps, especially around arrays and optional properties.",
+      "related": "ts-gotcha-array-index",
+      "tags": ["types", "config"]
+    }
+  ]
+}

@@ -1,0 +1,106 @@
+{
+  "category": "css",
+  "intro": "Layout, the cascade and the box model in compact form.",
+  "entries": [
+    {
+      "id": "rev-css-box-model",
+      "category": "css",
+      "term": "Box model",
+      "short": "Content, padding, border, margin, and what width actually means.",
+      "medium": "By default width is the content box, so padding and border make the element bigger. box-sizing: border-box makes width include both. Vertical margins collapse, padding never does.",
+      "detail": "Applying border-box globally with the universal selector removes the most common source of layout surprises. Padding is the safer spacing tool because it cannot collapse or go negative.",
+      "related": "css-box-model",
+      "tags": ["box-model"]
+    },
+    {
+      "id": "rev-css-specificity",
+      "category": "css",
+      "term": "Specificity",
+      "short": "ids beat classes beat types, compared as three separate components.",
+      "medium": "Inline styles outrank all selectors and !important outranks those. The universal selector and combinators add nothing, while :where() always adds zero and :is() takes its most specific argument.",
+      "detail": "Keeping specificity flat, ideally one class per rule, makes styles easy to override and reason about. Escalating specificity is usually a sign the selector structure is wrong.",
+      "related": "css-specificity",
+      "tags": ["cascade"]
+    },
+    {
+      "id": "rev-css-cascade",
+      "category": "css",
+      "term": "Cascade and layers",
+      "short": "Origin, layer, specificity, then source order decides the winner.",
+      "medium": "Layers let authors define their own ordering with @layer, so a later layer wins regardless of specificity. Inheritance only applies when nothing targets the element directly.",
+      "detail": "Because layers beat specificity, utilities can override components without selector games. !important inverts normal origin ordering, which is why it causes so much confusion.",
+      "related": "css-cascade",
+      "tags": ["cascade"]
+    },
+    {
+      "id": "rev-css-flex",
+      "category": "css",
+      "term": "Flexbox",
+      "short": "One-dimensional distribution with content-sized items.",
+      "medium": "justify-content spaces items on the main axis, align-items on the cross axis. Items grow and shrink from flex-grow, flex-shrink and flex-basis, with min-width auto as a common surprise.",
+      "detail": "Flexbox is the right tool for toolbars, rows of controls and centering. Set min-width: 0 on a flex item that contains overflowing text, otherwise it refuses to shrink below its content.",
+      "related": "css-flexbox-vs-grid",
+      "tags": ["layout"]
+    },
+    {
+      "id": "rev-css-grid",
+      "category": "css",
+      "term": "Grid",
+      "short": "Two-dimensional layout with container-defined tracks.",
+      "medium": "Define columns and rows with grid-template, place items with grid-column and grid-row. auto-fit with minmax produces a responsive grid with no media queries.",
+      "detail": "Grid and Flexbox compose rather than compete. Use Grid for the overall structure and Flexbox inside a cell. Overlapping items is a Grid feature that Flexbox does not offer.",
+      "related": "css-flexbox-vs-grid",
+      "tags": ["layout"]
+    },
+    {
+      "id": "rev-css-position",
+      "category": "css",
+      "term": "Positioning",
+      "short": "static, relative, absolute, fixed and sticky, each with its own containing block.",
+      "medium": "absolute resolves against the nearest positioned ancestor, fixed against the viewport, sticky against the nearest scroller and only within its parent. relative offsets and establishes a containing block.",
+      "detail": "An ancestor with transform, filter or will-change becomes the containing block for fixed descendants, which breaks fixed positioning in ways that are hard to spot.",
+      "related": "css-position",
+      "tags": ["layout", "position"]
+    },
+    {
+      "id": "rev-css-stacking",
+      "category": "css",
+      "term": "Stacking context",
+      "short": "A local z-index arena, and children cannot escape it.",
+      "medium": "Created by the root, positioned elements with z-index, opacity below one, transform, filter, will-change and isolation: isolate. z-index only competes within the same context.",
+      "detail": "A modal with z-index: 9999 can still sit behind a dropdown if an ancestor created a stacking context. The fix is structural, not a larger number.",
+      "related": "css-stacking-context",
+      "tags": ["z-index", "stacking"]
+    },
+    {
+      "id": "rev-css-custom-props",
+      "category": "css",
+      "term": "Custom properties",
+      "short": "Runtime variables that cascade and inherit.",
+      "medium": "Defined with a double dash and read with var(). Unlike preprocessor variables they are resolved by the browser, so overriding them on an ancestor re-themes the subtree.",
+      "detail": "They can be read and written from JavaScript with setProperty, which makes them a bridge between styling and runtime state. var(--token, fallback) provides a default.",
+      "related": "css-variables",
+      "tags": ["variables", "theming"]
+    },
+    {
+      "id": "rev-css-centering",
+      "category": "css",
+      "term": "Centering",
+      "short": "display: grid with place-items: center handles both axes.",
+      "medium": "Flexbox needs justify-content and align-items together. An absolutely positioned element with a definite size centers with inset: 0 and margin: auto. text-align only handles the inline axis.",
+      "detail": "Grid centering works regardless of the child's size and is the most reliable default. Older hacks such as the table-cell trick are no longer needed.",
+      "related": "css-centering",
+      "tags": ["layout", "centering"]
+    },
+    {
+      "id": "rev-css-margin-collapse",
+      "category": "css",
+      "term": "Margin collapse",
+      "short": "Vertical margins merge to the larger value, and can leak through a parent.",
+      "medium": "Adjacent siblings collapse to the larger margin, not the sum. A parent and its first child collapse together unless something separates them. Horizontal margins never collapse.",
+      "detail": "Flex and grid containers remove collapsing entirely, which is one reason modern layouts rarely hit the problem. Adding padding, a border or overflow on the parent stops it too.",
+      "related": "css-gotcha-margin-collapse",
+      "tags": ["box-model", "margin"]
+    }
+  ]
+}

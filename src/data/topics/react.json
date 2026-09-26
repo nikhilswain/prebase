@@ -1,0 +1,539 @@
+[
+  {
+    "id": "react-reconciliation",
+    "slug": "reconciliation",
+    "category": "react",
+    "type": "question",
+    "title": "What happens during React reconciliation?",
+    "summary": "React compares the new element tree with the previous one and applies the smallest set of changes needed to match it.",
+    "difficulty": "medium",
+    "tags": ["rendering", "fiber", "diffing"],
+    "featured": true,
+    "reviewStatus": "verified",
+    "updated": "2026-08-24",
+    "shortAnswer": "Reconciliation is React's diffing algorithm. When state changes, React renders a new element tree in memory and compares it with the previous tree. It reuses DOM nodes it can match, updates changed props and text, and inserts or removes nodes where the structure differs. The result is a minimal set of DOM mutations.",
+    "explanation": [
+      "React does not diff two full trees node by node, which would be too slow. It makes practical assumptions: different element types produce different subtrees, and a key lets React track the same logical item across renders.",
+      "Since React 16 the work happens on the Fiber tree, which allows React to split rendering into units of work, pause, and resume. That is what enables concurrent features and interruption.",
+      "Changing the type of an element, such as swapping a div for a span, unmounts the old subtree and mounts a new one, so matching by type matters for performance and for preserving state."
+    ],
+    "keyPoints": [
+      "Diffing is heuristic, not a general tree diff",
+      "Same type updates in place, different type remounts",
+      "Keys let React match list items across renders",
+      "Fiber makes rendering interruptible and prioritised"
+    ],
+    "example": {
+      "language": "jsx",
+      "caption": "Swapping the root element type remounts the subtree and loses input state.",
+      "code": "function Panel({ as: Tag = 'div', children }) {\n  return <Tag>{children}</Tag>;\n}\n\n// Changing as from 'div' to 'section' unmounts the old tree."
+    },
+    "commonMistakes": [
+      "Using an array index as a key when the list can reorder",
+      "Assuming React re-renders only the changed component, when it re-renders the subtree by default",
+      "Defining a component inside another component, which remounts it on every parent render"
+    ],
+    "followUps": [
+      "Why does React need keys?",
+      "What is the Fiber architecture for?",
+      "How does memo change reconciliation?"
+    ],
+    "related": ["react-virtual-dom", "react-keys", "react-memo", "react-state-batching"]
+  },
+  {
+    "id": "react-virtual-dom",
+    "slug": "virtual-dom",
+    "category": "react",
+    "type": "concept",
+    "title": "The Virtual DOM",
+    "summary": "A lightweight in-memory description of the UI that React diffs before touching the real DOM.",
+    "difficulty": "easy",
+    "tags": ["rendering", "dom"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-13",
+    "definition": "The virtual DOM is a plain JavaScript object tree that describes what the UI should look like. React builds a new tree on each render and compares it with the previous one before applying changes to the browser DOM.",
+    "explanation": [
+      "Direct DOM manipulation is expensive because reads and writes can force layout and repaint. Batching changes behind a diff means React can touch the DOM as little as possible.",
+      "The virtual DOM is not faster than hand-written DOM code in isolation. Its value is that it makes declarative UI predictable and fast enough while you write code as a function of state.",
+      "In React the description is built from createElement calls, which JSX compiles into."
+    ],
+    "keyPoints": [
+      "A JS object tree describing the UI",
+      "Diffing produces a minimal patch for the real DOM",
+      "Its value is predictability and developer experience, not raw speed",
+      "JSX compiles to createElement calls that produce this tree"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "JSX is sugar for nested createElement calls that build the element tree.",
+      "code": "const element = <h1 className='title'>Hello</h1>;\n\n// compiles to roughly\nconst element = React.createElement('h1', { className: 'title' }, 'Hello');"
+    },
+    "related": ["react-reconciliation", "react-keys", "react-memo"]
+  },
+  {
+    "id": "react-hooks-rules",
+    "slug": "rules-of-hooks",
+    "category": "react",
+    "type": "concept",
+    "title": "Rules of Hooks",
+    "summary": "Call hooks only at the top level of a component or custom hook, never conditionally, so the call order stays stable.",
+    "difficulty": "medium",
+    "tags": ["hooks", "rules"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-17",
+    "definition": "Hooks must be called in the same order on every render. That means calling them only at the top level of a function component or custom hook, and never inside conditions, loops or nested functions.",
+    "explanation": [
+      "React stores hook state in a list per component and matches it by call order rather than by name. If a hook is skipped on one render, every hook after it reads the wrong state.",
+      "Custom hooks are just functions whose name starts with use. They follow the same rules because they execute in the calling component's hook list.",
+      "The linter rule react-hooks/rules-of-hooks enforces this statically, which is why the plugin is close to mandatory in any React project."
+    ],
+    "keyPoints": [
+      "Order is the identity of a hook's state",
+      "Conditionals go inside hooks, not around them",
+      "Custom hooks start with use and compose",
+      "The eslint plugin catches most violations"
+    ],
+    "example": {
+      "language": "jsx",
+      "caption": "The conditional hook breaks the order and corrupts later hooks. Move the condition inside useEffect instead.",
+      "code": "function Search({ enabled }) {\n  if (enabled) {\n    const [query, setQuery] = useState(''); // wrong\n  }\n\n  return null;\n}"
+    },
+    "related": ["react-useeffect", "react-strict-mode", "react-useref"]
+  },
+  {
+    "id": "react-usememo-vs-usecallback",
+    "slug": "usememo-vs-usecallback",
+    "category": "react",
+    "type": "comparison",
+    "title": "useMemo vs useCallback",
+    "summary": "Both cache across renders. useMemo caches a value, useCallback caches a function.",
+    "difficulty": "medium",
+    "tags": ["hooks", "performance"],
+    "featured": true,
+    "reviewStatus": "verified",
+    "updated": "2026-08-25",
+    "options": [
+      { "name": "useMemo", "summary": "Memoises the result of a computation" },
+      { "name": "useCallback", "summary": "Memoises a function identity" }
+    ],
+    "rows": [
+      { "label": "Returns", "values": ["The computed value", "The same function reference until dependencies change"] },
+      { "label": "Typical use", "values": ["Expensive derived data", "Stable callbacks passed to memoised children"] },
+      { "label": "Dependency array", "values": ["Recomputes when deps change", "Returns a new function when deps change"] },
+      { "label": "Equivalent to", "values": ["useCallback(fn, deps) is useMemo(() => fn, deps)", "The inverse of the above"] },
+      { "label": "Cost", "values": ["Caching plus a dependency comparison", "Caching plus a dependency comparison"] }
+    ],
+    "verdict": "Neither is free. Both add a dependency comparison on every render, so reach for them when you have a measured reason: a truly expensive computation or a function reference that must stay stable for a memoised child.",
+    "pickWhen": [
+      { "option": "useMemo", "guidance": "When a computation is genuinely expensive or when an object identity must stay stable, for example as a context value." },
+      { "option": "useCallback", "guidance": "When passing a callback to a child wrapped in memo, or to a dependency array of another hook." }
+    ],
+    "example": {
+      "language": "jsx",
+      "caption": "The callback stays stable so the memoised child does not re-render with every parent render.",
+      "code": "const handleSelect = useCallback((id) => {\n  setSelected(id);\n}, []);\n\nconst total = useMemo(\n  () => items.reduce((sum, item) => sum + item.price, 0),\n  [items]\n);"
+    },
+    "commonMistakes": [
+      "Memoising everything by default and adding overhead for no gain",
+      "Forgetting a dependency so the memoised value goes stale",
+      "Memoising a callback whose child is not actually memoised"
+    ],
+    "related": ["react-memo", "react-useref", "react-useeffect", "react-cheatsheet"]
+  },
+  {
+    "id": "react-useeffect",
+    "slug": "useeffect",
+    "category": "react",
+    "type": "question",
+    "title": "How does useEffect work?",
+    "summary": "It runs a side effect after render and re-runs it when its dependencies change. It is for syncing with things outside React, not for deriving state.",
+    "difficulty": "medium",
+    "tags": ["hooks", "effects", "lifecycle"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-23",
+    "shortAnswer": "useEffect schedules a function to run after the browser has painted, and re-runs it whenever a value in its dependency array changes. Returning a function from the effect registers cleanup, which React runs before the next effect and on unmount. An empty dependency array means run once after the first render.",
+    "explanation": [
+      "Effects exist to synchronise React with systems outside it: network requests, subscriptions, timers and manually managed DOM. They are not the place to compute values from props and state, which belongs in render.",
+      "The dependency array is a list of values the effect reads. Every reactive value the effect uses must be listed, otherwise the effect closes over a stale value. The exhaustive-deps lint rule exists for exactly this.",
+      "React 18 development mode mounts, unmounts and remounts components to surface missing cleanup. Effects should be written so that running them twice is safe."
+    ],
+    "keyPoints": [
+      "Runs after commit and paint, not during render",
+      "Cleanup runs before the next effect and on unmount",
+      "List every reactive value the effect reads",
+      "Use it to sync with external systems, not to derive state"
+    ],
+    "example": {
+      "language": "jsx",
+      "caption": "The cleanup cancels the connection when id changes or the component unmounts.",
+      "code": "useEffect(() => {\n  const controller = new AbortController();\n\n  fetch(`/api/room/${id}`, { signal: controller.signal })\n    .then((response) => response.json())\n    .then(setRoom)\n    .catch((error) => {\n      if (error.name !== 'AbortError') setError(error);\n    });\n\n  return () => controller.abort();\n}, [id]);"
+    },
+    "commonMistakes": [
+      "Deriving state from props in an effect instead of computing it during render",
+      "Omitting dependencies and reading stale values",
+      "Fetching on every render because the dependency is a new object each time",
+      "Forgetting cleanup for subscriptions and timers"
+    ],
+    "followUps": [
+      "When is it better to compute a value during render instead of in an effect?",
+      "Why does the effect run twice in development?",
+      "How do you fetch data in React today?"
+    ],
+    "related": ["react-hooks-rules", "react-useref", "react-state-batching", "react-gotcha-stale-closure"]
+  },
+  {
+    "id": "react-keys",
+    "slug": "keys",
+    "category": "react",
+    "type": "question",
+    "title": "Why does React need keys?",
+    "summary": "Keys tell React which list items are the same across renders so it can move, keep or discard the right DOM and state.",
+    "difficulty": "easy",
+    "tags": ["lists", "reconciliation"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-05",
+    "shortAnswer": "A key is a stable identity for an element among its siblings. React uses it during reconciliation to match the previous item with the new one, so it can preserve that item's DOM nodes and state when the list reorders, and discard the right items when it shrinks.",
+    "explanation": [
+      "Without keys React falls back to position. Inserting an item at the top therefore shifts every item, and React updates all of them, which also moves input state and checkbox values to the wrong rows.",
+      "Keys only need to be unique among siblings, not globally. They are not passed to the component as a prop.",
+      "The index is only safe as a key when the list never reorders, never inserts and never removes from the middle. As soon as any of those happen the identity breaks."
+    ],
+    "keyPoints": [
+      "Keys must be unique and stable among siblings",
+      "They let React move instead of recreate items",
+      "Index keys break on reorder, insertion or removal",
+      "Keys are not forwarded as props"
+    ],
+    "example": {
+      "language": "jsx",
+      "caption": "Using the item id keeps each row's state attached to the right item when the list changes.",
+      "code": "{items.map((item) => (\n  <Row key={item.id} item={item} />\n))}"
+    },
+    "commonMistakes": [
+      "Using the array index as a key in a sortable or filterable list",
+      "Generating a random key on every render, which remounts the row each time",
+      "Expecting to read key inside the component"
+    ],
+    "followUps": [
+      "When is an index key acceptable?",
+      "What happens if two siblings share a key?",
+      "How do keys interact with reconciliation?"
+    ],
+    "related": ["react-reconciliation", "react-virtual-dom", "react-controlled-vs-uncontrolled"]
+  },
+  {
+    "id": "react-state-batching",
+    "slug": "state-batching",
+    "category": "react",
+    "type": "question",
+    "title": "What is automatic state batching?",
+    "summary": "React groups multiple state updates in the same event into one re-render, and since React 18 it does so everywhere.",
+    "difficulty": "hard",
+    "tags": ["state", "rendering", "concurrency"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-22",
+    "shortAnswer": "Batching means React collects several state updates and applies them together, producing a single re-render. Since React 18 it happens automatically in timeouts, promises and native event handlers, not only inside React event handlers.",
+    "explanation": [
+      "Before React 18, updates inside promises and timeouts each triggered their own render. Automatic batching removed that inconsistency, which is why the same code can render fewer times now.",
+      "When several updates depend on the previous value, pass an updater function instead of a value. React queues the updaters and applies them in order against the latest state.",
+      "If you need to read the DOM immediately after a committed update, flushSync forces React to apply the update synchronously, but it opts out of batching and should be used sparingly."
+    ],
+    "keyPoints": [
+      "One re-render for many updates in the same tick",
+      "Updates are queued, not applied instantly",
+      "Use updater functions when the next value depends on the previous one",
+      "flushSync opts out of batching for a deliberate synchronous commit"
+    ],
+    "example": {
+      "language": "jsx",
+      "caption": "Both updates batch into one render. The updater form guarantees the second statement sees the first.",
+      "code": "function handleClick() {\n  setCount((value) => value + 1);\n  setCount((value) => value + 1);\n  setFlag(true);\n  // one re-render with count incremented by 2\n}"
+    },
+    "commonMistakes": [
+      "Reading state right after setting it and expecting the new value",
+      "Calling setCount(count + 1) twice and expecting plus two, when both read the same count",
+      "Reaching for flushSync by default"
+    ],
+    "followUps": [
+      "Why does reading state after setState give the old value?",
+      "When would you use flushSync?",
+      "How does batching relate to concurrent rendering?"
+    ],
+    "related": ["react-useeffect", "react-reconciliation", "react-gotcha-stale-closure", "react-context"]
+  },
+  {
+    "id": "react-controlled-vs-uncontrolled",
+    "slug": "controlled-vs-uncontrolled",
+    "category": "react",
+    "type": "comparison",
+    "title": "Controlled vs Uncontrolled Components",
+    "summary": "Controlled inputs keep their value in React state. Uncontrolled inputs keep it in the DOM and are read with a ref.",
+    "difficulty": "medium",
+    "tags": ["forms", "state", "refs"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-19",
+    "options": [
+      { "name": "Controlled", "summary": "Value lives in React state" },
+      { "name": "Uncontrolled", "summary": "Value lives in the DOM" }
+    ],
+    "rows": [
+      { "label": "Source of truth", "values": ["React state", "The DOM node"] },
+      { "label": "Reading the value", "values": ["From state on each change", "From a ref on submit"] },
+      { "label": "Re-render on typing", "values": ["Yes, state updates", "No"] },
+      { "label": "Best for", "values": ["Validation, conditional UI, formatting, dependent fields", "Simple forms, file inputs, quick prototypes"] },
+      { "label": "Typical API", "values": ["value plus onChange", "defaultValue plus ref"] }
+    ],
+    "verdict": "Controlled inputs are the React default and the right choice when the UI reacts to input. Uncontrolled inputs are leaner for simple forms and are the only practical option for file inputs.",
+    "pickWhen": [
+      { "option": "Controlled", "guidance": "When validation, formatting or other UI depends on the value as the user types." },
+      { "option": "Uncontrolled", "guidance": "For simple submit-and-read forms, large forms where re-render cost matters, and file inputs." }
+    ],
+    "example": {
+      "language": "jsx",
+      "caption": "The controlled input drives state, the uncontrolled input is read on submit with a ref.",
+      "code": "function Form() {\n  const [email, setEmail] = useState('');\n  const nameRef = useRef(null);\n\n  return (\n    <form onSubmit={() => console.log(nameRef.current.value)}>\n      <input value={email} onChange={(e) => setEmail(e.target.value)} />\n      <input ref={nameRef} defaultValue='' />\n    </form>\n  );\n}"
+    },
+    "related": ["react-useref", "react-keys", "react-useeffect"]
+  },
+  {
+    "id": "react-useref",
+    "slug": "useref",
+    "category": "react",
+    "type": "concept",
+    "title": "useRef",
+    "summary": "A mutable box that survives renders without causing one, plus the standard way to reach a DOM node.",
+    "difficulty": "medium",
+    "tags": ["hooks", "refs", "dom"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-16",
+    "definition": "useRef returns an object with a single current property that persists for the lifetime of the component. Mutating it does not trigger a re-render, and it is the standard way to hold a DOM node reference or any value that should not affect rendering.",
+    "explanation": [
+      "The ref object is stable across renders, so it is safe to read and write in effects and callbacks without adding it to a dependency array.",
+      "Attaching a ref to a DOM element fills current with the node after commit. That is how you focus an input, measure an element or integrate a non-React library.",
+      "Because mutating current does not re-render, it is the wrong tool for values the UI displays. Use state for those, and a ref for values the UI does not render."
+    ],
+    "keyPoints": [
+      "Persists for the component lifetime",
+      "Mutating current does not re-render",
+      "The standard escape hatch to imperative DOM APIs",
+      "Do not read or write refs during render"
+    ],
+    "example": {
+      "language": "jsx",
+      "caption": "The ref focuses the input after mount, without any state involved.",
+      "code": "function SearchInput() {\n  const inputRef = useRef(null);\n\n  useEffect(() => {\n    inputRef.current?.focus();\n  }, []);\n\n  return <input ref={inputRef} type='search' />;\n}"
+    },
+    "commonMistakes": [
+      "Using a ref to store values the UI needs to display",
+      "Reading ref.current during the first render and getting null",
+      "Adding a ref to a dependency array, which is unnecessary because it is stable"
+    ],
+    "related": ["react-useeffect", "react-controlled-vs-uncontrolled", "react-memo"]
+  },
+  {
+    "id": "react-context",
+    "slug": "context",
+    "category": "react",
+    "type": "concept",
+    "title": "Context",
+    "summary": "A way to pass values through the tree without prop drilling, but not a state management system.",
+    "difficulty": "medium",
+    "tags": ["state", "context", "props"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-18",
+    "definition": "Context lets a component read a value provided higher in the tree without passing props through every level in between. It is a transport mechanism for values that are genuinely global to a subtree.",
+    "explanation": [
+      "Context is often described as avoiding prop drilling, but the more precise framing is that it lets a component depend on a value that is implicitly provided by an ancestor. That is why it fits themes, locale and auth.",
+      "When the provider's value changes, every consumer re-renders. If the provider passes a new object on each render, that happens far more often than intended. Memoise the value or split contexts.",
+      "Context does not optimise updates and does not replace a state library for high-frequency changes, where an external store with subscriptions avoids re-rendering the whole subtree."
+    ],
+    "keyPoints": [
+      "Avoids prop drilling for subtree-wide values",
+      "All consumers re-render when the value changes",
+      "Memoise the provider value to avoid needless renders",
+      "Better for low-frequency values than hot state"
+    ],
+    "example": {
+      "language": "jsx",
+      "caption": "The value is memoised so consumers only re-render when the actual theme changes.",
+      "code": "const ThemeContext = createContext('light');\n\nfunction ThemeProvider({ children }) {\n  const [theme, setTheme] = useState('light');\n  const value = useMemo(() => ({ theme, setTheme }), [theme]);\n  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;\n}"
+    },
+    "related": ["react-memo", "react-state-batching", "react-usememo-vs-usecallback"]
+  },
+  {
+    "id": "react-memo",
+    "slug": "memo",
+    "category": "react",
+    "type": "concept",
+    "title": "memo, and when not to use it",
+    "summary": "memo skips re-rendering a component when its props are shallowly equal. That is often less useful than it sounds.",
+    "difficulty": "medium",
+    "tags": ["performance", "rendering"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-20",
+    "definition": "memo wraps a component and returns a memoised version that skips re-rendering when its props are shallowly equal to the previous render. It is a performance tool, not a correctness tool.",
+    "explanation": [
+      "Because the comparison is shallow, a new object, array or function prop defeats it every time. That is why memo usually pairs with useMemo and useCallback on the parent side.",
+      "Memoising is not free. Every render pays a props comparison, and the wrapper adds indirection. For cheap components the comparison can cost more than the render it avoids.",
+      "The React compiler and profiling tools change the calculus. Measure first, then memoise the components that actually show up as hot in a profile."
+    ],
+    "keyPoints": [
+      "Shallow prop comparison only",
+      "New function or object props defeat it",
+      "Costs a comparison on every render",
+      "Profile before memoising broadly"
+    ],
+    "example": {
+      "language": "jsx",
+      "caption": "memo only helps because the parent memoises the callback it passes down.",
+      "code": "const Row = memo(function Row({ item, onSelect }) {\n  return <li onClick={() => onSelect(item.id)}>{item.label}</li>;\n});"
+    },
+    "related": ["react-usememo-vs-usecallback", "react-reconciliation", "react-useref", "react-context"]
+  },
+  {
+    "id": "react-strict-mode",
+    "slug": "strict-mode",
+    "category": "react",
+    "type": "question",
+    "title": "What does StrictMode do?",
+    "summary": "It double-invokes render, effects and other lifecycles in development to surface unsafe code. It does nothing in production.",
+    "difficulty": "medium",
+    "tags": ["development", "effects", "strict-mode"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-21",
+    "shortAnswer": "StrictMode is a development-only tool that intentionally runs render functions twice, remounts components once, and double-invokes many lifecycles. It surfaces components that are not resilient to being mounted twice or that mutate state during render. It has no effect in production builds.",
+    "explanation": [
+      "The double render catches impure render logic, such as mutating an external variable or relying on a side effect in render. The remount cycle catches effects that lack cleanup.",
+      "It also warns about deprecated APIs and legacy patterns, which is why new React apps enable it by default.",
+      "Because it only runs in development, code that only works because StrictMode is off may still fail in production. Treat StrictMode warnings as real bugs."
+    ],
+    "keyPoints": [
+      "Development only, no production impact",
+      "Double-invokes render and effects to reveal unsafe code",
+      "Remounts components once to test cleanup",
+      "Warnings usually point to a real bug"
+    ],
+    "example": {
+      "language": "jsx",
+      "caption": "Enable it once near the root of the app.",
+      "code": "createRoot(document.getElementById('root')).render(\n  <StrictMode>\n    <App />\n  </StrictMode>\n);"
+    },
+    "related": ["react-hooks-rules", "react-useeffect", "react-state-batching"]
+  },
+  {
+    "id": "react-gotcha-stale-closure",
+    "slug": "gotcha-stale-closure",
+    "category": "react",
+    "type": "gotcha",
+    "title": "Stale state inside an interval",
+    "summary": "An effect with an empty dependency array captures the first render's state, so an interval reads a stale value forever.",
+    "difficulty": "hard",
+    "tags": ["hooks", "effects", "closures", "gotcha"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-17",
+    "scenario": "You start an interval in an effect with an empty dependency array and read a state value inside it. The value never updates even though the component re-renders.",
+    "problem": "The effect runs once, so its callback closes over the state value from the first render. Every interval tick reads that same captured value, which is the classic stale closure. It is the React version of the JavaScript closure rule that a function sees the binding from where it was created.",
+    "example": {
+      "language": "jsx",
+      "caption": "count is captured once, so the interval always logs the initial value.",
+      "code": "useEffect(() => {\n  const id = setInterval(() => {\n    console.log(count); // always the first count\n  }, 1000);\n  return () => clearInterval(id);\n}, []);"
+    },
+    "fix": "Either add the value to the dependency array so the effect re-subscribes when it changes, or use the updater form setCount((value) => value + 1) so the logic does not need to read state at all. For values that must not cause re-subscription, keep the latest value in a ref.",
+    "keyPoints": [
+      "Empty dependency arrays freeze the values the effect reads",
+      "Updater functions avoid reading state entirely",
+      "A ref holding the latest value is the escape hatch for intervals",
+      "This is the same lexical capture rule as plain JavaScript closures"
+    ],
+    "related": ["react-useeffect", "react-hooks-rules", "js-closures", "react-state-batching"]
+  },
+  {
+    "id": "react-challenge-usefetch",
+    "slug": "challenge-usefetch",
+    "category": "react",
+    "type": "challenge",
+    "title": "Write a useFetch hook",
+    "summary": "Build a hook that fetches data for a url and returns loading, error and data, with cancellation.",
+    "difficulty": "hard",
+    "tags": ["hooks", "effects", "async", "exercise"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-24",
+    "prompt": "Implement a useFetch hook that takes a url and returns an object with data, loading and error. It must cancel the in-flight request when the url changes or the component unmounts, and it must not set state after unmount.",
+    "constraints": [
+      "Use AbortController for cancellation",
+      "Ignore the AbortError from a cancelled request",
+      "Reset the error when a new request starts"
+    ],
+    "hints": [
+      "The effect depends on the url and returns a cleanup that aborts.",
+      "Check the error name before setting the error state."
+    ],
+    "solution": {
+      "code": {
+        "language": "jsx",
+        "code": "function useFetch(url) {\n  const [state, setState] = useState({\n    data: null,\n    loading: true,\n    error: null,\n  });\n\n  useEffect(() => {\n    const controller = new AbortController();\n    setState({ data: null, loading: true, error: null });\n\n    fetch(url, { signal: controller.signal })\n      .then((response) => {\n        if (!response.ok) throw new Error('Request failed');\n        return response.json();\n      })\n      .then((data) => setState({ data, loading: false, error: null }))\n      .catch((error) => {\n        if (error.name === 'AbortError') return;\n        setState({ data: null, loading: false, error });\n      });\n\n    return () => controller.abort();\n  }, [url]);\n\n  return state;\n}"
+      },
+      "explanation": [
+        "The effect re-runs whenever url changes. Its cleanup aborts the previous request, so only the latest one can resolve.",
+        "Ignoring AbortError keeps a cancelled request from surfacing as a real error.",
+        "In a real app you would reach for a data library, but understanding this shape is what interviews test."
+      ]
+    },
+    "related": ["react-useeffect", "react-useref", "react-hooks-rules"]
+  },
+  {
+    "id": "react-cheatsheet",
+    "slug": "react-cheat-sheet",
+    "category": "react",
+    "type": "cheat-sheet",
+    "title": "React Hooks Cheat Sheet",
+    "summary": "The hooks you reach for most, their dependencies, and the rules that keep them predictable.",
+    "difficulty": "medium",
+    "tags": ["reference", "hooks", "cheat-sheet"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-25",
+    "description": "A compact reference for React hooks, common patterns and the gotchas that show up in interviews and production.",
+    "sections": [
+      {
+        "title": "Core hooks",
+        "items": [
+          { "label": "useState", "value": "Local state, triggers re-render" },
+          { "label": "useEffect", "value": "Sync with external systems after render", "note": "List every reactive value" },
+          { "label": "useRef", "value": "Mutable box that survives renders", "note": "Does not re-render" },
+          { "label": "useMemo", "value": "Cache a computed value" },
+          { "label": "useCallback", "value": "Cache a function identity" },
+          { "label": "useContext", "value": "Read the nearest provider value" }
+        ]
+      },
+      {
+        "title": "Rules",
+        "items": [
+          { "label": "Top level only", "value": "Never call hooks conditionally" },
+          { "label": "Same order", "value": "Order is the identity of hook state" },
+          { "label": "Custom hooks", "value": "Name starts with use" },
+          { "label": "Exhaustive deps", "value": "List every reactive value used" }
+        ]
+      },
+      {
+        "title": "Effect patterns",
+        "items": [
+          { "label": "Run once", "value": "Empty dependency array" },
+          { "label": "Cleanup", "value": "Return a function, runs on unmount and before re-run" },
+          { "label": "Avoid stale values", "value": "Add deps or use updater functions or a ref" }
+        ]
+      },
+      {
+        "title": "Performance",
+        "items": [
+          { "label": "memo", "value": "Skip re-render on shallow-equal props" },
+          { "label": "Stable props", "value": "Pair memo with useCallback and useMemo" },
+          { "label": "Context value", "value": "Memoise the provider value" },
+          { "label": "Batching", "value": "Multiple updates, one re-render" }
+        ]
+      }
+    ],
+    "related": ["react-usememo-vs-usecallback", "react-useeffect", "react-memo", "react-hooks-rules"]
+  }
+]

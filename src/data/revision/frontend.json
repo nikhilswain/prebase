@@ -1,0 +1,106 @@
+{
+  "category": "frontend",
+  "intro": "How the browser turns code into pixels, and the numbers that matter.",
+  "entries": [
+    {
+      "id": "rev-fe-critical-path",
+      "category": "frontend",
+      "term": "Critical rendering path",
+      "short": "DOM, CSSOM, render tree, layout, paint: what must finish before first paint.",
+      "medium": "CSS blocks rendering because styles must be resolved before layout. JavaScript blocks parsing unless deferred. Reducing the resources on this path is the fastest way to a quicker first paint.",
+      "detail": "Inline critical CSS, defer non-essential scripts, preload fonts and keep the initial HTML small enough to stream. Every blocking resource on the path delays the first frame.",
+      "related": "fe-critical-rendering-path",
+      "tags": ["performance", "rendering"]
+    },
+    {
+      "id": "rev-fe-pipeline",
+      "category": "frontend",
+      "term": "Rendering pipeline",
+      "short": "Parse, style, layout, paint, composite.",
+      "medium": "Geometry changes trigger layout, color changes trigger paint, and transform or opacity can skip both and only re-composite on the GPU. Animate transform and opacity for smoothness.",
+      "detail": "Layout and paint run on the main thread, so heavy work there competes with JavaScript. Composited transforms and opacity run off the main thread, which is why they stay smooth under load.",
+      "related": "fe-rendering-pipeline",
+      "tags": ["rendering", "performance"]
+    },
+    {
+      "id": "rev-fe-blocking",
+      "category": "frontend",
+      "term": "defer vs async",
+      "short": "defer runs after parsing in order, async runs as soon as it loads.",
+      "medium": "Both download scripts without blocking the parser. defer preserves document order and runs before DOMContentLoaded. async runs as soon as it is ready, so order is not guaranteed.",
+      "detail": "Use defer for application code that depends on the DOM and on other scripts. Use async for independent scripts such as analytics, where order does not matter.",
+      "related": "fe-critical-rendering-path",
+      "tags": ["performance", "scripts"]
+    },
+    {
+      "id": "rev-fe-lazy",
+      "category": "frontend",
+      "term": "Lazy loading",
+      "short": "Load off-screen work only when it is needed.",
+      "medium": "loading=lazy defers images until they approach the viewport. Dynamic import splits JavaScript so heavy features load on demand. Never lazy load the LCP image, it only delays it.",
+      "detail": "Set width and height on lazy images so the layout is reserved and nothing shifts when they arrive. Combine lazy images with a responsive srcset to avoid downloading oversized files.",
+      "related": "fe-code-splitting",
+      "tags": ["performance", "images"]
+    },
+    {
+      "id": "rev-fe-cls",
+      "category": "frontend",
+      "term": "Cumulative Layout Shift",
+      "short": "How much visible content moves after it painted.",
+      "medium": "Cause is content that loads into space that was not reserved. Fix by setting explicit width and height on images and embeds, reserving space for ads and fonts, and avoiding injecting content above existing content.",
+      "detail": "Layout shifts caused by user interaction within 500ms are excluded from the metric, but shifts caused by late-loading content are not. Aim for under 0.1.",
+      "related": "fe-core-web-vitals",
+      "tags": ["performance", "metrics"]
+    },
+    {
+      "id": "rev-fe-lcp-inp",
+      "category": "frontend",
+      "term": "LCP and INP",
+      "short": "Loading and responsiveness. Under 2.5s and under 200ms.",
+      "medium": "LCP is when the largest visible element renders, improved by faster servers, caching and prioritised critical resources. INP is the delay between interaction and next paint, improved by breaking up long tasks.",
+      "detail": "Both are field metrics taken from real sessions, not lab scores. Lab tools help diagnose, but the numbers that count come from real users on real devices.",
+      "related": "fe-core-web-vitals",
+      "tags": ["performance", "metrics"]
+    },
+    {
+      "id": "rev-fe-hydration",
+      "category": "frontend",
+      "term": "Hydration",
+      "short": "Attaching behaviour to server HTML. Visible first, interactive later.",
+      "medium": "The gap between paint and interactivity is the cost, and it grows with bundle size. Islands hydrate only interactive regions and leave the rest as static HTML.",
+      "detail": "Progressive hydration waits until a component is visible. Resumability serialises state so the client continues without re-running the tree. Both reduce the hydration cliff.",
+      "related": "fe-hydration",
+      "tags": ["hydration", "performance"]
+    },
+    {
+      "id": "rev-fe-strategies",
+      "category": "frontend",
+      "term": "SSR, SSG and ISR",
+      "short": "Per request, at build time, or static with background refresh.",
+      "medium": "SSG is fastest and cheapest but frozen at build. SSR is always fresh but costs compute per request. ISR serves static HTML and regenerates in the background after a revalidate window.",
+      "detail": "Most real apps mix strategies per route: static for marketing and docs, ISR for content, SSR for anything personalised or session dependent.",
+      "related": "fe-ssr-ssg-isr",
+      "tags": ["architecture", "rendering"]
+    },
+    {
+      "id": "rev-fe-islands",
+      "category": "frontend",
+      "term": "Islands architecture",
+      "short": "Static HTML by default, JavaScript only around interactive regions.",
+      "medium": "Each interactive widget is its own island with its own hydration. Everything else ships as HTML with no client JavaScript, which keeps the first load small.",
+      "detail": "The trade-off is that islands cannot share context as freely as a single application tree, and cross-island state needs an explicit store or events. This site uses exactly this model.",
+      "related": "fe-hydration",
+      "tags": ["architecture", "performance"]
+    },
+    {
+      "id": "rev-fe-caching",
+      "category": "frontend",
+      "term": "HTTP caching",
+      "short": "Immutable hashed assets with long max-age, HTML revalidated.",
+      "medium": "Fingerprint file names and serve them with a one year max-age and immutable so they never revalidate. Keep HTML short lived so deployments are picked up quickly.",
+      "detail": "stale-while-revalidate lets the CDN serve a cached response while fetching a fresh one in the background, which keeps responses fast without waiting on origin latency.",
+      "related": "fe-ssr-ssg-isr",
+      "tags": ["caching", "performance"]
+    }
+  ]
+}

@@ -1,0 +1,155 @@
+{
+  "category": "javascript",
+  "intro": "The JavaScript essentials to skim in the minutes before an interview.",
+  "entries": [
+    {
+      "id": "rev-js-scope",
+      "category": "javascript",
+      "term": "Scope",
+      "short": "Where a variable is visible. Decided by the source, not the call site.",
+      "medium": "Lexical scope is fixed at parse time. Inner scopes can read outer ones, never the reverse. Shadowing hides an outer binding with a closer one of the same name.",
+      "detail": "Because scope is static, you can reason about a variable by reading the file. This is what makes closures predictable and why a function called from far away still sees the variables written next to it.",
+      "related": "js-lexical-scope",
+      "tags": ["scope"]
+    },
+    {
+      "id": "rev-js-hoisting",
+      "category": "javascript",
+      "term": "Hoisting",
+      "short": "Declarations are registered before code runs.",
+      "medium": "var is hoisted and initialised to undefined. Function declarations are fully available. let, const and class are hoisted but uninitialised, so reading them early throws in the temporal dead zone.",
+      "detail": "The engine creates a scope, registers every declaration in it, then executes statements. That two-phase model explains var undefined, working function declarations and the temporal dead zone error.",
+      "related": "js-hoisting",
+      "tags": ["scope", "declarations"]
+    },
+    {
+      "id": "rev-js-closures",
+      "category": "javascript",
+      "term": "Closures",
+      "short": "A function that keeps access to the scope it was defined in.",
+      "medium": "The function holds a live reference to the surrounding bindings, not copies, so it can read and update them after the outer function returns. This enables private state, factories and event handlers.",
+      "detail": "Every function closes over its lexical environment. The captured scope stays alive while the closure is reachable, which is also why a long-lived closure can keep a large object from being collected.",
+      "related": "js-closures",
+      "tags": ["scope", "functions"]
+    },
+    {
+      "id": "rev-js-this",
+      "category": "javascript",
+      "term": "this",
+      "short": "Set by how a function is called, not where it is defined.",
+      "medium": "Priority order: new binding, explicit binding with call or apply or bind, implicit binding to the object before the dot, default binding. Arrow functions have no own this and inherit it from the enclosing scope.",
+      "detail": "Because this depends on the call site, extracting a method from an object loses the implicit binding. bind returns a new function with this permanently fixed, which is the usual fix for lost context.",
+      "related": "js-this",
+      "tags": ["this", "binding"]
+    },
+    {
+      "id": "rev-js-prototypes",
+      "category": "javascript",
+      "term": "Prototypes",
+      "short": "Property lookups walk a chain of prototype objects.",
+      "medium": "Every object links to a prototype. Missing properties are looked up along the chain until found or until null. Methods live on the prototype, so they are shared rather than copied per instance.",
+      "detail": "The chain ends at Object.prototype whose prototype is null. Classes are syntax over the same mechanism, so understanding prototypes explains class methods, instanceof and __proto__.",
+      "related": "js-prototypes",
+      "tags": ["prototypes", "objects"]
+    },
+    {
+      "id": "rev-js-event-loop",
+      "category": "javascript",
+      "term": "Event Loop",
+      "short": "Runs the current task to completion, drains microtasks, then takes the next task.",
+      "medium": "Single-threaded but non-blocking. After each task the microtask queue is fully drained, then the browser may render, then the next macrotask runs. Rendering never happens mid-task.",
+      "detail": "Because microtasks drain before rendering, a long promise chain can starve the renderer. Because tasks run to completion, one long synchronous loop freezes the page until it returns.",
+      "related": "js-event-loop",
+      "tags": ["async", "runtime"]
+    },
+    {
+      "id": "rev-js-promises",
+      "category": "javascript",
+      "term": "Promises",
+      "short": "A placeholder for a future value that settles once.",
+      "medium": "States are pending, fulfilled and rejected. then returns a new promise, which enables chaining. Static helpers change how you combine work: all, allSettled, race and any.",
+      "detail": "then and catch handlers always run asynchronously as microtasks, even when the promise is already settled. That is why promise callbacks beat timers scheduled in the same tick.",
+      "related": "js-promises",
+      "tags": ["async", "promises"]
+    },
+    {
+      "id": "rev-js-async-await",
+      "category": "javascript",
+      "term": "async / await",
+      "short": "Syntax over promises that reads like synchronous code.",
+      "medium": "An async function always returns a promise. await pauses the function, not the thread, and resumes as a microtask. Exceptions become rejections, so try and catch works naturally.",
+      "detail": "Sequential awaits run one after another, which is slower than Promise.all when the requests are independent. Understanding that await is promise syntax, not a thread pause, is the interview point.",
+      "related": "js-promises",
+      "tags": ["async"]
+    },
+    {
+      "id": "rev-js-microtasks",
+      "category": "javascript",
+      "term": "Microtasks",
+      "short": "Promises, queueMicrotask and MutationObserver callbacks.",
+      "medium": "The microtask queue is drained completely after the current task and before rendering. This is why promise callbacks run before setTimeout callbacks scheduled in the same tick.",
+      "detail": "A recursive promise chain keeps adding microtasks and can prevent the browser from ever painting, because rendering waits for the queue to empty. This is a real cause of unresponsive pages.",
+      "related": "js-microtasks",
+      "tags": ["async", "scheduling"]
+    },
+    {
+      "id": "rev-js-macrotasks",
+      "category": "javascript",
+      "term": "Macrotasks",
+      "short": "setTimeout, events and I/O callbacks.",
+      "medium": "The loop picks up one macrotask at a time between renders. Timer delays are a minimum wait, not a guarantee, and the actual delay depends on how busy the main thread is.",
+      "detail": "Nested setTimeout calls are clamped to a minimum of a few milliseconds by browsers. For smooth visual updates, requestAnimationFrame is the right scheduler because it aligns with the render step.",
+      "related": "js-microtasks",
+      "tags": ["async", "scheduling"]
+    },
+    {
+      "id": "rev-js-modules",
+      "category": "javascript",
+      "term": "Modules",
+      "short": "ES modules have their own scope and always run in strict mode.",
+      "medium": "Imports are live read-only bindings, not copies, so a module sees updates to an exported value. Modules are parsed once, so circular imports can leave a binding undefined during initial evaluation.",
+      "detail": "Because module scope is not the global scope, top-level declarations do not become global properties, and this is undefined at the top level. That is a common difference from classic scripts.",
+      "tags": ["modules"]
+    },
+    {
+      "id": "rev-js-array-methods",
+      "category": "javascript",
+      "term": "map / filter / reduce",
+      "short": "Transform each, keep some, fold into one.",
+      "medium": "All three return a new array and never mutate the source. map keeps the length, filter may shorten it, reduce collapses it. Pass an initial value to reduce to handle empty arrays safely.",
+      "detail": "map and filter cannot short-circuit. Use find, some or every when you want to stop early. Anything map and filter do can be expressed with reduce, but clarity usually favours the specialised method.",
+      "related": "js-map-filter-reduce",
+      "tags": ["arrays", "functional"]
+    },
+    {
+      "id": "rev-js-equality",
+      "category": "javascript",
+      "term": "== vs ===",
+      "short": "Strict equality does not coerce. Prefer ===.",
+      "medium": "== coerces operands to a common type before comparing, which produces surprising results such as [] == '' being true. The one accepted use of == is the null check, because value == null matches both null and undefined.",
+      "detail": "NaN is never equal to itself under either operator, so use Number.isNaN. Object comparison is always by reference, so two structurally identical objects are never equal.",
+      "related": "js-equality",
+      "tags": ["equality", "coercion"]
+    },
+    {
+      "id": "rev-js-references",
+      "category": "javascript",
+      "term": "References and copying",
+      "short": "Primitives copy by value, objects copy by reference.",
+      "medium": "Assigning an object copies the pointer, so both names see mutations. Spread and Object.assign are shallow, leaving nested objects shared. structuredClone makes a true deep copy.",
+      "detail": "JSON round-tripping was the old deep copy trick, but it loses functions, dates, undefined and circular references. structuredClone handles those, which is why it is the modern answer.",
+      "related": "js-objects",
+      "tags": ["objects", "references"]
+    },
+    {
+      "id": "rev-js-var-let-const",
+      "category": "javascript",
+      "term": "var vs let vs const",
+      "short": "const by default, let when it changes, var almost never.",
+      "medium": "let and const are block scoped and hoisted with a temporal dead zone. var is function scoped and hoisted as undefined. const prevents reassignment, not mutation of the value.",
+      "detail": "In a loop, let and const create a fresh binding per iteration, while var shares one binding. That difference is the root of the classic setTimeout-in-a-loop interview question.",
+      "related": "js-var-let-const",
+      "tags": ["declarations", "scope"]
+    }
+  ]
+}

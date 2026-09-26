@@ -1,0 +1,136 @@
+{
+  "category": "react",
+  "intro": "React's mental model in short, scannable pieces.",
+  "entries": [
+    {
+      "id": "rev-react-render",
+      "category": "react",
+      "term": "Render vs commit",
+      "short": "Render builds the element tree; commit applies it to the DOM.",
+      "medium": "Rendering is pure and can be interrupted. Committing is the synchronous phase where React mutates the DOM and runs layout effects. Effects run after the commit and paint.",
+      "detail": "Keeping render pure is what allows React to pause, discard and replay work. Side effects belong in effects, not in render, which is a rule StrictMode enforces by double-invoking render.",
+      "related": "react-reconciliation",
+      "tags": ["rendering"]
+    },
+    {
+      "id": "rev-react-reconciliation",
+      "category": "react",
+      "term": "Reconciliation",
+      "short": "Diff the new tree against the old and apply the smallest patch.",
+      "medium": "Same element type updates in place, a different type unmounts and remounts. Keys let React match list items across renders. Fiber makes the work interruptible and prioritised.",
+      "detail": "The diff is heuristic, based on type and keys, not a general tree diff which would be too slow. That is why keys matter and why defining a component inside another component remounts it every render.",
+      "related": "react-reconciliation",
+      "tags": ["rendering", "fiber"]
+    },
+    {
+      "id": "rev-react-virtual-dom",
+      "category": "react",
+      "term": "Virtual DOM",
+      "short": "A JS description of the UI that React diffs before touching the DOM.",
+      "medium": "JSX compiles to createElement calls that build a plain object tree. React compares it with the previous tree and produces a minimal set of DOM mutations.",
+      "detail": "It is not faster than hand-written DOM code in isolation. Its value is that declarative UI stays predictable in performance while you write code as a function of state.",
+      "related": "react-virtual-dom",
+      "tags": ["rendering"]
+    },
+    {
+      "id": "rev-react-rules",
+      "category": "react",
+      "term": "Rules of hooks",
+      "short": "Call hooks at the top level, in the same order, every render.",
+      "medium": "React stores hook state per component in call order. Conditionals go inside hooks, not around them. Custom hooks start with use and compose into a component's hook list.",
+      "detail": "The eslint rule react-hooks/rules-of-hooks catches most violations statically. Skipping a hook on one render shifts every later hook to the wrong state slot.",
+      "related": "react-hooks-rules",
+      "tags": ["hooks"]
+    },
+    {
+      "id": "rev-react-state",
+      "category": "react",
+      "term": "State and batching",
+      "short": "State updates are queued, and batching produces one re-render.",
+      "medium": "Reading state right after setting it gives the old value. Use the updater form when the next value depends on the previous one. Since React 18, batching happens everywhere, including promises and timeouts.",
+      "detail": "Batching is why two setCount calls in one handler produce a single render. Because updates are queued, both statements must use the updater form to accumulate, otherwise both read the same stale value.",
+      "related": "react-state-batching",
+      "tags": ["state"]
+    },
+    {
+      "id": "rev-react-useeffect",
+      "category": "react",
+      "term": "useEffect",
+      "short": "Run a side effect after render and when dependencies change.",
+      "medium": "Use it to sync with external systems, not to derive state. Return a cleanup function for subscriptions and requests. List every reactive value the effect reads in the dependency array.",
+      "detail": "An empty dependency array freezes the values the effect captures, which is the stale closure bug. Fetching, subscribing or measuring belongs in an effect; computing a value from props belongs in render.",
+      "related": "react-useeffect",
+      "tags": ["hooks", "effects"]
+    },
+    {
+      "id": "rev-react-deps",
+      "category": "react",
+      "term": "Dependency arrays",
+      "short": "The list of values the effect or memo depends on.",
+      "medium": "Missing dependencies cause stale values, extra dependencies cause extra runs. The exhaustive-deps rule enforces this. Functions and objects created during render are new each time and cause repeated runs.",
+      "detail": "If an effect depends on a function, either wrap that function in useCallback or move it inside the effect. Adding a ref used for its identity never needs to be in the array because the ref object is stable.",
+      "related": "react-useeffect",
+      "tags": ["hooks", "effects"]
+    },
+    {
+      "id": "rev-react-useref",
+      "category": "react",
+      "term": "useRef",
+      "short": "A mutable box that survives renders without causing one.",
+      "medium": "The ref object is stable, so it is safe in effects without adding it to dependencies. Attaching it to a DOM node fills current after commit, which is the standard way to reach imperative APIs.",
+      "detail": "Because mutating current does not re-render, refs are wrong for values the UI displays. Use them for timers, previous values and DOM nodes.",
+      "related": "react-useref",
+      "tags": ["hooks", "refs"]
+    },
+    {
+      "id": "rev-react-usememo-callback",
+      "category": "react",
+      "term": "useMemo and useCallback",
+      "short": "Cache a value or a function across renders.",
+      "medium": "useMemo caches the result of a computation, useCallback caches a function reference. Both add a dependency comparison on every render, so use them when there is a measured reason.",
+      "detail": "useCallback(fn, deps) is equivalent to useMemo(() => fn, deps). They matter most when passing stable props to a memoised child or when a value must stay stable as a dependency or context value.",
+      "related": "react-usememo-vs-usecallback",
+      "tags": ["hooks", "performance"]
+    },
+    {
+      "id": "rev-react-memo",
+      "category": "react",
+      "term": "memo",
+      "short": "Skip re-rendering when props are shallowly equal.",
+      "medium": "New object, array or function props defeat it, so memo usually pairs with useMemo and useCallback on the parent. It costs a comparison on every render, which is not free for cheap components.",
+      "detail": "Measure before memoising broadly. The React compiler reduces the need for manual memoisation, but understanding the shallow comparison is still a common interview topic.",
+      "related": "react-memo",
+      "tags": ["performance"]
+    },
+    {
+      "id": "rev-react-keys",
+      "category": "react",
+      "term": "Keys",
+      "short": "Stable identity for siblings so React can match items across renders.",
+      "medium": "Keys must be unique among siblings and stable over time. Using the array index breaks when the list reorders, inserts or removes from the middle, and moves state to the wrong row.",
+      "detail": "Keys are not passed as props. They tell reconciliation which old item corresponds to which new one, so DOM nodes and component state are preserved for items that persist.",
+      "related": "react-keys",
+      "tags": ["lists"]
+    },
+    {
+      "id": "rev-react-context",
+      "category": "react",
+      "term": "Context",
+      "short": "Read a value provided higher in the tree without prop drilling.",
+      "medium": "All consumers re-render when the value changes, so memoise the provider value or split contexts. Good for low-frequency values like theme, locale and auth.",
+      "detail": "Context is transport, not a state manager. For high-frequency updates, an external store with subscriptions avoids re-rendering every consumer on each change.",
+      "related": "react-context",
+      "tags": ["state", "context"]
+    },
+    {
+      "id": "rev-react-strict-mode",
+      "category": "react",
+      "term": "StrictMode",
+      "short": "Development-only double rendering to surface unsafe code.",
+      "medium": "It double-invokes render and effects and remounts components once. It catches impure render logic and effects without cleanup. It has no effect in production.",
+      "detail": "Warnings usually point to a real bug rather than a StrictMode quirk. Code that only works with StrictMode off may still fail in production, so treat the warnings as signal.",
+      "related": "react-strict-mode",
+      "tags": ["development"]
+    }
+  ]
+}

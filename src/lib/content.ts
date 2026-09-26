@@ -91,6 +91,18 @@ function validate(items: ContentItem[]): void {
   if (problems.length) {
     throw new Error(`Content validation failed:\n- ${problems.join('\n- ')}`);
   }
+
+  const dangling = new Set<string>();
+  for (const item of items) {
+    for (const id of item.related ?? []) {
+      if (!ids.has(id)) dangling.add(`${item.id} → ${id}`);
+    }
+  }
+  if (dangling.size) {
+    console.warn(
+      `[content] ${dangling.size} related reference(s) point to missing topics:\n  ${[...dangling].join('\n  ')}`,
+    );
+  }
 }
 
 const allItems = collectItems();

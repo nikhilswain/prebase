@@ -1,0 +1,381 @@
+[
+  {
+    "id": "css-flexbox-vs-grid",
+    "slug": "flexbox-vs-grid",
+    "category": "css",
+    "type": "comparison",
+    "title": "Flexbox vs Grid",
+    "summary": "Flexbox lays out one dimension at a time. Grid lays out rows and columns together.",
+    "difficulty": "medium",
+    "tags": ["layout", "flexbox", "grid"],
+    "featured": true,
+    "reviewStatus": "verified",
+    "updated": "2026-08-27",
+    "options": [
+      { "name": "Flexbox", "summary": "One-dimensional distribution" },
+      { "name": "Grid", "summary": "Two-dimensional layout" }
+    ],
+    "rows": [
+      { "label": "Dimensions", "values": ["One axis at a time, row or column", "Rows and columns together"] },
+      { "label": "Sizing model", "values": ["Content driven, items size themselves", "Track driven, the container defines the tracks"] },
+      { "label": "Alignment", "values": ["Along the main axis with justify, cross with align", "Both axes controlled independently"] },
+      { "label": "Overlap", "values": ["Not designed for it", "Items can share the same cells"] },
+      { "label": "Best for", "values": ["Toolbars, rows of controls, equal-height items, centering", "Page layout, dashboards, card galleries, magazine layouts"] }
+    ],
+    "verdict": "They are not competitors. Use Grid for the overall layout and Flexbox for distributing content inside a single row or column. A card gallery is Grid, the toolbar inside each card is Flexbox.",
+    "pickWhen": [
+      { "option": "Flexbox", "guidance": "When you are arranging items along one axis and want them to size from their content." },
+      { "option": "Grid", "guidance": "When you know you need rows and columns, or want to place items precisely in a defined structure." }
+    ],
+    "example": {
+      "language": "css",
+      "caption": "A grid page shell with a flexbox toolbar inside the header.",
+      "code": ".layout {\n  display: grid;\n  grid-template-columns: 16rem 1fr;\n  gap: 2rem;\n}\n\n.toolbar {\n  display: flex;\n  align-items: center;\n  gap: 0.5rem;\n}"
+    },
+    "commonMistakes": [
+      "Using Flexbox with percentage widths when Grid tracks would express the layout directly",
+      "Forgetting flex-wrap, so items shrink instead of wrapping",
+      "Fighting min-width auto inside a flex item that contains overflowing content"
+    ],
+    "related": ["css-centering", "css-challenge-responsive-grid", "css-cheatsheet"]
+  },
+  {
+    "id": "css-cascade",
+    "slug": "cascade",
+    "category": "css",
+    "type": "concept",
+    "title": "The Cascade and Layers",
+    "summary": "When rules conflict, the cascade decides the winner by origin, layer, specificity and order.",
+    "difficulty": "medium",
+    "tags": ["cascade", "specificity", "layers"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-18",
+    "definition": "The cascade is the algorithm that resolves conflicting declarations. It considers the origin and importance of the declaration, the layer it is in, its specificity, and finally the order it appears in the source.",
+    "explanation": [
+      "Origin matters most. User agent styles lose to author styles, author styles lose to user styles when those are important, and animations and transitions sit in their own positions in the order.",
+      "Cascade layers let authors define their own ordering with @layer. Anything in a later layer wins regardless of specificity, which is how you keep utilities from being overridden by component styles without escalating specificity.",
+      "Inheritance is separate from the cascade. Inherited values only apply when no declaration targets the element, and inherit, initial and unset let you opt in or out explicitly."
+    ],
+    "keyPoints": [
+      "Order of decision: origin and importance, layer, specificity, source order",
+      "Layers beat specificity for author level conflicts",
+      "Inheritance only fills in when nothing targets the element",
+      "!important inverts the cascade rather than simply winning"
+    ],
+    "example": {
+      "language": "css",
+      "caption": "Utilities in a later layer override component styles even with lower specificity.",
+      "code": "@layer reset, components, utilities;\n\n@layer components {\n  .card p { color: var(--ink-2); }\n}\n\n@layer utilities {\n  .text-accent { color: var(--accent); }\n}"
+    },
+    "related": ["css-specificity", "css-variables", "css-stacking-context"]
+  },
+  {
+    "id": "css-specificity",
+    "slug": "specificity",
+    "category": "css",
+    "type": "concept",
+    "title": "Specificity",
+    "summary": "A three-part score that decides which selector wins when two rules match the same element.",
+    "difficulty": "medium",
+    "tags": ["cascade", "selectors"],
+    "featured": true,
+    "reviewStatus": "verified",
+    "updated": "2026-08-25",
+    "definition": "Specificity ranks selectors by three components: the number of id selectors, the number of class, attribute and pseudo-class selectors, and the number of type and pseudo-element selectors. Higher components win before lower ones are compared.",
+    "explanation": [
+      "The score is compared as a triple, not as a single number. One id beats any number of classes, no matter how many. Inline styles sit above all selectors, and !important sits above those.",
+      "The universal selector and combinators add nothing. :where() always adds zero, which makes it useful for zero-specificity defaults, while :is() takes the specificity of its most specific argument.",
+      "Keeping specificity low and flat is the practical goal. A codebase where every rule is a single class is easy to override and reason about, which is why utility and layered approaches work so well."
+    ],
+    "keyPoints": [
+      "Compared as three separate components, not summed",
+      "Inline styles outrank selectors",
+      ":where() contributes zero specificity",
+      "Avoid ids and !important in application styles"
+    ],
+    "example": {
+      "language": "css",
+      "caption": "The id rule wins despite the class rule appearing later.",
+      "code": "#title { color: red; }   /* 1,0,0 */\n.title { color: blue; }  /* 0,1,0 */\n\n:where(#title) { color: green; } /* 0,0,0 */"
+    },
+    "related": ["css-cascade", "css-variables", "css-stacking-context"]
+  },
+  {
+    "id": "css-box-model",
+    "slug": "box-model",
+    "category": "css",
+    "type": "concept",
+    "title": "The Box Model",
+    "summary": "Content, padding, border and margin, and the box-sizing decision that changes what width means.",
+    "difficulty": "easy",
+    "tags": ["layout", "box-model"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-06",
+    "definition": "Every element is a box made of four layers: content, padding, border and margin. The box-sizing property decides whether width and height refer to the content box or the border box.",
+    "explanation": [
+      "By default width applies to the content box, so adding padding or a border makes the rendered box larger than the declared width. This is the single most common layout surprise in CSS.",
+      "Setting box-sizing: border-box makes width include padding and border, so a declared width is the size you actually get. It is common to apply it to every element with the universal selector.",
+      "Margin can collapse between adjacent blocks and can be negative. Padding cannot be negative and does not collapse, which is why padding is the safer choice for spacing inside an element."
+    ],
+    "keyPoints": [
+      "Default content-box adds padding and border on top of width",
+      "border-box makes width include padding and border",
+      "Vertical margins between siblings collapse to the larger value",
+      "Padding is never negative and never collapses"
+    ],
+    "example": {
+      "language": "css",
+      "caption": "Border box sizing makes the declared width the real rendered width.",
+      "code": "*, *::before, *::after {\n  box-sizing: border-box;\n}\n\n.card {\n  width: 20rem;\n  padding: 1rem;\n  border: 1px solid #ddd;\n}"
+    },
+    "related": ["css-position", "css-centering", "css-gotcha-margin-collapse"]
+  },
+  {
+    "id": "css-position",
+    "slug": "position",
+    "category": "css",
+    "type": "concept",
+    "title": "Positioning",
+    "summary": "static, relative, absolute, fixed and sticky, and how each relates to its containing block.",
+    "difficulty": "medium",
+    "tags": ["layout", "position", "containing-block"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-14",
+    "definition": "The position property changes how an element is laid out and what its offsets mean. The key idea is the containing block: absolute elements resolve offsets against the nearest positioned ancestor, fixed against the viewport, and sticky against their nearest scrolling ancestor.",
+    "explanation": [
+      "relative keeps the element in normal flow but lets you offset it, and crucially makes it a containing block for absolutely positioned children. That pairing is the standard way to anchor a badge to a card.",
+      "absolute removes the element from flow and positions it against the nearest ancestor with a position other than static. If none exists, it resolves against the initial containing block.",
+      "fixed is positioned against the viewport, except when an ancestor creates a containing block through transform, filter or will-change, which is a frequent source of surprise.",
+      "sticky stays in flow and behaves relative until it crosses a threshold, then sticks. It only sticks within its parent, which is why it often stops earlier than expected."
+    ],
+    "keyPoints": [
+      "absolute resolves against the nearest positioned ancestor",
+      "relative both offsets and establishes a containing block",
+      "transform on an ancestor breaks fixed positioning",
+      "sticky is constrained by its parent and needs a scroll offset"
+    ],
+    "example": {
+      "language": "css",
+      "caption": "The card is positioned, so the badge anchors to its top right corner.",
+      "code": ".card {\n  position: relative;\n}\n\n.badge {\n  position: absolute;\n  top: -0.5rem;\n  right: -0.5rem;\n}"
+    },
+    "related": ["css-stacking-context", "css-box-model", "css-centering"]
+  },
+  {
+    "id": "css-variables",
+    "slug": "custom-properties",
+    "category": "css",
+    "type": "concept",
+    "title": "Custom Properties",
+    "summary": "Runtime variables that cascade and inherit, unlike preprocessor variables which are compile-time text.",
+    "difficulty": "easy",
+    "tags": ["variables", "theming", "cascade"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-12",
+    "definition": "Custom properties, written with a double dash, are CSS values you define once and reuse. Because they are part of the cascade, they inherit and can be redefined per element or per media query at runtime.",
+    "explanation": [
+      "Unlike a Sass variable, which is substituted at build time, a custom property is a live value resolved by the browser. Changing it on an ancestor updates every descendant that references it.",
+      "This is how theming works without duplicating rules: define the tokens on the root and override them under a media query or an attribute selector.",
+      "Fallbacks are built in through var(--name, fallback). Values can also be set from JavaScript with style.setProperty, which makes custom properties a bridge between styling and runtime state."
+    ],
+    "keyPoints": [
+      "Resolved at runtime, not compiled away",
+      "They inherit and can be scoped to any element",
+      "var(--token, fallback) provides a default",
+      "Overriding on an ancestor re-themes the subtree"
+    ],
+    "example": {
+      "language": "css",
+      "caption": "The dark theme only redefines the tokens, everything else stays the same.",
+      "code": ":root {\n  --bg: #ffffff;\n  --ink: #16161a;\n}\n\n.dark {\n  --bg: #0a0a0d;\n  --ink: #f2f2f4;\n}\n\nbody {\n  background: var(--bg);\n  color: var(--ink);\n}"
+    },
+    "related": ["css-cascade", "css-specificity", "css-cheatsheet"]
+  },
+  {
+    "id": "css-centering",
+    "slug": "centering",
+    "category": "css",
+    "type": "question",
+    "title": "How do you center an element?",
+    "summary": "Modern CSS centers in one or two lines with Grid or Flexbox. No more absolute positioning hacks.",
+    "difficulty": "easy",
+    "tags": ["layout", "centering", "flexbox", "grid"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-04",
+    "shortAnswer": "For centering an element inside its parent, use display: grid with place-items: center. For centering text, use text-align: center for the inline axis and align-content or an explicit line-height approach for the block axis. For centering an absolutely positioned element, use inset: 0 with margin: auto and a defined size.",
+    "explanation": [
+      "place-items: center on a grid container centers both axes at once and works regardless of the child's size, which makes it the most reliable default.",
+      "Flexbox needs justify-content and align-items together, and behaves differently for a single child depending on flex-direction.",
+      "A fixed or absolute element can still be centered with inset: 0 and margin: auto as long as it has a definite width and height. Overlay dialogs often use exactly this."
+    ],
+    "keyPoints": [
+      "Grid with place-items center is the simplest two-axis centering",
+      "Flexbox needs justify-content and align-items",
+      "inset auto margins center a sized absolute element",
+      "text-align center only handles the inline axis"
+    ],
+    "example": {
+      "language": "css",
+      "caption": "One line centers a child on both axes regardless of its size.",
+      "code": ".center {\n  display: grid;\n  place-items: center;\n  min-height: 100dvh;\n}"
+    },
+    "related": ["css-flexbox-vs-grid", "css-position", "css-box-model"]
+  },
+  {
+    "id": "css-stacking-context",
+    "slug": "stacking-context",
+    "category": "css",
+    "type": "question",
+    "title": "What is a stacking context?",
+    "summary": "A local z-index arena. Some properties create one, and z-index only competes within the same context.",
+    "difficulty": "hard",
+    "tags": ["z-index", "stacking", "position"],
+    "featured": true,
+    "reviewStatus": "verified",
+    "updated": "2026-08-26",
+    "shortAnswer": "A stacking context is a group of elements that are painted together and whose z-index values only compete with each other. It is created by the root element and by things like position with a z-index, opacity below one, transform, filter, isolation: isolate and will-change. A child cannot use z-index to escape the context it lives in.",
+    "explanation": [
+      "This is why a high z-index on a modal can still appear behind a dropdown: the modal may be trapped inside a stacking context created by a transformed ancestor, so its z-index is only meaningful within that subtree.",
+      "The fix is usually structural, not a bigger number. Move the element to a higher level of the tree, or create a deliberate context with isolation: isolate where you want one.",
+      "Within a single context, painting order follows the stacking rules: backgrounds first, then positioned elements by z-index, then inline content and finally positioned descendants with higher z-index."
+    ],
+    "keyPoints": [
+      "z-index only competes within one stacking context",
+      "transform, filter, opacity below 1 and will-change all create contexts",
+      "isolation: isolate creates one on purpose",
+      "A child cannot escape an ancestor's context with z-index"
+    ],
+    "example": {
+      "language": "css",
+      "caption": "The transformed card traps the tooltip, so its z-index cannot lift it above the nav.",
+      "code": ".card {\n  transform: translateZ(0);\n}\n\n.card .tooltip {\n  z-index: 9999;\n}\n\n.nav {\n  z-index: 10;\n}"
+    },
+    "followUps": [
+      "Why does transform break fixed positioning and stacking?",
+      "What creates a stacking context?",
+      "How would you fix a modal that renders behind other content?"
+    ],
+    "related": ["css-position", "css-specificity", "css-cascade"]
+  },
+  {
+    "id": "css-gotcha-margin-collapse",
+    "slug": "gotcha-margin-collapse",
+    "category": "css",
+    "type": "gotcha",
+    "title": "Collapsing margins",
+    "summary": "Adjacent vertical margins merge into one, and a child's top margin can leak out of its parent.",
+    "difficulty": "medium",
+    "tags": ["box-model", "margin", "gotcha"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-10",
+    "scenario": "You add a top margin to a child heading and the whole parent moves down instead, or two stacked sections show a gap of the larger margin rather than the sum.",
+    "problem": "Adjacent vertical margins collapse. Between siblings the larger margin wins and is not added. Between a parent and its first or last child, if nothing separates them, the child's margin collapses through the parent and pushes the parent instead. Horizontal margins never collapse.",
+    "example": {
+      "language": "css",
+      "caption": "The child's 2rem top margin collapses through, so the parent moves instead of the child sitting 2rem down.",
+      "code": ".parent {\n  background: #eee;\n}\n\n.parent h2 {\n  margin-top: 2rem;\n}"
+    },
+    "fix": "Break the adjacency. Adding padding, a border, overflow other than visible, or a display value that establishes a block formatting context on the parent stops the collapse. Using flex or grid containers also removes collapsing entirely, which is why modern layouts rarely hit it.",
+    "keyPoints": [
+      "Only vertical margins collapse",
+      "Sibling margins take the larger value, not the sum",
+      "A parent and first child can collapse together",
+      "Flex and grid containers do not collapse margins"
+    ],
+    "related": ["css-box-model", "css-position", "css-challenge-responsive-grid"]
+  },
+  {
+    "id": "css-challenge-responsive-grid",
+    "slug": "challenge-responsive-grid",
+    "category": "css",
+    "type": "challenge",
+    "title": "Responsive card grid without media queries",
+    "summary": "Write a grid that fits as many cards per row as possible, with no breakpoints.",
+    "difficulty": "medium",
+    "tags": ["layout", "grid", "responsive", "exercise"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-23",
+    "prompt": "Write CSS for a card container that places as many 16rem cards as fit on the row, expands them to fill the remaining space, and wraps to fewer columns on narrow screens. Do not use media queries.",
+    "constraints": [
+      "No media queries",
+      "Cards should shrink and grow between 16rem and 1fr",
+      "Consistent gaps between cards"
+    ],
+    "hints": [
+      "auto-fit and auto-fill control how empty tracks behave.",
+      "minmax lets a track shrink to a minimum and grow to fill."
+    ],
+    "solution": {
+      "code": {
+        "language": "css",
+        "code": ".cards {\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));\n  gap: 1.5rem;\n}"
+      },
+      "explanation": [
+        "auto-fit creates as many tracks as fit at the minimum size, then collapses empty tracks so the remaining ones stretch to fill the row.",
+        "auto-fill keeps the empty tracks, which leaves the last row left-aligned. Choose auto-fit when you want the cards to stretch, auto-fill when you want them to keep their size."
+      ]
+    },
+    "related": ["css-flexbox-vs-grid", "css-gotcha-margin-collapse", "css-cheatsheet"]
+  },
+  {
+    "id": "css-cheatsheet",
+    "slug": "css-cheat-sheet",
+    "category": "css",
+    "type": "cheat-sheet",
+    "title": "CSS Cheat Sheet",
+    "summary": "Layout, centering, the cascade and the box model at a glance.",
+    "difficulty": "easy",
+    "tags": ["reference", "cheat-sheet"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-27",
+    "description": "A quick reference for the CSS that decides how a page is laid out and how conflicts are resolved.",
+    "sections": [
+      {
+        "title": "Layout",
+        "items": [
+          { "label": "Flexbox", "value": "One axis, content sized", "note": "Toolbars, rows, centering" },
+          { "label": "Grid", "value": "Two axes, track sized", "note": "Page shells, galleries" },
+          { "label": "Auto responsive grid", "value": "repeat(auto-fit, minmax(16rem, 1fr))", "code": ".grid { grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }", "language": "css" },
+          { "label": "Center both axes", "value": "display: grid; place-items: center", "code": ".center { display: grid; place-items: center; }", "language": "css" }
+        ]
+      },
+      {
+        "title": "Cascade order",
+        "items": [
+          { "label": "1. Origin and importance", "value": "User agent, author, user, animations" },
+          { "label": "2. Layers", "value": "Later @layer wins over earlier" },
+          { "label": "3. Specificity", "value": "ids, then classes, then types" },
+          { "label": "4. Source order", "value": "Last declaration wins a tie" }
+        ]
+      },
+      {
+        "title": "Specificity",
+        "items": [
+          { "label": "id", "value": "1,0,0" },
+          { "label": "class, attribute, pseudo-class", "value": "0,1,0" },
+          { "label": "type, pseudo-element", "value": "0,0,1" },
+          { "label": ":where()", "value": "0,0,0", "note": "Zero specificity" }
+        ]
+      },
+      {
+        "title": "Box model",
+        "items": [
+          { "label": "border-box", "value": "width includes padding and border", "note": "Set this globally" },
+          { "label": "margin", "value": "Can collapse vertically, can be negative" },
+          { "label": "padding", "value": "Never collapses, never negative" }
+        ]
+      },
+      {
+        "title": "Stacking contexts created by",
+        "items": [
+          { "label": "position plus z-index", "value": "Any position other than static with a z-index" },
+          { "label": "opacity", "value": "Less than 1" },
+          { "label": "transform, filter, will-change", "value": "Creates a context" },
+          { "label": "isolation: isolate", "value": "Creates one deliberately" }
+        ]
+      }
+    ],
+    "related": ["css-flexbox-vs-grid", "css-specificity", "css-variables", "css-stacking-context"]
+  }
+]
