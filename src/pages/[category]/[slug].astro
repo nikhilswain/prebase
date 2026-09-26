@@ -77,12 +77,12 @@ const noindex = status === 'unreviewed' && item.generated === true;
     />
 
     <div class="mt-7 grid gap-12 lg:grid-cols-[minmax(0,1fr)_15rem] lg:gap-16">
-      <div class="min-w-0">
+      <article class="min-w-0">
         <ItemHeader item={item} />
         <div class="mt-10">
           <ItemBody item={item} />
         </div>
-      </div>
+      </article>
 
       <aside class="lg:sticky lg:top-20 lg:self-start">
         <div class="space-y-8">
@@ -105,10 +105,12 @@ const noindex = status === 'unreviewed' && item.generated === true;
                 </dd>
               </div>
               {
-                updatedLabel && (
+                updatedLabel && item.updated && (
                   <div class="flex items-center justify-between gap-3">
                     <dt class="text-ink-3">Updated</dt>
-                    <dd class="text-ink-2">{updatedLabel}</dd>
+                    <dd class="text-ink-2">
+                      <time datetime={item.updated}>{updatedLabel}</time>
+                    </dd>
                   </div>
                 )
               }

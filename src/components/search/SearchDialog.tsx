@@ -4,7 +4,7 @@ import {
   useMemo,
   useRef,
   useState,
-  type KeyboardEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
 } from 'react';
 import {
   groupResults,
@@ -85,6 +85,7 @@ export default function SearchDialog() {
   const [loading, setLoading] = useState(false);
   const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const restoreRef = useRef<HTMLElement | null>(null);
 
   const openDialog = useCallback(() => {
@@ -138,6 +139,36 @@ export default function SearchDialog() {
     setActive(0);
   }, [query]);
 
+  useEffect(() => {
+    if (!open) return;
+    const handleTab = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== 'Tab') return;
+      const panel = panelRef.current;
+      if (!panel) return;
+      const focusable = Array.from(
+        panel.querySelectorAll<HTMLElement>(
+          'input, button, a[href], [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((element) => !element.hasAttribute('disabled'));
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const current = document.activeElement;
+      if (event.shiftKey && current === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && current === last) {
+        event.preventDefault();
+        first.focus();
+      } else if (current && !panel.contains(current)) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', handleTab);
+    return () => document.removeEventListener('keydown', handleTab);
+  }, [open]);
+
   const results = useMemo(
     () => (docs ? searchDocs(docs, query) : []),
     [docs, query],
@@ -161,7 +192,7 @@ export default function SearchDialog() {
     window.location.href = href;
   }, []);
 
-  const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+  const onKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'ArrowDown') {
       event.preventDefault();
       setActive((index) => Math.min(index + 1, Math.max(flat.length - 1, 0)));
@@ -191,6 +222,7 @@ export default function SearchDialog() {
 
       <div className="relative mx-auto mt-[9vh] w-[calc(100%-1.5rem)] max-w-xl">
         <div
+          ref={panelRef}
           data-search-panel
           role="dialog"
           aria-modal="true"

@@ -3,9 +3,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Breadcrumbs from '../components/site/Breadcrumbs.astro';
 import CategoryCard from '../components/site/CategoryCard.astro';
 import SearchTrigger from '../components/site/SearchTrigger.astro';
-import { getCategories, getItemsByCategory, getRevisionEntries, getStats } from '../lib/content';
+import { getCategories, getItems, getItemsByCategory, getRevisionEntries, getStats } from '../lib/content';
 import { collectionJsonLd } from '../lib/seo';
-import { getItems } from '../lib/content';
 
 const stats = getStats();
 const categories = getCategories();

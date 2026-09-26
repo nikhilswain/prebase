@@ -20,6 +20,10 @@ function join(parts: (string | undefined | null)[]): string {
   return parts.filter(Boolean).join(' \n ');
 }
 
+function clamp(value: string, max: number): string {
+  return value.length > max ? value.slice(0, max) : value;
+}
+
 function textOf(item: ResolvedItem): string {
   const base: (string | undefined)[] = [item.summary];
 
@@ -119,8 +123,8 @@ export function buildSearchIndex(): SearchDoc[] {
       difficulty: item.difficulty,
       tags: item.tags ?? [],
       tagText: (item.tags ?? []).join(' ').toLowerCase(),
-      text: textOf(item),
-      code: codeOf(item),
+      text: clamp(textOf(item), 600),
+      code: clamp(codeOf(item), 400),
       featured: item.featured,
     });
   }
@@ -139,7 +143,10 @@ export function buildSearchIndex(): SearchDoc[] {
       accent: category?.accent,
       tags: entry.tags ?? [],
       tagText: join([entry.term, ...(entry.tags ?? [])]).toLowerCase(),
-      text: join([entry.short, entry.medium, entry.detail]).toLowerCase(),
+      text: clamp(
+        join([entry.short, entry.medium, entry.detail]).toLowerCase(),
+        600,
+      ),
       code: '',
     });
   }
