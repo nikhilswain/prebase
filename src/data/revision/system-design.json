@@ -1,0 +1,146 @@
+{
+  "category": "system-design",
+  "intro": "The components and trade-offs behind system design interviews.",
+  "entries": [
+    {
+      "id": "rev-sd-cap",
+      "category": "system-design",
+      "term": "CAP theorem",
+      "short": "Under a partition, choose consistency or availability.",
+      "medium": "Partition tolerance is mandatory, so the real choice is CP or AP. CP refuses some requests to stay correct; AP answers with possibly stale data and reconciles later. The trade-off only applies during a partition.",
+      "detail": "Decide per operation: payments lean CP, feeds and like counts lean AP. Name the mechanism, quorums or leaders or conflict resolution.",
+      "related": "sd-cap",
+      "tags": ["distributed", "consistency"]
+    },
+    {
+      "id": "rev-sd-caching",
+      "category": "system-design",
+      "term": "Caching",
+      "short": "Serve hot data from memory; invalidation is the hard part.",
+      "medium": "Cache-aside is the default: check cache, on miss read the source and populate. Write-through keeps the cache warm but slows writes; write-behind is fast but can lose writes.",
+      "detail": "Invalidate with TTL, explicit deletion or events. Watch for stampedes when a hot key expires and for hot keys overloading one node.",
+      "related": "sd-caching",
+      "tags": ["caching", "performance"]
+    },
+    {
+      "id": "rev-sd-cache-stampede",
+      "category": "system-design",
+      "term": "Cache stampede",
+      "short": "A hot key expires and many requests hit the source at once.",
+      "medium": "Mitigate with a lock so one request rebuilds the value, request coalescing, or staggered expiry with jitter so keys do not all expire together.",
+      "detail": "The same problem at the database level is a thundering herd, solved with the same techniques plus rate limiting.",
+      "related": "sd-caching",
+      "tags": ["caching"]
+    },
+    {
+      "id": "rev-sd-load-balancing",
+      "category": "system-design",
+      "term": "Load balancing",
+      "short": "Route requests across healthy backends.",
+      "medium": "Round robin, least connections and consistent hashing are the common algorithms. Layer 4 balances by TCP, layer 7 understands HTTP and can route by path and terminate TLS. Health checks remove failing instances.",
+      "detail": "Prefer shared state over sticky sessions, so any instance can serve any request and the pool scales freely.",
+      "related": "sd-load-balancing",
+      "tags": ["scaling"]
+    },
+    {
+      "id": "rev-sd-queues",
+      "category": "system-design",
+      "term": "Message queues",
+      "short": "Decouple producers from consumers and absorb bursts.",
+      "medium": "Slow work moves off the request path: the handler enqueues and returns, a worker processes it. At-least-once delivery means consumers must be idempotent. Use a dead-letter queue for repeated failures.",
+      "detail": "A queue removes a message on ack; a log like Kafka retains it so many consumer groups can read and replay. Ordering holds only within a partition.",
+      "related": "sd-message-queues",
+      "tags": ["async", "queues"]
+    },
+    {
+      "id": "rev-sd-scaling",
+      "category": "system-design",
+      "term": "Horizontal vs vertical scaling",
+      "short": "Bigger machine versus more machines.",
+      "medium": "Vertical is a quick win with no code change but has a ceiling and stays a single point of failure. Horizontal adds availability and near-unlimited scale, but needs load balancing and shared or partitioned state.",
+      "detail": "Stateless services scale horizontally almost for free. Stateful databases need replication and sharding, which is where the complexity lives.",
+      "related": "sd-scaling",
+      "tags": ["scaling"]
+    },
+    {
+      "id": "rev-sd-sharding",
+      "category": "system-design",
+      "term": "Sharding",
+      "short": "Partition data across nodes by a well-spread key.",
+      "medium": "Choose a key with even spread, or one shard becomes a hot spot. Cross-shard joins and transactions are expensive, so shard late, after replicas and caching.",
+      "detail": "Resharding is painful, so pick the key with future growth in mind and consider consistent hashing to move fewer keys when nodes change.",
+      "related": "sd-scaling",
+      "tags": ["scaling", "data"]
+    },
+    {
+      "id": "rev-sd-replication",
+      "category": "system-design",
+      "term": "Replication",
+      "short": "Copies for reads, failover and durability.",
+      "medium": "A primary takes writes and streams to replicas. Async replication is fast but can lose recent writes on failover and serves stale reads. Sync waits for acknowledgement at the cost of latency.",
+      "detail": "Read-your-writes can break if reads hit a lagging replica, so route a user's reads to the primary briefly after they write.",
+      "related": "sd-cheatsheet",
+      "tags": ["data", "availability"]
+    },
+    {
+      "id": "rev-sd-consistency",
+      "category": "system-design",
+      "term": "Consistency models",
+      "short": "Strong is simple and slow; eventual is fast and needs care.",
+      "medium": "Strong consistency means every read sees the latest write, enforced with quorums, leaders or coordination, and it costs latency. Eventual consistency converges over time and is fine for feeds, counts and analytics.",
+      "detail": "Read-your-writes and monotonic reads are weaker, practical models that avoid surprising users without full strong consistency.",
+      "related": "sd-cap",
+      "tags": ["consistency"]
+    },
+    {
+      "id": "rev-sd-idempotency",
+      "category": "system-design",
+      "term": "Idempotency",
+      "short": "The same request applied twice has the same effect as once.",
+      "medium": "Needed whenever retries or at-least-once delivery are possible. Clients send an idempotency key and the server stores the result of the first request and returns it for repeats.",
+      "detail": "Design writes to be idempotent where you can, for example set a value rather than increment it, so a retry cannot double-apply.",
+      "related": "sd-message-queues",
+      "tags": ["reliability"]
+    },
+    {
+      "id": "rev-sd-rate-limiting",
+      "category": "system-design",
+      "term": "Rate limiting",
+      "short": "Cap how many requests a client may make.",
+      "medium": "Token bucket allows bursts up to a bucket size and refills over time. Sliding window is more precise. Fixed window is simplest but allows double the limit at a boundary.",
+      "detail": "Apply it at the edge or gateway, return 429 with a Retry-After header, and keep the counters in a shared store so limits hold across instances.",
+      "related": "sd-cheatsheet",
+      "tags": ["reliability", "security"]
+    },
+    {
+      "id": "rev-sd-cdn",
+      "category": "system-design",
+      "term": "CDN",
+      "short": "Cache content at the edge, close to users.",
+      "medium": "Static assets and cacheable API responses are served from points of presence near the user, cutting latency and offloading the origin. Cache keys and TTLs control freshness.",
+      "detail": "Introduce a CDN in a design when you serve static media at scale, and mention cache invalidation and Vary headers for correctness.",
+      "related": "sd-caching",
+      "tags": ["caching", "performance"]
+    },
+    {
+      "id": "rev-sd-approach",
+      "category": "system-design",
+      "term": "Answer structure",
+      "short": "Clarify, estimate, sketch, then go deep on the hard part.",
+      "medium": "Spend the first minutes on requirements and scale, do a rough capacity estimate, sketch the high-level flow, then spend the rest on the one or two areas the interviewer cares about.",
+      "detail": "State trade-offs and failure modes out loud. The signal is reasoning about cost, consistency and failure, not a single correct diagram.",
+      "related": "sd-approach",
+      "tags": ["process"]
+    },
+    {
+      "id": "rev-sd-url-shortener",
+      "category": "system-design",
+      "term": "URL shortener",
+      "short": "A KV map from code to URL, read-heavy and cacheable.",
+      "medium": "Generate codes with a distributed counter plus base62, or hash with collision handling. Reads are a single key lookup, so cache hot codes and serve from replicas. Writes are rare and can be slower.",
+      "detail": "The pattern, clarify, estimate, design the data path, scale the hot path, is the template for most design questions.",
+      "related": "sd-url-shortener",
+      "tags": ["design"]
+    }
+  ]
+}

@@ -1,0 +1,313 @@
+[
+  {
+    "id": "sd-cap",
+    "slug": "cap-theorem",
+    "category": "system-design",
+    "type": "concept",
+    "title": "The CAP Theorem",
+    "summary": "Under a network partition you choose consistency or availability; partition tolerance is not optional.",
+    "difficulty": "medium",
+    "tags": ["distributed", "consistency"],
+    "featured": true,
+    "reviewStatus": "verified",
+    "updated": "2026-09-03",
+    "definition": "CAP says a distributed system can strongly provide at most two of consistency, availability and partition tolerance. Because networks do partition in practice, partition tolerance is a given, so the real choice is between consistency and availability when a partition occurs.",
+    "explanation": [
+      "Consistency here means linearisability: once a write completes, every subsequent read sees it. Availability means every request gets a non-error response. Partition tolerance means the system keeps working despite dropped messages between nodes.",
+      "A CP system refuses some requests during a partition to avoid returning stale or conflicting data. A leader-based database that rejects writes when it cannot reach a quorum is CP. An AP system keeps answering, possibly with stale data, and reconciles later. Many NoSQL databases are AP.",
+      "The theorem only applies during a partition. When the network is healthy you can often have both, which is why PACELC extends it: else, when there is no partition, you still trade latency against consistency.",
+      "In an interview, the strong answer is to decide per operation. Payments need strong consistency, so they lean CP. A like count or a social feed tolerates staleness, so it leans AP. Say which you would choose and why, and name the mechanism: quorums, leaders or conflict resolution."
+    ],
+    "keyPoints": [
+      "Consistency, availability, partition tolerance: pick two, and P is mandatory",
+      "CP refuses requests to stay correct; AP answers with possible staleness",
+      "The trade-off only bites during a partition",
+      "Decide per operation, not per system"
+    ],
+    "example": {
+      "language": "text",
+      "caption": "How the choice shows up in practice.",
+      "code": "Payment balance    -> CP: reject the write if no quorum\nLike counter       -> AP: accept the write, reconcile later\nSession store      -> AP with a short TTL is usually fine"
+    },
+    "related": ["sd-caching", "sd-message-queues", "sd-cheatsheet"]
+  },
+  {
+    "id": "sd-caching",
+    "slug": "caching",
+    "category": "system-design",
+    "type": "concept",
+    "title": "Caching Strategies",
+    "summary": "Serve hot data from memory, and choose a write and invalidation strategy deliberately.",
+    "difficulty": "medium",
+    "tags": ["caching", "performance"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-03",
+    "definition": "A cache stores the result of expensive work in fast storage so later reads avoid the original source. The main patterns are cache-aside, write-through and write-behind, and the hard part is always invalidation.",
+    "explanation": [
+      "Cache-aside is the default. The application checks the cache, and on a miss reads the database and populates the cache. It is simple and only caches what is actually requested, but the first read after a miss is slow and the cache can go stale.",
+      "Write-through writes to the cache and the database together, so reads are always warm but writes are slower. Write-behind writes to the cache and flushes to the database asynchronously, which is fast but risks losing writes if the cache dies.",
+      "Invalidation is where caches break. Options are a TTL so entries expire, explicit deletion when the source changes, or event-driven updates. TTL is simplest and tolerates eventual consistency; explicit invalidation is more correct but easier to get wrong.",
+      "Two failure modes to name. A cache stampede is many requests hitting the source at once when a hot key expires, mitigated with locking or request coalescing. A hot key overloads one cache node, mitigated by replicating the key or adding a local cache in front.",
+      "Where to cache matters too: the browser, a CDN at the edge, the application process, or a shared cache like Redis. Each layer trades freshness for latency and offload."
+    ],
+    "keyPoints": [
+      "Cache-aside is the common default",
+      "Write-through is consistent but slower; write-behind is fast but risky",
+      "Invalidate with TTL, explicit deletion or events",
+      "Watch for stampedes and hot keys"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "Cache-aside with a TTL and explicit invalidation on write.",
+      "code": "async function getProduct(id) {\n  const cached = await redis.get(`product:${id}`);\n  if (cached) return JSON.parse(cached);\n\n  const product = await db.products.findById(id);\n  await redis.set(`product:${id}`, JSON.stringify(product), 'EX', 300);\n  return product;\n}\n\nasync function updateProduct(id, data) {\n  await db.products.update(id, data);\n  await redis.del(`product:${id}`); // invalidate, do not update\n}"
+    },
+    "related": ["sd-cap", "sd-load-balancing", "sd-cheatsheet"]
+  },
+  {
+    "id": "sd-load-balancing",
+    "slug": "load-balancing",
+    "category": "system-design",
+    "type": "concept",
+    "title": "Load Balancing",
+    "summary": "Distribute traffic across servers, health-check them, and choose a routing strategy.",
+    "difficulty": "medium",
+    "tags": ["scaling", "availability"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-03",
+    "definition": "A load balancer sits in front of a pool of servers and routes each request to one of them. It enables horizontal scaling, provides a single entry point, and removes unhealthy instances from rotation.",
+    "explanation": [
+      "Common algorithms: round robin for even distribution, least connections for uneven workloads, and consistent hashing when requests should stick to the same backend, for example to keep a cache warm.",
+      "Layer 4 balancing routes by TCP or UDP without inspecting the request, which is fast. Layer 7 balancing understands HTTP and can route by path, host or header, terminate TLS, and rewrite requests. Most web systems use layer 7.",
+      "Health checks are what make it resilient. The balancer probes each backend and stops sending traffic to one that fails, so a crashed instance causes a brief blip rather than an outage.",
+      "Sticky sessions are usually a smell. If a user must return to the same server, it is better to move that state to a shared store such as Redis or a database, so any server can serve any request and the pool can scale freely."
+    ],
+    "keyPoints": [
+      "Round robin, least connections, consistent hashing",
+      "Layer 4 is fast; layer 7 understands HTTP",
+      "Health checks remove failing instances",
+      "Prefer shared state over sticky sessions"
+    ],
+    "example": {
+      "language": "text",
+      "caption": "A typical request path.",
+      "code": "Client -> DNS -> CDN/edge -> Load balancer (TLS) -> App servers\n                                                  |\n                                        shared session store (Redis)"
+    },
+    "related": ["sd-scaling", "sd-caching", "sd-cheatsheet"]
+  },
+  {
+    "id": "sd-message-queues",
+    "slug": "message-queues",
+    "category": "system-design",
+    "type": "concept",
+    "title": "Message Queues and Async Processing",
+    "summary": "Decouple producers from consumers so slow or bursty work happens off the request path.",
+    "difficulty": "hard",
+    "tags": ["async", "decoupling", "queues"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-03",
+    "definition": "A message queue is a durable buffer between a producer and one or more consumers. The producer enqueues work and returns immediately; consumers process it at their own pace. This decouples services, absorbs bursts and lets slow work happen asynchronously.",
+    "explanation": [
+      "The classic use is anything slow that the user does not need to wait for: sending email, generating a report, resizing an image, fanning out notifications. The request path enqueues and returns, and a worker handles it.",
+      "Delivery guarantees matter. At-most-once may lose messages. At-least-once can duplicate, so consumers must be idempotent. Exactly-once is a property you approximate with idempotency keys rather than a guarantee you can assume.",
+      "Queues versus logs: a traditional queue (RabbitMQ) removes a message once acknowledged, while a log (Kafka) retains messages for a period and lets many consumer groups read independently. Logs enable replay and multiple consumers; queues are simpler for task distribution.",
+      "Reliability patterns to name: a dead-letter queue for messages that repeatedly fail, retries with exponential backoff, and backpressure so the queue does not grow without bound. Message ordering is only guaranteed within a partition, so design consumers not to depend on global order.",
+      "The interview point is that a queue turns a synchronous, fragile chain into an asynchronous one, at the cost of eventual consistency and the need to handle failures and duplicates."
+    ],
+    "keyPoints": [
+      "Decouple producers and consumers, absorb bursts",
+      "At-least-once means consumers must be idempotent",
+      "Queue removes on ack; log retains and allows replay",
+      "Dead-letter queues, retries and backpressure for reliability"
+    ],
+    "example": {
+      "language": "text",
+      "caption": "The request path stays fast; workers do the slow part.",
+      "code": "POST /signup\n  -> create user in DB\n  -> enqueue { type: 'welcome-email', userId }\n  -> 201 Created\n\nworker:\n  consume -> send email -> ack\n  on repeated failure -> dead-letter queue"
+    },
+    "related": ["sd-caching", "sd-cap", "sd-cheatsheet"]
+  },
+  {
+    "id": "sd-scaling",
+    "slug": "horizontal-vs-vertical-scaling",
+    "category": "system-design",
+    "type": "comparison",
+    "title": "Horizontal vs Vertical Scaling",
+    "summary": "Bigger machine versus more machines: cost, limits and complexity trade off differently.",
+    "difficulty": "medium",
+    "tags": ["scaling", "architecture"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-03",
+    "options": [
+      { "name": "Vertical", "summary": "Add CPU, memory or disk to one machine" },
+      { "name": "Horizontal", "summary": "Add more machines behind a load balancer" }
+    ],
+    "rows": [
+      { "label": "Ceiling", "values": ["Hard limit, the largest machine available", "Effectively unbounded"] },
+      { "label": "Cost", "values": ["Grows faster than linearly at the top end", "Commodity hardware, scales with demand"] },
+      { "label": "Complexity", "values": ["No code change, same single node", "Needs load balancing, shared state, distributed data"] },
+      { "label": "Availability", "values": ["Single point of failure", "Survives node failure with health checks"] },
+      { "label": "State", "values": ["State stays local, simple", "State must be shared or partitioned"] },
+      { "label": "Best for", "values": ["Quick wins, small systems, databases that resist sharding", "Web tiers, stateless services, high traffic"] }
+    ],
+    "verdict": "Scale vertically first when it is cheap and fast, then scale horizontally when you hit a ceiling or need availability. Stateless services scale horizontally almost for free; stateful systems like databases need replication and sharding, which is where the real complexity lives. The usual architecture is both: a few large database nodes and many small application instances.",
+    "pickWhen": [
+      { "option": "Vertical", "guidance": "You need a quick win, the system is small, or the component is hard to distribute such as a primary database." },
+      { "option": "Horizontal", "guidance": "You need high availability, the workload is spiky, or you have outgrown any single machine." }
+    ],
+    "example": {
+      "language": "text",
+      "caption": "A common split.",
+      "code": "App tier   -> horizontal: many stateless instances behind a balancer\nCache tier -> horizontal: a Redis cluster\nDB tier    -> vertical plus replicas, then shard when forced"
+    },
+    "related": ["sd-load-balancing", "sd-cap", "sd-cheatsheet"]
+  },
+  {
+    "id": "sd-url-shortener",
+    "slug": "design-a-url-shortener",
+    "category": "system-design",
+    "type": "question",
+    "title": "How would you design a URL shortener?",
+    "summary": "A worked example of the design interview: requirements, estimation, data model, then scaling.",
+    "difficulty": "hard",
+    "tags": ["design", "walkthrough"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-03",
+    "shortAnswer": "Clarify the requirements and scale, then design the write and read paths. Store a mapping from a short code to a long URL in a key-value store, generate unique codes, and serve reads from cache and a read replica. The interesting decisions are how to generate codes without collisions and how to keep redirects fast.",
+    "explanation": [
+      "Clarify first. Is the read-to-write ratio high, as usual? Do links expire? Do users need custom aliases or analytics? Assume a read-heavy system: many redirects, few creations.",
+      "Estimate. If you create a million links a day and keep them for five years, that is about 1.8 billion records. At 100 bytes each that is around 180 GB, which fits comfortably on a single well-provisioned database or a sharded key-value store.",
+      "Generate codes. Two options. Hash the URL and take a prefix, handling collisions, which is deterministic and lets the same URL map to the same code. Or use a distributed counter, base62-encode it, and optionally shuffle to avoid guessable sequential codes. The counter approach avoids collisions entirely and is the common answer.",
+      "Data model. A table or key-value store of code to long URL plus metadata such as owner and creation time. Reads are a single key lookup, which is why a KV store or a covered index works well.",
+      "Scale the reads. The redirect path must be fast, so cache hot codes in Redis or at the edge and serve from read replicas. Writes are far rarer and can tolerate more latency.",
+      "Failure and detail. Handle collisions or counter coordination, expire old links if required, rate-limit creation to prevent abuse, and add analytics asynchronously through a queue so it never slows the redirect."
+    ],
+    "keyPoints": [
+      "Clarify requirements and estimate scale first",
+      "Key-value mapping from code to URL",
+      "Counter plus base62 avoids collisions; hashing needs collision handling",
+      "Cache and replicate for a read-heavy redirect path"
+    ],
+    "example": {
+      "language": "text",
+      "caption": "The core flows.",
+      "code": "POST /shorten { longUrl }\n  -> id = counter.increment()\n  -> code = base62(id)\n  -> store code -> longUrl\n  -> return https://sho.rt/{code}\n\nGET /{code}\n  -> cache lookup, else DB (read replica)\n  -> 301/302 redirect to longUrl"
+    },
+    "commonMistakes": [
+      "Jumping to a schema before clarifying read and write patterns",
+      "Ignoring how codes are generated uniquely",
+      "Forgetting caching on the hot redirect path"
+    ],
+    "followUps": [
+      "Why 301 versus 302 for the redirect?",
+      "How would you support custom aliases?",
+      "How would you add click analytics without slowing redirects?"
+    ],
+    "realWorld": "The same structure, clarify, estimate, design the data path, then scale the hot path, applies to almost every design question.",
+    "related": ["sd-caching", "sd-scaling", "sd-cheatsheet", "sd-approach"]
+  },
+  {
+    "id": "sd-approach",
+    "slug": "how-to-approach-a-design-question",
+    "category": "system-design",
+    "type": "question",
+    "title": "How do you approach a system design interview?",
+    "summary": "A repeatable structure: clarify, estimate, sketch, then go deep on the hard part.",
+    "difficulty": "medium",
+    "tags": ["process", "interview"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-03",
+    "shortAnswer": "Do not start drawing boxes. Spend the first few minutes clarifying functional and non-functional requirements and scale, do a rough capacity estimate, sketch the high-level components, then go deep on the one or two hard parts the interviewer cares about. Drive the conversation and state trade-offs explicitly.",
+    "explanation": [
+      "Clarify requirements: what the system does, who uses it, and the non-functional targets such as latency, availability and consistency. Ask about read-to-write ratio and expected scale. This step alone separates strong candidates.",
+      "Estimate capacity roughly. Requests per second, storage per year, bandwidth. You do not need precision, you need the order of magnitude to justify choices such as caching or sharding.",
+      "Sketch the high-level design: clients, load balancer, services, cache, database, queue. Keep it simple and name the responsibility of each box.",
+      "Go deep where it matters. The interviewer usually has one or two areas in mind: how you generate ids, how you keep the cache consistent, how you handle a hot partition. Spend your remaining time there rather than broadening.",
+      "Throughout, state trade-offs and assumptions out loud. There is rarely one right answer; the signal is whether you can reason about cost, failure and consistency. Mention bottlenecks, single points of failure, and how you would monitor and scale each piece."
+    ],
+    "keyPoints": [
+      "Clarify requirements and scale before designing",
+      "Estimate order of magnitude, not precise numbers",
+      "Sketch the high-level flow, then go deep on the hard part",
+      "State trade-offs and failure modes out loud"
+    ],
+    "example": {
+      "language": "text",
+      "caption": "A structure that fits most questions.",
+      "code": "1. Requirements   functional + non-functional, scale\n2. Estimation     QPS, storage, bandwidth\n3. High-level     client -> edge -> service -> data -> async\n4. Deep dive      ids, caching, consistency, hot keys\n5. Wrap up        bottlenecks, monitoring, next steps"
+    },
+    "followUps": [
+      "What non-functional requirements do you always ask about?",
+      "How do you decide where to add a cache?",
+      "How do you talk about failure without going too deep?"
+    ],
+    "related": ["sd-url-shortener", "sd-cap", "sd-cheatsheet"]
+  },
+  {
+    "id": "sd-cheatsheet",
+    "slug": "system-design-cheat-sheet",
+    "category": "system-design",
+    "type": "cheat-sheet",
+    "title": "System Design Cheat Sheet",
+    "summary": "The building blocks, the trade-offs and a structure for answering.",
+    "difficulty": "medium",
+    "tags": ["reference", "cheat-sheet"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-03",
+    "description": "A quick reference for the components and trade-offs that come up in design interviews.",
+    "sections": [
+      {
+        "title": "Building blocks",
+        "items": [
+          { "label": "Load balancer", "value": "Distribute traffic, health-check backends", "note": "L4 vs L7" },
+          { "label": "Cache", "value": "Serve hot data from memory", "note": "Cache-aside, TTL" },
+          { "label": "CDN", "value": "Cache static and edge content near users" },
+          { "label": "Message queue", "value": "Decouple and absorb bursts", "note": "At-least-once, idempotent consumers" },
+          { "label": "Object store", "value": "Files and blobs, not rows" },
+          { "label": "Search index", "value": "Full-text and faceted queries" }
+        ]
+      },
+      {
+        "title": "Scaling data",
+        "items": [
+          { "label": "Read replicas", "value": "Offload reads, accept lag" },
+          { "label": "Sharding", "value": "Partition by a well-spread key", "note": "Avoid hot partitions" },
+          { "label": "Consistent hashing", "value": "Stable distribution as nodes change" },
+          { "label": "Denormalization", "value": "Precompute for reads, own the sync" }
+        ]
+      },
+      {
+        "title": "Consistency",
+        "items": [
+          { "label": "Strong", "value": "Every read sees the latest write", "note": "Costs latency, quorums" },
+          { "label": "Eventual", "value": "Converges over time", "note": "Fine for feeds and counts" },
+          { "label": "CAP", "value": "Under a partition, choose C or A" },
+          { "label": "Idempotency", "value": "Safe retries with idempotency keys" }
+        ]
+      },
+      {
+        "title": "Reliability",
+        "items": [
+          { "label": "Health checks", "value": "Remove failing instances" },
+          { "label": "Rate limiting", "value": "Protect against abuse", "note": "Token bucket, sliding window" },
+          { "label": "Retries and backoff", "value": "With jitter, bounded attempts" },
+          { "label": "Dead-letter queue", "value": "Isolate messages that keep failing" },
+          { "label": "Timeouts", "value": "Every network call needs one" }
+        ]
+      },
+      {
+        "title": "Answer structure",
+        "items": [
+          { "label": "1. Requirements", "value": "Functional, non-functional, scale" },
+          { "label": "2. Estimation", "value": "QPS, storage, bandwidth" },
+          { "label": "3. High-level", "value": "Client, edge, service, data, async" },
+          { "label": "4. Deep dive", "value": "Ids, caching, consistency, hot keys" },
+          { "label": "5. Trade-offs", "value": "Bottlenecks, failure, monitoring" }
+        ]
+      }
+    ],
+    "related": ["sd-cap", "sd-caching", "sd-load-balancing", "sd-message-queues", "sd-scaling", "sd-url-shortener", "sd-approach"]
+  }
+]

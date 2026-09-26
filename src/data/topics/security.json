@@ -1,0 +1,285 @@
+[
+  {
+    "id": "sec-xss",
+    "slug": "xss",
+    "category": "security",
+    "type": "question",
+    "title": "What is XSS and how do you prevent it?",
+    "summary": "Untrusted data reaching a script sink, so attacker code runs in your origin. Encode output and constrain execution.",
+    "difficulty": "medium",
+    "tags": ["xss", "injection"],
+    "featured": true,
+    "reviewStatus": "verified",
+    "updated": "2026-09-02",
+    "shortAnswer": "Cross-site scripting is when untrusted input is interpreted as code in your page, so the attacker's script runs with your origin's privileges: it can read cookies, make authenticated requests and rewrite the page. Prevent it by never putting untrusted data into an HTML, attribute or script context without escaping, by avoiding dangerous sinks, and by adding a Content Security Policy as a backstop.",
+    "explanation": [
+      "There are three shapes. Stored XSS persists the payload, for example in a comment, and hits every viewer. Reflected XSS bounces it off a request, usually via a crafted link. DOM XSS happens entirely in the browser when client code writes untrusted data into a sink such as innerHTML.",
+      "The defence is output encoding for the context. HTML-encoding for element text, attribute-encoding for attributes, and never interpolating into a script block. Frameworks like React escape by default, and the vulnerability appears when you bypass that with dangerouslySetInnerHTML or equivalent.",
+      "When you must render rich HTML, sanitize it with a maintained library such as DOMPurify rather than a regex. Allow-list the tags and attributes you need.",
+      "A Content Security Policy reduces the blast radius. Disallowing inline scripts and restricting script sources means an injected script often cannot execute at all. It is defence in depth, not a replacement for encoding.",
+      "Cookie flags limit the damage: HttpOnly keeps a session cookie out of document.cookie, so script cannot read it, though it can still make requests as the user."
+    ],
+    "keyPoints": [
+      "Stored, reflected and DOM XSS",
+      "Encode for the output context, do not filter input as the only defence",
+      "Avoid innerHTML and dangerouslySetInnerHTML; sanitize if you must render HTML",
+      "CSP and HttpOnly reduce the impact"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "innerHTML interprets markup; textContent does not.",
+      "code": "// vulnerable: a comment like <img src=x onerror=alert(1)> runs\ncommentEl.innerHTML = userInput;\n\n// safe: the same input is shown as text\ncommentEl.textContent = userInput;"
+    },
+    "commonMistakes": [
+      "Believing a framework makes you immune, while using its raw-HTML escape hatch",
+      "Sanitizing with a hand-written regex instead of a maintained library",
+      "Relying on CSP alone and skipping output encoding"
+    ],
+    "followUps": [
+      "What is the difference between stored and reflected XSS?",
+      "How does React protect you, and where does it not?",
+      "How would you safely render user-written markdown?"
+    ],
+    "realWorld": "Anywhere users can post content, display a name, or preview markdown, XSS is the first thing to check.",
+    "related": ["sec-csp", "sec-cors-same-origin", "sec-cheatsheet"]
+  },
+  {
+    "id": "sec-csrf",
+    "slug": "csrf",
+    "category": "security",
+    "type": "question",
+    "title": "What is CSRF and how do you prevent it?",
+    "summary": "Another site makes your browser send an authenticated request you did not intend. Cookies go along for the ride.",
+    "difficulty": "medium",
+    "tags": ["csrf", "cookies"],
+    "reviewStatus": "verified",
+    "updated": "2026-09-02",
+    "shortAnswer": "Cross-site request forgery tricks a logged-in user's browser into sending a state-changing request to your site. The browser attaches the session cookie automatically, so the request looks authenticated. Prevent it with SameSite cookies, a CSRF token that another origin cannot read, checking the request's origin or Fetch Metadata headers, and never putting side effects on GET.",
+    "explanation": [
+      "The attack works because cookies are sent based on the target domain, not who initiated the request. A form on evil.com can POST to your bank; the browser includes the bank's cookies, and without a check the bank acts on it.",
+      "SameSite is the first line. SameSite=Lax, now the default in modern browsers, sends the cookie on top-level navigations but not on cross-site POSTs, which blocks most CSRF. Strict is stronger but can break flows that arrive from another site.",
+      "A CSRF token is the classic defence. The server issues a random token tied to the session and requires it on state-changing requests. Another origin cannot read the token because of the same-origin policy, so it cannot forge a valid request.",
+      "Modern APIs often use a custom header instead. Requiring a header like X-Requested-With makes the request non-simple, so CORS preflight blocks other origins from sending it. Fetch Metadata headers such as Sec-Fetch-Site let the server reject cross-site requests directly.",
+      "Keep state-changing operations off GET. A GET that deletes a record can be triggered by an image tag and cannot be protected by a token in a form body."
+    ],
+    "keyPoints": [
+      "CSRF abuses automatically-sent cookies",
+      "SameSite=Lax blocks most cross-site POSTs",
+      "CSRF tokens cannot be read by another origin",
+      "Never put side effects on GET"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "Reject state-changing requests that arrive cross-site.",
+      "code": "app.post('/transfer', (req, res) => {\n  const site = req.get('sec-fetch-site');\n  if (site !== 'same-origin' && site !== 'same-site') {\n    return res.status(403).end();\n  }\n  // also verify the CSRF token\n});"
+    },
+    "commonMistakes": [
+      "Thinking HttpOnly protects against CSRF, when the browser still sends the cookie",
+      "Using SameSite=None without the Secure flag",
+      "Leaving destructive actions reachable by GET"
+    ],
+    "followUps": [
+      "Does HttpOnly prevent CSRF?",
+      "How does SameSite=Lax differ from Strict?",
+      "Why does a custom header help?"
+    ],
+    "realWorld": "Any cookie-authenticated, state-changing endpoint needs CSRF protection; bearer tokens sent in a header from memory largely avoid the classic attack.",
+    "related": ["sec-token-storage", "sec-cors-same-origin", "sec-cheatsheet"]
+  },
+  {
+    "id": "sec-cors-same-origin",
+    "slug": "same-origin-policy-and-cors",
+    "category": "security",
+    "type": "concept",
+    "title": "Same-Origin Policy and CORS",
+    "summary": "The browser blocks cross-origin reads by default; CORS is the server granting specific exceptions.",
+    "difficulty": "medium",
+    "tags": ["cors", "browser", "origin"],
+    "featured": true,
+    "reviewStatus": "verified",
+    "updated": "2026-09-02",
+    "definition": "The same-origin policy is a browser rule that stops JavaScript on one origin from reading responses from another. An origin is the scheme, host and port together. CORS, Cross-Origin Resource Sharing, is a set of response headers by which a server tells the browser which other origins may read its responses.",
+    "explanation": [
+      "The policy is about reading, not sending. A cross-origin request often does reach the server; the browser withholds the response from the calling script unless the server opts in with an Access-Control-Allow-Origin header that matches the origin.",
+      "Some requests trigger a preflight. If the request uses a method other than GET, HEAD or POST, sets a custom header, or uses a non-simple content type such as application/json, the browser first sends an OPTIONS request to ask permission. The server answers with allowed methods, headers and origins, and only then does the real request go.",
+      "Credentials change the rules. To send cookies, the client sets credentials include, the server must send Access-Control-Allow-Credentials: true, and Access-Control-Allow-Origin cannot be the wildcard; it must name the exact origin.",
+      "The key interview point: CORS is not authentication or authorization. It only controls whether browser JavaScript may read a response. A server must still authenticate and authorize every request, because tools and servers are not bound by CORS at all."
+    ],
+    "keyPoints": [
+      "An origin is scheme plus host plus port",
+      "CORS governs reading responses, enforced by the browser",
+      "Preflight OPTIONS precedes non-simple requests",
+      "Credentialed requests cannot use the wildcard origin",
+      "CORS is not a substitute for server-side authz"
+    ],
+    "example": {
+      "language": "http",
+      "caption": "A credentialed CORS response must name the origin, not use a wildcard.",
+      "code": "Access-Control-Allow-Origin: https://app.example.com\nAccess-Control-Allow-Credentials: true\nVary: Origin"
+    },
+    "related": ["sec-csrf", "sec-gotcha-cors-wildcard", "sec-cheatsheet"]
+  },
+  {
+    "id": "sec-token-storage",
+    "slug": "where-to-store-tokens",
+    "category": "security",
+    "type": "question",
+    "title": "Where should you store auth tokens?",
+    "summary": "HttpOnly cookies resist theft by XSS; in-memory tokens resist CSRF. Pick by which threat you can better defend.",
+    "difficulty": "hard",
+    "tags": ["auth", "cookies", "tokens"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-02",
+    "shortAnswer": "localStorage is readable by any script, so a single XSS leaks the token and there is no protection. An HttpOnly, Secure, SameSite cookie cannot be read by script, which blunts token theft, but the browser sends it automatically so you need CSRF protection. Keeping the access token in memory and the refresh token in an HttpOnly cookie is the common middle ground.",
+    "explanation": [
+      "localStorage is the easiest and the weakest. It survives reloads, but any successful XSS reads it directly. Because XSS is common and hard to eliminate, storing long-lived tokens there is a real risk.",
+      "HttpOnly cookies are not readable by JavaScript, so an XSS payload cannot exfiltrate the token itself, though it can still make authenticated requests in the page. Because cookies are sent automatically, cookie auth reintroduces CSRF, which SameSite and tokens address.",
+      "The hybrid pattern: hold the short-lived access token in memory, where a reload loses it but script cannot persist it, and keep the refresh token in an HttpOnly, Secure, SameSite cookie. On reload the app silently refreshes, so the user stays logged in while the durable credential is never readable by script.",
+      "Whichever you choose, set Secure, use SameSite, keep access tokens short-lived, rotate refresh tokens, and remember that no storage choice fixes a broken authorization check on the server."
+    ],
+    "keyPoints": [
+      "localStorage is XSS-readable with no mitigation",
+      "HttpOnly cookies resist token theft but need CSRF defence",
+      "In-memory access token plus HttpOnly refresh cookie is a common balance",
+      "Short lifetimes and rotation limit the damage"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "A hardened session cookie.",
+      "code": "res.cookie('refresh', token, {\n  httpOnly: true,\n  secure: true,\n  sameSite: 'lax',\n  path: '/auth/refresh',\n  maxAge: 7 * 24 * 60 * 60 * 1000,\n});"
+    },
+    "commonMistakes": [
+      "Storing long-lived tokens in localStorage and calling it secure",
+      "Using a cookie without SameSite or CSRF protection",
+      "Assuming the storage choice compensates for missing server-side authorization"
+    ],
+    "followUps": [
+      "Why is localStorage risky?",
+      "How do you keep a user logged in across reloads with an in-memory token?",
+      "What cookie flags matter and why?"
+    ],
+    "related": ["sec-csrf", "sec-xss", "sec-cheatsheet"]
+  },
+  {
+    "id": "sec-csp",
+    "slug": "content-security-policy",
+    "category": "security",
+    "type": "concept",
+    "title": "Content Security Policy",
+    "summary": "A header that tells the browser which sources of script, style and other content are allowed to load.",
+    "difficulty": "medium",
+    "tags": ["csp", "headers", "xss"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-02",
+    "definition": "A Content Security Policy is an HTTP response header that allow-lists where the page may load scripts, styles, images, fonts and connections from. It is the strongest single mitigation against XSS, because even a successfully injected script is blocked if it does not match the policy.",
+    "explanation": [
+      "The most valuable directive is script-src. Allowing only your own origin, and disallowing inline scripts with no 'unsafe-inline', means an injected inline script will not run. Inline scripts can be re-enabled narrowly with a nonce or a hash that the server generates per response.",
+      "CSP also covers style-src, img-src, connect-src for fetch and XHR, frame-ancestors for clickjacking, and object-src. frame-ancestors is the modern replacement for X-Frame-Options.",
+      "Deploy in report-only mode first. Content-Security-Policy-Report-Only logs violations without blocking, so you can find what would break before enforcing. A report-uri or report-to endpoint collects the violations.",
+      "CSP is defence in depth, not a substitute for output encoding. A policy with 'unsafe-inline' or a broad allow-list provides little protection, and allow-listing third-party CDNs has been shown to be bypassable."
+    ],
+    "keyPoints": [
+      "Allow-lists sources for scripts, styles and connections",
+      "no unsafe-inline plus a nonce is the strong configuration",
+      "Report-Only first, then enforce",
+      "Defence in depth alongside encoding"
+    ],
+    "example": {
+      "language": "http",
+      "caption": "A strict policy that blocks inline script and unexpected origins.",
+      "code": "Content-Security-Policy:\n  default-src 'self';\n  script-src 'self' 'nonce-abc123';\n  style-src 'self';\n  img-src 'self' data:;\n  frame-ancestors 'none';"
+    },
+    "related": ["sec-xss", "sec-cheatsheet", "sec-cors-same-origin"]
+  },
+  {
+    "id": "sec-gotcha-cors-wildcard",
+    "slug": "gotcha-cors-wildcard",
+    "category": "security",
+    "type": "gotcha",
+    "title": "CORS wildcard with credentials",
+    "summary": "Access-Control-Allow-Origin: * cannot be combined with credentials, and reflecting any origin is just as bad.",
+    "difficulty": "medium",
+    "tags": ["cors", "gotcha", "configuration"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-02",
+    "scenario": "A developer sets Access-Control-Allow-Origin: * and Access-Control-Allow-Credentials: true, and the browser refuses to deliver the response. They then 'fix' it by reflecting whatever Origin header the request sent, which makes every site trusted.",
+    "problem": "The wildcard is deliberately incompatible with credentialed requests, because allowing every origin to read authenticated responses would be a data leak. Reflecting the request's Origin header satisfies the browser but defeats the purpose: any site can now read your users' data. Often the server also forgets to vary the response by Origin, so a cache serves one user's CORS headers to another.",
+    "example": {
+      "language": "javascript",
+      "caption": "The unsafe pattern: echo any origin and allow credentials.",
+      "code": "// bad: any site becomes trusted\napp.use((req, res, next) => {\n  res.setHeader('Access-Control-Allow-Origin', req.headers.origin);\n  res.setHeader('Access-Control-Allow-Credentials', 'true');\n  next();\n});"
+    },
+    "fix": "Allow-list exact origins. Compare the request Origin against a fixed list and echo it only on a match, and add Vary: Origin so caches keep responses separate. If you do not need cookies, avoid credentialed CORS entirely and use a token in an Authorization header. Remember CORS is browser-enforced only: the server must still authenticate and authorize every request.",
+    "keyPoints": [
+      "Wildcard origin is incompatible with credentials",
+      "Reflecting any origin is equivalent to allowing all",
+      "Add Vary: Origin when the response depends on Origin",
+      "CORS never replaces server-side authorization"
+    ],
+    "related": ["sec-cors-same-origin", "sec-csrf", "sec-cheatsheet"]
+  },
+  {
+    "id": "sec-cheatsheet",
+    "slug": "security-cheat-sheet",
+    "category": "security",
+    "type": "cheat-sheet",
+    "title": "Web Security Cheat Sheet",
+    "summary": "XSS, CSRF, CORS, cookies and the headers that matter, at a glance.",
+    "difficulty": "medium",
+    "tags": ["reference", "cheat-sheet"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-02",
+    "description": "A quick reference for the client-side threat model and the defences interviewers expect you to know.",
+    "sections": [
+      {
+        "title": "Threats",
+        "items": [
+          { "label": "XSS", "value": "Untrusted data runs as script in your origin", "note": "Stored, reflected, DOM" },
+          { "label": "CSRF", "value": "Another site sends an authenticated request", "note": "Abuses automatic cookies" },
+          { "label": "Clickjacking", "value": "Your page framed and overlaid", "note": "Block with frame-ancestors" },
+          { "label": "SQL injection", "value": "Input becomes part of a query", "note": "Parameterise everything" }
+        ]
+      },
+      {
+        "title": "Defences",
+        "items": [
+          { "label": "Output encoding", "value": "Encode for the context, do not just filter input" },
+          { "label": "CSP", "value": "Allow-list sources; block inline script", "note": "Report-Only first" },
+          { "label": "Sanitize HTML", "value": "DOMPurify for user-authored markup" },
+          { "label": "Parameterised queries", "value": "Separate query and values" }
+        ]
+      },
+      {
+        "title": "Cookies",
+        "items": [
+          { "label": "HttpOnly", "value": "Script cannot read it", "note": "Does not stop CSRF" },
+          { "label": "Secure", "value": "Sent only over HTTPS" },
+          { "label": "SameSite=Lax", "value": "Sent on same-site and top-level GET", "note": "Common default" },
+          { "label": "SameSite=Strict", "value": "Sent only on same-site requests" },
+          { "label": "SameSite=None", "value": "Sent cross-site", "note": "Requires Secure" }
+        ]
+      },
+      {
+        "title": "CORS",
+        "items": [
+          { "label": "Origin", "value": "scheme + host + port" },
+          { "label": "Preflight", "value": "OPTIONS before non-simple requests" },
+          { "label": "Credentials", "value": "Cannot use the wildcard origin", "note": "Must name the origin" },
+          { "label": "Vary: Origin", "value": "Required when the response depends on Origin" }
+        ]
+      },
+      {
+        "title": "Headers to set",
+        "items": [
+          { "label": "Content-Security-Policy", "value": "Restrict script and other sources" },
+          { "label": "Strict-Transport-Security", "value": "Force HTTPS" },
+          { "label": "X-Content-Type-Options", "value": "nosniff" },
+          { "label": "Referrer-Policy", "value": "Limit referrer leakage" },
+          { "label": "frame-ancestors", "value": "Prevent clickjacking" }
+        ]
+      }
+    ],
+    "related": ["sec-xss", "sec-csrf", "sec-cors-same-origin", "sec-token-storage", "sec-csp"]
+  }
+]

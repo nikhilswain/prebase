@@ -1,0 +1,291 @@
+[
+  {
+    "id": "html-semantics",
+    "slug": "semantic-html",
+    "category": "html",
+    "type": "question",
+    "title": "What is semantic HTML and why does it matter?",
+    "summary": "Using elements that describe their meaning, so browsers, assistive tech and search engines understand the page.",
+    "difficulty": "easy",
+    "tags": ["semantics", "accessibility", "seo"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-02",
+    "shortAnswer": "Semantic HTML means choosing elements for what they mean rather than how they look: button for a button, nav for navigation, article for a self-contained piece of content. Screen readers, search engines, reader modes and the browser itself all use those meanings. A div styled to look like a button is invisible to all of them.",
+    "explanation": [
+      "Semantics come with behaviour for free. A button is focusable, activates on Enter and Space, and announces itself as a button. A form submits on Enter. A details element expands and collapses. Rebuilding that with divs means reimplementing keyboard handling and ARIA, usually incompletely.",
+      "Landmarks (header, nav, main, aside, footer) let a screen reader user jump between regions. Headings in order give a document outline. Lists announce their length. None of this works if everything is a div.",
+      "Search engines and reader modes rely on the same structure to extract the main content and its title. Good semantics are good SEO and good reader-mode support at the same time.",
+      "There is a first rule of ARIA worth remembering: prefer a native element that already has the semantics over adding a role to a div. No ARIA is better than bad ARIA."
+    ],
+    "keyPoints": [
+      "Choose elements for meaning, not appearance",
+      "Native elements bring keyboard and screen reader behaviour",
+      "Landmarks and headings give structure to assistive tech",
+      "Prefer a real element over a role on a div"
+    ],
+    "example": {
+      "language": "html",
+      "caption": "The semantic version is focusable, keyboard-operable and announced correctly.",
+      "code": "<nav aria-label=\"Primary\">\n  <ul>\n    <li><a href=\"/docs\">Docs</a></li>\n    <li><a href=\"/pricing\">Pricing</a></li>\n  </ul>\n</nav>\n\n<button type=\"button\">Save</button>"
+    },
+    "commonMistakes": [
+      "Using a div with a click handler instead of a button",
+      "Skipping heading levels for visual size instead of structure",
+      "Reaching for role and aria-* before checking for a native element"
+    ],
+    "followUps": [
+      "What does a button give you that a div with onclick does not?",
+      "How do landmarks help a screen reader user?",
+      "When would you use an anchor instead of a button?"
+    ],
+    "realWorld": "Most accessibility bugs are really semantics bugs: the wrong element, an unlabelled control, or a heading outline that skips levels.",
+    "related": ["html-forms-labels", "html-cheatsheet", "html-gotcha-div-button"]
+  },
+  {
+    "id": "html-defer-async",
+    "slug": "defer-vs-async",
+    "category": "html",
+    "type": "comparison",
+    "title": "script: defer vs async vs module",
+    "summary": "How a script is fetched and when it runs relative to HTML parsing.",
+    "difficulty": "medium",
+    "tags": ["loading", "performance", "scripts"],
+    "featured": true,
+    "reviewStatus": "verified",
+    "updated": "2026-09-02",
+    "options": [
+      { "name": "defer", "summary": "Parallel download, runs after parsing, in order" },
+      { "name": "async", "summary": "Parallel download, runs as soon as ready, order not guaranteed" },
+      { "name": "type=module", "summary": "Deferred by default, strict mode, scoped" }
+    ],
+    "rows": [
+      { "label": "Fetch", "values": ["Parallel with parsing", "Parallel with parsing", "Parallel with parsing"] },
+      { "label": "Execution", "values": ["After parsing, before DOMContentLoaded", "As soon as downloaded, may interrupt parsing", "After parsing, like defer"] },
+      { "label": "Order", "values": ["Guaranteed, source order", "Not guaranteed", "Guaranteed, source order"] },
+      { "label": "Blocking", "values": ["Never blocks parsing", "Can block parsing when it runs", "Never blocks parsing"] },
+      { "label": "Best for", "values": ["Most app and vendor scripts", "Independent analytics or ads", "Modern app entry points"] }
+    ],
+    "verdict": "Use defer or type=module for application code: both download in parallel and run after the HTML is parsed, and modules are deferred by default. Use async only for scripts that are genuinely independent and must run as soon as possible, such as analytics. A plain script in the head blocks parsing and should be avoided.",
+    "pickWhen": [
+      { "option": "defer", "guidance": "Your scripts depend on each other and on the DOM, which is almost always the case for app code." },
+      { "option": "async", "guidance": "The script is self-contained, does not depend on order, and should not wait for the page." },
+      { "option": "type=module", "guidance": "You are writing modern JavaScript and want deferred, scoped, strict-mode execution by default." }
+    ],
+    "example": {
+      "language": "html",
+      "caption": "Both are non-blocking; module is deferred automatically.",
+      "code": "<script src=\"/app.js\" defer></script>\n<script type=\"module\" src=\"/main.js\"></script>\n<script src=\"/analytics.js\" async></script>"
+    },
+    "commonMistakes": [
+      "Putting a blocking script in the head and delaying first paint",
+      "Using async for scripts that depend on each other and getting random errors",
+      "Assuming defer runs before DOMContentLoaded when it actually runs just before it"
+    ],
+    "related": ["html-dom-parsing", "html-cheatsheet", "html-data-attributes"]
+  },
+  {
+    "id": "html-dom-parsing",
+    "slug": "parsing-and-the-dom",
+    "category": "html",
+    "type": "concept",
+    "title": "Parsing and the DOM",
+    "summary": "The browser turns HTML into a tree, tolerating errors, and scripts can block the parser.",
+    "difficulty": "medium",
+    "tags": ["dom", "parsing", "rendering"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-02",
+    "definition": "Parsing is how the browser converts an HTML byte stream into the Document Object Model, a tree of nodes. The HTML parser is error-tolerant and has a fixed set of rules for recovering from malformed markup, so it rarely fails; it repairs instead.",
+    "explanation": [
+      "The parser works incrementally. As it encounters a script without defer or async, it pauses, fetches and runs the script, then resumes. That is why a blocking script in the head delays the rest of the page.",
+      "CSS is render-blocking rather than parser-blocking. The browser keeps parsing while stylesheets download, but it will not paint until the render-blocking stylesheets are ready, because it does not want to show unstyled content.",
+      "Because the parser repairs bad markup, the tree you get in the DOM can differ from what the source looks like. A table without a tbody gets one inserted, an unclosed tag is closed, and invalid nesting is rearranged. This is why you inspect the DOM, not just the source.",
+      "When JavaScript runs, the DOM is already partially or fully built depending on how the script is loaded. That timing is the whole reason defer, async and DOMContentLoaded exist."
+    ],
+    "keyPoints": [
+      "HTML parsing is incremental and error-tolerant",
+      "Scripts without defer or async block the parser",
+      "CSS is render-blocking, not parser-blocking",
+      "The DOM may differ from the source after error repair"
+    ],
+    "example": {
+      "language": "html",
+      "caption": "The parser inserts tbody, so the DOM does not match the source exactly.",
+      "code": "<table>\n  <tr><td>1</td></tr>\n</table>\n<!-- in the DOM this becomes table > tbody > tr -->"
+    },
+    "related": ["html-defer-async", "html-cheatsheet", "html-semantics"]
+  },
+  {
+    "id": "html-data-attributes",
+    "slug": "data-attributes",
+    "category": "html",
+    "type": "question",
+    "title": "What are data-* attributes for?",
+    "summary": "Custom attributes for storing extra information on an element without inventing non-standard attributes.",
+    "difficulty": "easy",
+    "tags": ["dom", "attributes"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-02",
+    "shortAnswer": "data-* attributes let you attach custom data to an element in a valid way. They are read in JavaScript through the dataset property and in CSS through attribute selectors. They are for data that belongs to the markup, such as a configuration value or a hook for behaviour, not for styling state that has a better attribute already.",
+    "explanation": [
+      "dataset converts the attribute name to camelCase: data-user-id becomes dataset.userId. Every value is a string, so numbers and booleans need parsing.",
+      "They are a clean way to pass server-rendered values to a script without an inline script or a global. A component can read its own configuration from its element instead of from a lookup.",
+      "Use them for hooks and data, not as a replacement for real state. For a toggle, aria-expanded or a native checked is better than a data-state you then have to keep in sync for assistive tech.",
+      "Attribute selectors can style them, but if the value is really a visual state, a class is usually clearer and easier to reason about."
+    ],
+    "keyPoints": [
+      "Valid custom attributes, unlike made-up ones",
+      "Read with dataset in camelCase, always as strings",
+      "Good for passing server data to scripts and for behaviour hooks",
+      "Do not use them where a real ARIA or form attribute applies"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "Reading a server-rendered id and a JSON payload.",
+      "code": "<button data-copy data-code=\"console.log('hi')\">Copy</button>\n\nconst button = document.querySelector('[data-copy]');\nbutton.dataset.code; // \"console.log('hi')\""
+    },
+    "commonMistakes": [
+      "Forgetting dataset values are always strings",
+      "Storing large JSON in an attribute instead of fetching it",
+      "Using data-* for state that assistive tech needs, instead of ARIA or native attributes"
+    ],
+    "followUps": [
+      "How do you read a data attribute in JavaScript?",
+      "When would you use a class instead?",
+      "How does dataset map to the attribute name?"
+    ],
+    "related": ["html-semantics", "html-cheatsheet", "html-dom-parsing"]
+  },
+  {
+    "id": "html-forms-labels",
+    "slug": "forms-and-labels",
+    "category": "html",
+    "type": "question",
+    "title": "How do you associate a label with an input?",
+    "summary": "Wrap the input or use for and id, so the label is announced and clicking it focuses the field.",
+    "difficulty": "easy",
+    "tags": ["forms", "accessibility"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-02",
+    "shortAnswer": "Either wrap the input inside the label element, or give the input an id and set the label's for attribute to that id. Both create a programmatic association, so screen readers announce the label with the field and clicking the label focuses or toggles it. A placeholder is not a label.",
+    "explanation": [
+      "The association is what makes the field understandable. Without it, a screen reader announces an unlabelled edit field, and a sighted user cannot click the text to focus the input.",
+      "Wrapping is convenient when the label and input sit together. The for and id approach is better when they are separated, and is required for some widgets.",
+      "Every input needs an accessible name. For a group of radios or checkboxes, use a fieldset with a legend to name the group, and a label per option. For an icon-only control, an aria-label or visually hidden text provides the name.",
+      "Placeholders disappear on input and often fail contrast, so they are a hint at most. They are never a substitute for a visible label."
+    ],
+    "keyPoints": [
+      "label for=id, or wrap the input in the label",
+      "Clicking the label focuses or toggles the control",
+      "fieldset and legend name a group of controls",
+      "Placeholders are not labels"
+    ],
+    "example": {
+      "language": "html",
+      "caption": "Both patterns are valid; the first is more common.",
+      "code": "<label for=\"email\">Email</label>\n<input id=\"email\" name=\"email\" type=\"email\" />\n\n<label>\n  Subscribe\n  <input type=\"checkbox\" name=\"subscribe\" />\n</label>"
+    },
+    "commonMistakes": [
+      "Using only a placeholder as the label",
+      "Nesting an interactive element inside a label and causing double activation",
+      "Forgetting to name a group of radio buttons with fieldset and legend"
+    ],
+    "followUps": [
+      "Why is a placeholder not enough?",
+      "How do you label a group of radio buttons?",
+      "How do you give an icon-only button a name?"
+    ],
+    "related": ["html-semantics", "html-gotcha-div-button", "html-cheatsheet"]
+  },
+  {
+    "id": "html-gotcha-div-button",
+    "slug": "gotcha-div-button",
+    "category": "html",
+    "type": "gotcha",
+    "title": "A div that looks like a button",
+    "summary": "It works with a mouse and fails for everyone using a keyboard or screen reader.",
+    "difficulty": "easy",
+    "tags": ["accessibility", "gotcha", "semantics"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-02",
+    "scenario": "A custom control is built as a div with a click handler. It looks right and works when clicked with a mouse, so it passes review. Then a keyboard user cannot reach it and a screen reader user does not know it is interactive.",
+    "problem": "A div is not focusable, has no button role, and does not respond to Enter or Space. It also does not participate in form semantics, so it will not submit a form. The visual styling hid all of that.",
+    "example": {
+      "language": "html",
+      "caption": "The div version needs role, tabindex, and key handlers to come close, and still misses form behaviour.",
+      "code": "<!-- broken: unreachable by keyboard -->\n<div class=\"btn\" onclick=\"save()\">Save</div>\n\n<!-- correct -->\n<button type=\"button\" onclick=\"save()\">Save</button>"
+    },
+    "fix": "Use a button. If you truly cannot, you must add role=button, tabindex=0, and handlers for both Enter and Space, and even then it will not submit forms or behave exactly like a button. The cost of getting a div right is always higher than using the element that already works.",
+    "keyPoints": [
+      "div is not focusable and has no role",
+      "button is keyboard-operable and announced for free",
+      "Faking a button needs role, tabindex and key handlers",
+      "Use an anchor for navigation and a button for actions"
+    ],
+    "related": ["html-semantics", "html-forms-labels", "html-cheatsheet"]
+  },
+  {
+    "id": "html-cheatsheet",
+    "slug": "html-cheat-sheet",
+    "category": "html",
+    "type": "cheat-sheet",
+    "title": "HTML Cheat Sheet",
+    "summary": "Semantics, loading order and the form and accessibility basics.",
+    "difficulty": "easy",
+    "tags": ["reference", "cheat-sheet"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-02",
+    "description": "A quick reference for document structure, script loading and accessible markup.",
+    "sections": [
+      {
+        "title": "Landmarks",
+        "items": [
+          { "label": "header", "value": "Introductory content or site header" },
+          { "label": "nav", "value": "Major navigation", "note": "Label it when there is more than one" },
+          { "label": "main", "value": "The primary content", "note": "One per page" },
+          { "label": "aside", "value": "Related but tangential content" },
+          { "label": "footer", "value": "Footer for the page or a section" }
+        ]
+      },
+      {
+        "title": "Script loading",
+        "items": [
+          { "label": "plain", "value": "Blocks parsing while it runs", "note": "Avoid in the head" },
+          { "label": "defer", "value": "Parallel fetch, runs after parsing, in order" },
+          { "label": "async", "value": "Parallel fetch, runs when ready, unordered" },
+          { "label": "type=module", "value": "Deferred by default, strict, scoped" }
+        ]
+      },
+      {
+        "title": "Forms and labels",
+        "items": [
+          { "label": "Label association", "value": "label for=id or wrap the input", "code": "<label for=\"email\">Email</label>\n<input id=\"email\" type=\"email\" />", "language": "html" },
+          { "label": "Group of controls", "value": "fieldset with a legend" },
+          { "label": "Input types", "value": "email, tel, url, number, date give free validation and keyboards" },
+          { "label": "Autocomplete", "value": "name, email, one-time-code improve autofill" }
+        ]
+      },
+      {
+        "title": "Accessibility essentials",
+        "items": [
+          { "label": "Accessible name", "value": "Visible label, or aria-label for icon-only controls" },
+          { "label": "Images", "value": "alt text, or alt=\"\" if decorative" },
+          { "label": "Headings", "value": "One h1, then a logical outline without skipping" },
+          { "label": "Interactive elements", "value": "button for actions, a for navigation" },
+          { "label": "Language", "value": "lang on the html element" }
+        ]
+      },
+      {
+        "title": "Metadata",
+        "items": [
+          { "label": "viewport", "value": "width=device-width, initial-scale=1" },
+          { "label": "title", "value": "Unique and descriptive per page" },
+          { "label": "description", "value": "Summarises the page for search and sharing" },
+          { "label": "Open Graph", "value": "og:title, og:image, og:description for link previews" }
+        ]
+      }
+    ],
+    "related": ["html-semantics", "html-defer-async", "html-forms-labels", "html-gotcha-div-button"]
+  }
+]

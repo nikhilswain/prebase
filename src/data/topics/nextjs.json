@@ -1,0 +1,236 @@
+[
+  {
+    "id": "nextjs-app-router",
+    "slug": "app-router",
+    "category": "nextjs",
+    "type": "concept",
+    "title": "The App Router",
+    "summary": "File-system routing under app/, with layouts, nested routes and React Server Components by default.",
+    "difficulty": "medium",
+    "tags": ["routing", "app-router"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-03",
+    "definition": "The App Router is the routing model built on the app directory. Folders define routes, a page file makes a route reachable, and a layout file wraps the route and its children and preserves state across navigation. It is built on React Server Components, so components are server-rendered by default.",
+    "explanation": [
+      "Conventions do the work. page.tsx is the route's UI, layout.tsx is shared shell that does not re-render when navigating between its children, loading.tsx is an automatic Suspense fallback, error.tsx is an error boundary, and route.ts is an API endpoint. Special filenames give you behaviour without configuration.",
+      "Layouts nest. A layout at the root wraps everything, and a layout inside a folder wraps only that segment. Because layouts persist across navigation within their segment, shared UI keeps its state, which is why a sidebar or a player does not reset.",
+      "The old Pages Router used getServerSideProps and getStaticProps and a pages directory. It still works and is supported, but new projects use the App Router, and the two have different data-fetching and caching models.",
+      "Dynamic segments use brackets, [id], and catch-all uses [...slug]. Route groups with parentheses, (marketing), organise files without affecting the URL, which is useful for giving different sections different layouts."
+    ],
+    "keyPoints": [
+      "Folders define routes; special filenames define behaviour",
+      "layout.tsx persists across navigation in its segment",
+      "Server Components are the default",
+      "Route groups organise without changing the URL"
+    ],
+    "example": {
+      "language": "text",
+      "caption": "The file layout for a dashboard with a shared shell.",
+      "code": "app/\n  layout.tsx          root shell, persists\n  page.tsx            /\n  dashboard/\n    layout.tsx        shared dashboard shell\n    page.tsx          /dashboard\n    [id]/\n      page.tsx        /dashboard/:id\n    loading.tsx       Suspense fallback\n    error.tsx         error boundary"
+    },
+    "related": ["nextjs-server-client", "nextjs-rendering", "nextjs-cheatsheet"]
+  },
+  {
+    "id": "nextjs-server-client",
+    "slug": "server-vs-client-components",
+    "category": "nextjs",
+    "type": "concept",
+    "title": "Server vs Client Components",
+    "summary": "Server Components run on the server and ship no JavaScript; Client Components add interactivity in the browser.",
+    "difficulty": "medium",
+    "tags": ["rsc", "components"],
+    "featured": true,
+    "reviewStatus": "verified",
+    "updated": "2026-09-03",
+    "definition": "In the App Router, every component is a Server Component by default. It runs on the server, can read the database or the filesystem directly, and sends only rendered output to the browser. Adding the 'use client' directive at the top of a file marks it and its imports as Client Components, which are shipped to the browser and can use state, effects and event handlers.",
+    "explanation": [
+      "Server Components exist to keep code and data on the server. Because they never ship to the browser, they can use heavy libraries and secrets without bloating the bundle or leaking anything. Fetching data in them is direct, so the classic client-side loading spinner disappears.",
+      "Client Components are for interactivity: useState, useEffect, event handlers, browser APIs. They still server-render for the initial HTML, then hydrate, which is why a Client Component can show content before it becomes interactive.",
+      "The boundary is one-directional. A Server Component can render a Client Component, but a Client Component cannot import a Server Component. To pass server-rendered UI into a client component, use the children prop, which is the composition pattern that lets a client wrapper host server content.",
+      "Keep the boundary low in the tree. Marking a page 'use client' drags its whole subtree into the client bundle. Instead, push 'use client' down to the small interactive leaves and keep data fetching and layout on the server."
+    ],
+    "keyPoints": [
+      "Server Components are the default and ship no JS",
+      "use client marks a component and its imports as client",
+      "Server can render client, not the reverse; use children to compose",
+      "Push the client boundary down to interactive leaves"
+    ],
+    "example": {
+      "language": "jsx",
+      "caption": "A client search box inside a server-rendered page.",
+      "code": "// app/page.tsx  (Server Component)\nimport SearchBox from './search-box';\n\nexport default async function Page() {\n  const posts = await db.posts.findMany();\n  return (\n    <main>\n      <SearchBox />\n      <ul>{posts.map((p) => <li key={p.id}>{p.title}</li>)}</ul>\n    </main>\n  );\n}\n\n// app/search-box.tsx  (Client Component)\n'use client';\nimport { useState } from 'react';\nexport default function SearchBox() {\n  const [q, setQ] = useState('');\n  return <input value={q} onChange={(e) => setQ(e.target.value)} />;\n}"
+    },
+    "commonMistakes": [
+      "Adding 'use client' to a whole page and pulling data fetching into the browser",
+      "Trying to import a Server Component into a Client Component",
+      "Passing non-serialisable props such as functions across the boundary"
+    ],
+    "related": ["nextjs-app-router", "nextjs-caching", "nextjs-cheatsheet"]
+  },
+  {
+    "id": "nextjs-rendering",
+    "slug": "rendering-strategies",
+    "category": "nextjs",
+    "type": "question",
+    "title": "How does Next.js decide between static and dynamic rendering?",
+    "summary": "Routes are static by default and become dynamic when they use request-time data or are opted out of caching.",
+    "difficulty": "hard",
+    "tags": ["rendering", "ssr", "ssg"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-03",
+    "shortAnswer": "In the App Router, a route is statically rendered at build time by default. It becomes dynamically rendered at request time when it uses something request-specific, such as reading cookies or headers, a search param, or a dynamic function like noStore. You can also force it with a route segment config such as dynamic = 'force-dynamic' or revalidate = 0.",
+    "explanation": [
+      "Static rendering produces HTML once and serves it from the edge, which is the fastest option. It is the default because most pages do not need per-request data.",
+      "Dynamic rendering happens per request when the route depends on the request. Accessing cookies() or headers(), or a dynamic route without generateStaticParams, switches the whole route to dynamic. This is the App Router's replacement for the explicit getServerSideProps choice.",
+      "Incremental Static Regeneration sits in between. Setting revalidate on a fetch or a segment gives a static page that refreshes in the background after a time window, so content stays fast and reasonably fresh. On-demand revalidation with revalidatePath or revalidateTag refreshes after a mutation instead of on a timer.",
+      "The mental model is that caching is opt-out, not opt-in. Fetch results are cached by default, and you deliberately break the cache when you need freshness. Understanding exactly which call makes a route dynamic is the crux of most Next.js interview questions."
+    ],
+    "keyPoints": [
+      "Static by default, dynamic when request data is used",
+      "cookies, headers and search params make a route dynamic",
+      "revalidate gives ISR; revalidatePath and revalidateTag are on-demand",
+      "Caching is opt-out, not opt-in"
+    ],
+    "example": {
+      "language": "jsx",
+      "caption": "Opt into dynamic rendering and control revalidation.",
+      "code": "// per-request rendering\nexport const dynamic = 'force-dynamic';\n\n// or ISR: rebuild at most every 60 seconds\nexport const revalidate = 60;\n\n// on-demand after a mutation\nimport { revalidateTag } from 'next/cache';\nrevalidateTag('posts');"
+    },
+    "commonMistakes": [
+      "Assuming every page is server-rendered per request",
+      "Being surprised that reading cookies made the whole route dynamic",
+      "Fetching fresh data in a client component to avoid the caching model"
+    ],
+    "followUps": [
+      "What makes a route dynamic in the App Router?",
+      "How does ISR differ from a plain static build?",
+      "How would you revalidate a page after a user edits content?"
+    ],
+    "related": ["nextjs-caching", "nextjs-app-router", "fe-ssr-ssg-isr"]
+  },
+  {
+    "id": "nextjs-caching",
+    "slug": "caching",
+    "category": "nextjs",
+    "type": "concept",
+    "title": "Next.js Caching Layers",
+    "summary": "Request memoization, the Data Cache, the Full Route Cache and the Router Cache, each with its own lifetime.",
+    "difficulty": "hard",
+    "tags": ["caching", "rendering"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-03",
+    "definition": "Next.js caches at several layers. Request memoization deduplicates identical fetches within a single render. The Data Cache persists fetch results across requests and deployments. The Full Route Cache stores the rendered HTML and RSC payload of static routes. The Router Cache keeps visited route segments in the browser for fast client navigation.",
+    "explanation": [
+      "Request memoization is per render pass. If several components fetch the same URL, it is fetched once and shared, which is why you can fetch in the component that needs the data without prop-drilling or a global store.",
+      "The Data Cache is persistent and keyed by the URL and options. A fetch is cached by default; setting cache: 'no-store' or a revalidate window controls its lifetime. This is what makes a static route cheap to serve.",
+      "The Full Route Cache stores the output of a statically rendered route. A dynamic route skips it and renders per request. This is why one dynamic call can make a route slower and uncached.",
+      "The Router Cache is client-side and makes back and forward navigation instant by reusing segments. It is the layer people forget when stale data appears after a mutation, which is why revalidatePath and router.refresh exist."
+    ],
+    "keyPoints": [
+      "Four layers: request memoization, Data Cache, Full Route Cache, Router Cache",
+      "fetch is cached by default; opt out with no-store",
+      "A dynamic call bypasses the Full Route Cache",
+      "Stale client navigation comes from the Router Cache"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "Controlling the Data Cache per fetch.",
+      "code": "// cached until you revalidate\nconst res = await fetch('https://api.example.com/posts', {\n  next: { revalidate: 60, tags: ['posts'] },\n});\n\n// never cached\nconst fresh = await fetch(url, { cache: 'no-store' });"
+    },
+    "related": ["nextjs-rendering", "nextjs-server-client", "nextjs-cheatsheet"]
+  },
+  {
+    "id": "nextjs-gotcha-hydration",
+    "slug": "gotcha-hydration-mismatch",
+    "category": "nextjs",
+    "type": "gotcha",
+    "title": "Hydration mismatch",
+    "summary": "The server HTML does not match what the client renders, so React discards and re-renders.",
+    "difficulty": "medium",
+    "tags": ["hydration", "gotcha"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-03",
+    "scenario": "A page renders fine on the server but throws a hydration error in the browser, or flashes different content for a moment. The console warns that the server-rendered HTML did not match the client.",
+    "problem": "During hydration React expects the client's first render to match the server HTML. If it differs, React cannot reuse the DOM and re-renders the subtree. The usual causes are values that differ between server and client: Date.now() or new Date(), Math.random(), reading localStorage or window during render, locale and timezone formatting differences, and invalid HTML nesting that the browser repairs differently on each side.",
+    "example": {
+      "language": "jsx",
+      "caption": "The same component renders different text on server and client.",
+      "code": "'use client';\n\nexport function Clock() {\n  // server renders one time, client renders another -> mismatch\n  return <span>{new Date().toLocaleTimeString()}</span>;\n}"
+    },
+    "fix": "Render environment-dependent values only after mount, using an effect and a mounted flag, or move them behind a Client Component that fetches them client-side. For intentional differences such as a theme class, suppressHydrationWarning on the specific element. Fix invalid nesting at the source, since the parser repair is not guaranteed to match. In Next.js, make sure the same code path runs on both sides rather than branching on typeof window during render.",
+    "keyPoints": [
+      "Server HTML must match the client's first render",
+      "Time, random values and browser-only APIs are the usual causes",
+      "Render those after mount, not during render",
+      "Invalid HTML nesting can hydrate differently than the parser"
+    ],
+    "related": ["nextjs-server-client", "nextjs-rendering", "nextjs-cheatsheet"]
+  },
+  {
+    "id": "nextjs-cheatsheet",
+    "slug": "nextjs-cheat-sheet",
+    "category": "nextjs",
+    "type": "cheat-sheet",
+    "title": "Next.js Cheat Sheet",
+    "summary": "App Router conventions, rendering and caching at a glance.",
+    "difficulty": "medium",
+    "tags": ["reference", "cheat-sheet"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-03",
+    "description": "A quick reference for the App Router, Server and Client Components, and the caching model.",
+    "sections": [
+      {
+        "title": "File conventions",
+        "items": [
+          { "label": "page.tsx", "value": "Makes a route reachable" },
+          { "label": "layout.tsx", "value": "Shared shell, persists across navigation" },
+          { "label": "loading.tsx", "value": "Suspense fallback for the segment" },
+          { "label": "error.tsx", "value": "Error boundary for the segment" },
+          { "label": "route.ts", "value": "API endpoint" },
+          { "label": "[id] / [...slug]", "value": "Dynamic and catch-all segments" },
+          { "label": "(group)", "value": "Route group, does not affect the URL" }
+        ]
+      },
+      {
+        "title": "Components",
+        "items": [
+          { "label": "Default", "value": "Server Component, no JS shipped" },
+          { "label": "'use client'", "value": "Client Component with state and events" },
+          { "label": "Composition", "value": "Pass server UI into client via children" },
+          { "label": "Keep the boundary low", "value": "Mark interactive leaves, not whole pages" }
+        ]
+      },
+      {
+        "title": "Rendering",
+        "items": [
+          { "label": "Static", "value": "Default, rendered at build" },
+          { "label": "Dynamic", "value": "cookies, headers, searchParams, noStore" },
+          { "label": "ISR", "value": "export const revalidate = 60" },
+          { "label": "On-demand", "value": "revalidatePath, revalidateTag" }
+        ]
+      },
+      {
+        "title": "Caching layers",
+        "items": [
+          { "label": "Request memoization", "value": "Deduplicates fetches in one render" },
+          { "label": "Data Cache", "value": "Persistent fetch results, keyed by URL" },
+          { "label": "Full Route Cache", "value": "Rendered HTML for static routes" },
+          { "label": "Router Cache", "value": "Client segments for fast navigation" },
+          { "label": "Opt out", "value": "cache: 'no-store'", "language": "javascript" }
+        ]
+      },
+      {
+        "title": "Data fetching",
+        "items": [
+          { "label": "In Server Components", "value": "await directly, no useEffect" },
+          { "label": "Mutations", "value": "Server Actions with 'use server'" },
+          { "label": "Loading UI", "value": "Suspense or loading.tsx" },
+          { "label": "Refresh client cache", "value": "router.refresh()" }
+        ]
+      }
+    ],
+    "related": ["nextjs-app-router", "nextjs-server-client", "nextjs-rendering", "nextjs-caching", "nextjs-gotcha-hydration"]
+  }
+]

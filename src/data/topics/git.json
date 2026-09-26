@@ -1,0 +1,273 @@
+[
+  {
+    "id": "git-merge-vs-rebase",
+    "slug": "merge-vs-rebase",
+    "category": "git",
+    "type": "comparison",
+    "title": "merge vs rebase",
+    "summary": "Merge preserves history and adds a merge commit. Rebase rewrites your commits onto a new base for a linear history.",
+    "difficulty": "medium",
+    "tags": ["branching", "history"],
+    "featured": true,
+    "reviewStatus": "verified",
+    "updated": "2026-09-02",
+    "options": [
+      { "name": "merge", "summary": "Joins two histories, keeps every commit" },
+      { "name": "rebase", "summary": "Replays your commits on top of another branch" }
+    ],
+    "rows": [
+      { "label": "History shape", "values": ["Preserved, with a merge commit", "Linear, your commits get new hashes"] },
+      { "label": "Commit hashes", "values": ["Unchanged", "Rewritten for the rebased commits"] },
+      { "label": "Conflicts", "values": ["Resolved once, in the merge", "May recur per replayed commit"] },
+      { "label": "Safe on shared branches", "values": ["Yes", "No, it rewrites published history"] },
+      { "label": "Best for", "values": ["Integrating a feature into main", "Tidying your local branch before review"] }
+    ],
+    "verdict": "Rebase your own local branch to keep it current and tidy, then merge it into the shared branch. Never rebase commits that others have based work on, because rewriting their hashes forces everyone to recover. The rule of thumb: rebase to update, merge to integrate.",
+    "pickWhen": [
+      { "option": "merge", "guidance": "You are bringing a finished branch into main, or the branch is already shared with others." },
+      { "option": "rebase", "guidance": "You want a clean linear history, or you are updating your own unpublished branch before opening a pull request." }
+    ],
+    "example": {
+      "language": "bash",
+      "caption": "Update a feature branch onto the latest main, then integrate.",
+      "code": "git switch feature\ngit fetch origin\ngit rebase origin/main\n# resolve any conflicts, then\ngit switch main\ngit merge feature"
+    },
+    "commonMistakes": [
+      "Rebasing a branch that others have pulled, forcing them to reset",
+      "Using merge --no-ff everywhere and creating a noisy history of trivial merge commits",
+      "Resolving a conflict during rebase with the wrong side and silently dropping changes"
+    ],
+    "related": ["git-three-trees", "git-gotcha-force-push", "git-cheatsheet"]
+  },
+  {
+    "id": "git-three-trees",
+    "slug": "the-three-trees",
+    "category": "git",
+    "type": "concept",
+    "title": "The Three Trees",
+    "summary": "Working directory, staging area and commit history: understanding them makes every command predictable.",
+    "difficulty": "medium",
+    "tags": ["internals", "staging"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-02",
+    "definition": "Git tracks three states. The working directory is the files on disk. The index, or staging area, is the snapshot you are preparing for the next commit. HEAD is the last commit on the current branch. Most Git commands move changes between these three.",
+    "explanation": [
+      "git add copies changes from the working directory into the index. git commit turns the index into a new commit and moves HEAD to it. The working directory is not touched by commit, which is why you can stage part of your changes and leave the rest.",
+      "This is why reset has modes. --soft moves HEAD only, leaving the index and working directory alone, so the changes become staged. --mixed (the default) also resets the index, so changes become unstaged. --hard resets all three and discards your work.",
+      "Understanding the three trees turns confusing commands into obvious ones. Checking out a file overwrites the working directory from a commit. Restoring a staged file copies it back from HEAD into the index.",
+      "The index also enables partial staging: git add -p lets you stage individual hunks, which is how you split one messy working session into several clean commits."
+    ],
+    "keyPoints": [
+      "Working directory, index, HEAD",
+      "add moves working directory into the index",
+      "commit turns the index into a commit",
+      "reset --soft, --mixed and --hard differ in which trees they touch"
+    ],
+    "example": {
+      "language": "bash",
+      "caption": "Undo the last commit but keep the changes staged.",
+      "code": "git reset --soft HEAD~1\n# the commit is gone, the changes are back in the index\n\n# discard everything in the working directory (destructive)\ngit reset --hard HEAD"
+    },
+    "related": ["git-undo", "git-merge-vs-rebase", "git-cheatsheet"]
+  },
+  {
+    "id": "git-undo",
+    "slug": "undoing-things",
+    "category": "git",
+    "type": "question",
+    "title": "How do you undo changes in Git?",
+    "summary": "reset, revert and restore undo different things; pick by whether the commit is shared.",
+    "difficulty": "medium",
+    "tags": ["recovery", "commands"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-02",
+    "shortAnswer": "Use restore to undo changes in the working directory or index. Use reset to move a branch pointer and optionally the index, which rewrites local history. Use revert to create a new commit that undoes an earlier one, which is the safe choice on a shared branch because it does not rewrite history.",
+    "explanation": [
+      "For uncommitted work, git restore file discards working-directory changes and git restore --staged file unstages without touching the file. These replace the old, overloaded checkout of a path.",
+      "For local commits, reset moves the branch. --soft keeps the changes staged, --mixed unstages them, --hard discards them. Because it moves the branch pointer, reset is a history rewrite and must not be used on commits others have pulled.",
+      "For published commits, revert is correct. It adds an inverse commit, so history stays intact and everyone gets the undo on their next pull. The original mistake remains in the log, which is usually desirable for audit.",
+      "To find the commit to recover, git reflog lists everywhere HEAD has been, including commits that reset or rebase orphaned. That is the safety net for almost every accidental history change."
+    ],
+    "keyPoints": [
+      "restore for files, reset for local history, revert for shared history",
+      "reset --hard is destructive and unrecoverable without reflog",
+      "revert adds an inverse commit and is safe on shared branches",
+      "reflog finds orphaned commits"
+    ],
+    "example": {
+      "language": "bash",
+      "caption": "Undo a pushed commit safely, then recover a lost one.",
+      "code": "# undo a published commit without rewriting history\ngit revert <sha>\n\n# find and recover a commit lost to reset or rebase\ngit reflog\ngit switch -c rescue <sha-from-reflog>"
+    },
+    "commonMistakes": [
+      "Using reset --hard on a shared branch and rewriting history",
+      "Using revert on a merge commit without specifying the mainline",
+      "Reaching for reset when the commit was already pushed, instead of revert"
+    ],
+    "followUps": [
+      "What is the difference between reset --soft, --mixed and --hard?",
+      "How do you undo a commit that is already pushed?",
+      "How do you recover a commit after a bad rebase?"
+    ],
+    "realWorld": "Knowing revert versus reset is the difference between a clean shared history and a force-push incident.",
+    "related": ["git-three-trees", "git-gotcha-force-push", "git-merge-vs-rebase"]
+  },
+  {
+    "id": "git-branching-strategy",
+    "slug": "branching-strategies",
+    "category": "git",
+    "type": "question",
+    "title": "Trunk-based vs Git Flow",
+    "summary": "Short-lived branches merged often, versus long-lived develop, release and hotfix branches.",
+    "difficulty": "medium",
+    "tags": ["workflow", "collaboration"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-02",
+    "shortAnswer": "Trunk-based development keeps one main branch, with very short-lived feature branches merged within a day or two and often protected by feature flags. Git Flow adds long-lived develop and release branches plus hotfix branches. Trunk-based favours continuous delivery; Git Flow favours scheduled releases and versioned software.",
+    "explanation": [
+      "Trunk-based reduces merge pain because branches diverge for hours, not weeks. It pairs naturally with continuous integration and feature flags, which let unfinished code ship dark.",
+      "Git Flow was designed for software with explicit releases and multiple supported versions. It gives a clear place for release stabilisation, but long-lived branches drift and produce large, conflict-heavy merges.",
+      "The practical question is release cadence. If you deploy continuously, trunk-based is simpler and safer. If you ship versioned releases, some release branching earns its keep, though most teams use a lighter variant than full Git Flow.",
+      "Either way, the invariants are the same: keep branches small and short, protect main, and let CI gate the merge."
+    ],
+    "keyPoints": [
+      "Trunk-based: one main, short branches, feature flags",
+      "Git Flow: develop, release and hotfix branches",
+      "Short branches mean fewer and easier conflicts",
+      "Choose by release cadence, not by fashion"
+    ],
+    "example": {
+      "language": "bash",
+      "caption": "A short-lived branch, merged the same day.",
+      "code": "git switch -c feat/rate-limit main\n# small change, tests pass\ngit switch main\ngit merge --no-ff feat/rate-limit\ngit branch -d feat/rate-limit"
+    },
+    "commonMistakes": [
+      "Keeping a feature branch open for weeks and facing a huge merge",
+      "Long-lived branches that make continuous integration impossible",
+      "Adopting full Git Flow for a team that deploys many times a day"
+    ],
+    "followUps": [
+      "How do feature flags enable trunk-based development?",
+      "What problems do long-lived branches cause?",
+      "How does CI fit into each model?"
+    ],
+    "related": ["git-merge-vs-rebase", "git-cheatsheet"]
+  },
+  {
+    "id": "git-gotcha-force-push",
+    "slug": "gotcha-force-push",
+    "category": "git",
+    "type": "gotcha",
+    "title": "Force-pushing a shared branch",
+    "summary": "It rewrites history other people have based work on, and their next pull silently diverges.",
+    "difficulty": "medium",
+    "tags": ["collaboration", "gotcha"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-02",
+    "scenario": "Someone rebases or amends a branch that others have pulled, then runs git push --force. The remote now has different commit hashes. Teammates pull and get duplicated commits or errors, and any work based on the old commits looks lost.",
+    "problem": "Force-push replaces the remote branch with your local history. Commits that others built on no longer exist on the remote, so their branches reference objects the shared branch does not have. This is not a merge conflict you can resolve; the shared history has genuinely changed underneath them.",
+    "example": {
+      "language": "bash",
+      "caption": "The safe form refuses to overwrite if someone pushed since you last fetched.",
+      "code": "# dangerous: overwrites whatever is on the remote\ngit push --force\n\n# safer: fails if the remote moved since your last fetch\ngit push --force-with-lease"
+    },
+    "fix": "Treat published branches as immutable. Rebase only local, unpublished work. If you must rewrite a shared branch, use --force-with-lease so the push fails if someone else pushed in the meantime, and tell the team so they can reset. Better still, protect main on the remote so force-push is rejected outright.",
+    "keyPoints": [
+      "Force-push replaces shared history, not just your commits",
+      "Teammates get duplicate or missing commits",
+      "--force-with-lease fails if the remote moved",
+      "Protect main server-side to prevent it entirely"
+    ],
+    "related": ["git-merge-vs-rebase", "git-undo", "git-cheatsheet"]
+  },
+  {
+    "id": "git-challenge-recover-commit",
+    "slug": "challenge-recover-commit",
+    "category": "git",
+    "type": "challenge",
+    "title": "Recover a commit after a bad reset",
+    "summary": "You ran reset --hard and lost a commit that was never pushed. Get it back.",
+    "difficulty": "medium",
+    "tags": ["recovery", "reflog", "exercise"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-02",
+    "prompt": "A teammate ran git reset --hard HEAD~3 and discarded three commits that were only local. Nothing was pushed. Describe the exact steps to recover them.",
+    "constraints": [
+      "The commits were never pushed to the remote",
+      "You must not lose the current working state",
+      "Explain why the recovery works"
+    ],
+    "hints": [
+      "Git keeps commits reachable for a while even after a branch stops pointing at them.",
+      "Every move of HEAD is recorded."
+    ],
+    "solution": {
+      "code": {
+        "language": "bash",
+        "code": "# 1. find the lost commit; reflog lists where HEAD has been\ngit reflog\n# e.g. HEAD@{4} abc1234 commit: add rate limiting\n\n# 2. inspect it before trusting it\ngit show abc1234\n\n# 3. recover it onto a new branch (non-destructive)\ngit branch rescue abc1234\n\n# or move the current branch back to it\ngit reset --hard abc1234"
+      },
+      "explanation": [
+        "reset moves the branch pointer but does not delete objects. The commits become unreachable from any branch, but they still exist in the object database until garbage collection prunes them, which is why recovery is possible.",
+        "The reflog records every value HEAD has held, with a timestamp and message, so the lost commit is easy to find. This works for resets, rebases and amended commits alike.",
+        "Creating a branch at the recovered commit is the safe move because it does not disturb your current work. Resetting the current branch hard is an option but discards whatever is in the working directory, so prefer the branch when in doubt."
+      ]
+    },
+    "related": ["git-undo", "git-three-trees", "git-cheatsheet"]
+  },
+  {
+    "id": "git-cheatsheet",
+    "slug": "git-cheat-sheet",
+    "category": "git",
+    "type": "cheat-sheet",
+    "title": "Git Cheat Sheet",
+    "summary": "Everyday commands, history fixes and recovery, at a glance.",
+    "difficulty": "medium",
+    "tags": ["reference", "cheat-sheet"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-02",
+    "description": "A quick reference for inspecting, fixing and recovering history without breaking a shared branch.",
+    "sections": [
+      {
+        "title": "Everyday",
+        "items": [
+          { "label": "Status", "value": "git status -sb", "code": "git status -sb", "language": "bash" },
+          { "label": "Stage hunks", "value": "git add -p", "note": "Split a messy session into clean commits" },
+          { "label": "Amend last commit", "value": "git commit --amend", "note": "Only before it is pushed" },
+          { "label": "Log with graph", "value": "git log --oneline --graph --decorate", "language": "bash" }
+        ]
+      },
+      {
+        "title": "Undo",
+        "items": [
+          { "label": "Discard file changes", "value": "git restore <file>" },
+          { "label": "Unstage", "value": "git restore --staged <file>" },
+          { "label": "Undo commit, keep staged", "value": "git reset --soft HEAD~1" },
+          { "label": "Undo commit, keep unstaged", "value": "git reset HEAD~1" },
+          { "label": "Undo a pushed commit", "value": "git revert <sha>", "note": "Safe on shared branches" }
+        ]
+      },
+      {
+        "title": "Branches and integration",
+        "items": [
+          { "label": "Switch and create", "value": "git switch -c feature" },
+          { "label": "Update onto main", "value": "git rebase origin/main", "note": "Local branches only" },
+          { "label": "Integrate", "value": "git merge --no-ff feature" },
+          { "label": "Delete merged branch", "value": "git branch -d feature" }
+        ]
+      },
+      {
+        "title": "Recovery",
+        "items": [
+          { "label": "Find lost commits", "value": "git reflog", "note": "Reset, rebase and amend all show up" },
+          { "label": "Rescue a commit", "value": "git branch rescue <sha>" },
+          { "label": "See a stash", "value": "git stash list" },
+          { "label": "Abort a rebase", "value": "git rebase --abort" },
+          { "label": "Safe force-push", "value": "git push --force-with-lease", "note": "Fails if the remote moved" }
+        ]
+      }
+    ],
+    "related": ["git-undo", "git-merge-vs-rebase", "git-three-trees", "git-gotcha-force-push"]
+  }
+]

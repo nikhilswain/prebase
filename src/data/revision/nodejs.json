@@ -1,0 +1,136 @@
+{
+  "category": "nodejs",
+  "intro": "The Node.js runtime essentials to skim before a backend interview.",
+  "entries": [
+    {
+      "id": "rev-node-event-loop",
+      "category": "nodejs",
+      "term": "Event loop",
+      "short": "One JS thread; the loop moves ready callbacks onto it phase by phase.",
+      "medium": "Phases run in order: timers, pending callbacks, poll, check, close. Microtasks (nextTick then promises) drain between phases. The poll phase blocks efficiently when there is no work, which is why an idle server uses no CPU.",
+      "detail": "Because there is one thread, a synchronous task blocks every other connection for its whole duration. Concurrency comes from overlapping I/O waits, not parallel JavaScript. Anything CPU-bound must move to worker_threads or another process.",
+      "related": "node-event-loop",
+      "tags": ["runtime", "async"]
+    },
+    {
+      "id": "rev-node-nexttick",
+      "category": "nodejs",
+      "term": "nextTick vs setImmediate",
+      "short": "nextTick runs before the loop continues; setImmediate runs in the check phase.",
+      "medium": "process.nextTick defers to the end of the current operation, before any I/O. setImmediate runs in the check phase after the poll phase, so it yields to I/O. setTimeout(0) runs in the timers phase and is clamped to about a millisecond.",
+      "detail": "The nextTick queue drains completely before the loop moves on, so recursive nextTick can starve I/O and timers. Use nextTick for consistency guarantees in APIs, and setImmediate to defer work without starving the loop.",
+      "related": "node-nexttick-setimmediate",
+      "tags": ["async", "scheduling"]
+    },
+    {
+      "id": "rev-node-libuv",
+      "category": "nodejs",
+      "term": "libuv thread pool",
+      "short": "A small pool for blocking work the OS cannot do asynchronously.",
+      "medium": "Networking uses the OS event mechanism and never touches the pool. File system, DNS and some crypto run on a pool of four threads by default. Saturating it delays unrelated I/O even when the CPU looks idle.",
+      "detail": "Tune with UV_THREADPOOL_SIZE before the process starts. The pool offloads blocking native calls; it does not make your JavaScript run in parallel.",
+      "related": "node-libuv-threadpool",
+      "tags": ["runtime", "concurrency"]
+    },
+    {
+      "id": "rev-node-single-thread",
+      "category": "nodejs",
+      "term": "Single-threaded model",
+      "short": "It never waits: it starts I/O, stores a callback and moves on.",
+      "medium": "One thread juggles thousands of in-flight requests by overlapping waits. The trade-off is that CPU work blocks everything, and per-process memory cannot be the source of truth across instances.",
+      "detail": "This is why sessions live in a shared store, why hashing uses async variants, and why a single heavy handler can degrade the whole service.",
+      "related": "node-single-thread",
+      "tags": ["concurrency"]
+    },
+    {
+      "id": "rev-node-streams",
+      "category": "nodejs",
+      "term": "Streams",
+      "short": "Process data in chunks instead of buffering it all.",
+      "medium": "Readable produces, Writable consumes, Duplex does both, Transform rewrites chunks. Use them for files, uploads and proxying so memory stays flat regardless of size.",
+      "detail": "pipe() and pipeline() wire streams and handle backpressure for you. pipeline propagates errors and destroys the whole chain, so prefer it over pipe.",
+      "related": "node-streams-backpressure",
+      "tags": ["streams", "memory"]
+    },
+    {
+      "id": "rev-node-backpressure",
+      "category": "nodejs",
+      "term": "Backpressure",
+      "short": "Slow the producer when the consumer cannot keep up.",
+      "medium": "write() returns false when the internal buffer is full. Pause the source and resume on the drain event. Ignoring the signal lets buffers grow without bound until memory runs out.",
+      "detail": "This is the difference between a service that survives a large upload and one that OOMs under the same load.",
+      "related": "node-streams-backpressure",
+      "tags": ["streams", "memory"]
+    },
+    {
+      "id": "rev-node-buffers",
+      "category": "nodejs",
+      "term": "Buffers",
+      "short": "Raw binary data held in memory, outside the JS heap.",
+      "medium": "Buffers represent fixed-length byte sequences and are how Node moves binary data. They are allocated outside the V8 heap, so they do not appear in heap snapshots the way objects do.",
+      "detail": "Buffer.from creates one from a string or array; Buffer.alloc creates an empty, zero-filled one. Prefer streams when the data is large, since a buffer holds the whole thing at once.",
+      "related": "node-streams-backpressure",
+      "tags": ["streams", "memory"]
+    },
+    {
+      "id": "rev-node-cluster",
+      "category": "nodejs",
+      "term": "cluster",
+      "short": "Fork processes that share one server port.",
+      "medium": "The primary process forks workers, one per core, and hands the listening socket to them. Workers are separate processes, so they do not share memory; keep shared state in an external store.",
+      "detail": "Node does not balance connections perfectly, and it does not manage the worker pool for you. PM2 or a container orchestrator usually replaces it in production.",
+      "related": "node-cluster-vs-worker-threads",
+      "tags": ["scaling", "concurrency"]
+    },
+    {
+      "id": "rev-node-worker-threads",
+      "category": "nodejs",
+      "term": "worker_threads",
+      "short": "Threads inside one process for CPU-bound work.",
+      "medium": "A worker runs JavaScript on its own thread and communicates by message passing, with optional SharedArrayBuffer for shared memory. Use it when one request needs heavy computation without blocking the loop.",
+      "detail": "Workers do not help I/O-bound work; built-in async I/O is already more efficient. The win is keeping the main loop free during computation.",
+      "related": "node-cluster-vs-worker-threads",
+      "tags": ["scaling", "concurrency"]
+    },
+    {
+      "id": "rev-node-errors",
+      "category": "nodejs",
+      "term": "Async error handling",
+      "short": "Callback errors come first; promise errors need a catch or a handler.",
+      "medium": "Error-first callbacks put the error as the first argument. Promises reject, so wrap awaits in try/catch or add a catch. An unhandled rejection can crash the process, so add a process-level handler that logs and exits cleanly.",
+      "detail": "In Express, an async handler that throws does not reach the error middleware unless you call next(err) or wrap it. Express 5 forwards rejected promises for you.",
+      "related": "node-event-loop",
+      "tags": ["errors"]
+    },
+    {
+      "id": "rev-node-esm",
+      "category": "nodejs",
+      "term": "ESM vs CommonJS",
+      "short": "Static import/export versus synchronous require.",
+      "medium": "ESM is statically analysed and hoisted, so imports can be tree-shaken and top-level await works. CommonJS is synchronous and dynamic. Set type: module to make .js files ESM, and use .cjs for CommonJS.",
+      "detail": "In ESM there is no __dirname; use import.meta.url and fileURLToPath. Mixing the two has sharp edges, so keep a project on one module system where you can.",
+      "related": "node-cheatsheet",
+      "tags": ["modules"]
+    },
+    {
+      "id": "rev-node-env",
+      "category": "nodejs",
+      "term": "Configuration and env",
+      "short": "Read config from the environment, never hardcode secrets.",
+      "medium": "process.env holds environment variables. Load a .env file in development only, keep secrets out of the repository, and validate required variables at startup so the process fails fast.",
+      "detail": "12-factor style config keeps the same build running in every environment. Missing a required variable at boot is far cheaper than failing on the first request.",
+      "related": "node-cheatsheet",
+      "tags": ["configuration"]
+    },
+    {
+      "id": "rev-node-blocking",
+      "category": "nodejs",
+      "term": "Blocking the loop",
+      "short": "Synchronous heavy work stalls every other request.",
+      "medium": "Watch for readFileSync, pbkdf2Sync, execSync, large JSON.parse and heavy regex. Prefer async variants and offload unavoidable computation to a worker. Monitor event loop lag to catch it early.",
+      "detail": "The symptoms are high latency with low throughput and one busy core, while external calls look fast. The cause is your own code holding the only thread.",
+      "related": "node-gotcha-blocking",
+      "tags": ["performance", "gotcha"]
+    }
+  ]
+}

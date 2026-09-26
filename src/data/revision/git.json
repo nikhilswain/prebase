@@ -1,0 +1,126 @@
+{
+  "category": "git",
+  "intro": "The Git mental models and commands that come up in interviews and on the job.",
+  "entries": [
+    {
+      "id": "rev-git-three-trees",
+      "category": "git",
+      "term": "The three trees",
+      "short": "Working directory, staging area, HEAD.",
+      "medium": "add copies changes into the index, commit turns the index into a commit and moves HEAD. The working directory is untouched by commit, which is why partial staging works.",
+      "detail": "reset modes differ in which trees they touch: --soft moves HEAD only, --mixed also resets the index, --hard resets all three and discards work.",
+      "related": "git-three-trees",
+      "tags": ["internals"]
+    },
+    {
+      "id": "rev-git-merge-rebase",
+      "category": "git",
+      "term": "merge vs rebase",
+      "short": "Merge preserves history; rebase rewrites your commits onto a new base.",
+      "medium": "Merge adds a merge commit and keeps hashes. Rebase replays your commits with new hashes for a linear history. Rebase only unpublished, personal branches; merge to integrate.",
+      "detail": "Rebasing a shared branch forces everyone to recover, so the rule is: rebase to update, merge to integrate.",
+      "related": "git-merge-vs-rebase",
+      "tags": ["history"]
+    },
+    {
+      "id": "rev-git-reset-revert",
+      "category": "git",
+      "term": "reset vs revert",
+      "short": "reset rewrites local history; revert adds an inverse commit.",
+      "medium": "reset moves the branch pointer and is a rewrite, so it is for local work. revert creates a new commit that undoes an earlier one and is safe on shared branches.",
+      "detail": "For a published mistake, always revert. Rewriting published history breaks everyone who has pulled.",
+      "related": "git-undo",
+      "tags": ["recovery"]
+    },
+    {
+      "id": "rev-git-restore",
+      "category": "git",
+      "term": "restore",
+      "short": "Undo changes to files and the index.",
+      "medium": "git restore file discards working-directory changes; git restore --staged file unstages without touching the file. It replaces the old overloaded checkout of a path.",
+      "detail": "These are the safe, non-history commands to reach for when you have not committed yet.",
+      "related": "git-undo",
+      "tags": ["recovery"]
+    },
+    {
+      "id": "rev-git-reflog",
+      "category": "git",
+      "term": "reflog",
+      "short": "A record of everywhere HEAD has been.",
+      "medium": "Reflog lists every HEAD position with a timestamp, including commits orphaned by reset, rebase and amend. Recover with git branch rescue <sha>.",
+      "detail": "It is the safety net for almost every accidental history change, and it only works before garbage collection prunes the objects.",
+      "related": "git-undo",
+      "tags": ["recovery"]
+    },
+    {
+      "id": "rev-git-force-with-lease",
+      "category": "git",
+      "term": "force-with-lease",
+      "short": "A force-push that fails if the remote moved.",
+      "medium": "git push --force overwrites the remote unconditionally. --force-with-lease refuses if someone else pushed since your last fetch, so you cannot silently clobber their work.",
+      "detail": "Better still, protect main on the remote so force-push is rejected outright. Published branches should be treated as immutable.",
+      "related": "git-gotcha-force-push",
+      "tags": ["collaboration"]
+    },
+    {
+      "id": "rev-git-amend",
+      "category": "git",
+      "term": "amend",
+      "short": "Replace the last commit, before it is pushed.",
+      "medium": "git commit --amend adds staged changes to the previous commit or lets you edit its message. It rewrites that commit, so only use it before the commit is published.",
+      "detail": "Forgetting to add a file to the last commit is the classic use case.",
+      "related": "git-undo",
+      "tags": ["history"]
+    },
+    {
+      "id": "rev-git-cherry-pick",
+      "category": "git",
+      "term": "cherry-pick",
+      "short": "Copy one commit onto the current branch.",
+      "medium": "git cherry-pick <sha> applies a single commit elsewhere, which is useful for backporting a fix to a release branch without merging the whole feature.",
+      "detail": "It creates a new commit with a new hash, so the same change can end up twice in history. Use it deliberately.",
+      "related": "git-cheatsheet",
+      "tags": ["history"]
+    },
+    {
+      "id": "rev-git-stash",
+      "category": "git",
+      "term": "stash",
+      "short": "Set aside uncommitted work temporarily.",
+      "medium": "git stash saves working-directory and index changes and cleans the tree, so you can switch branches. git stash pop reapplies them. Untracked files need -u.",
+      "detail": "Stashes are easy to forget and can conflict later, so prefer a small WIP commit on a branch for anything you will come back to.",
+      "related": "git-cheatsheet",
+      "tags": ["workflow"]
+    },
+    {
+      "id": "rev-git-trunk-based",
+      "category": "git",
+      "term": "Trunk-based development",
+      "short": "One main branch and very short-lived feature branches.",
+      "medium": "Branches live hours to a day and merge often, with feature flags hiding unfinished work. This keeps merges small and pairs with continuous integration and delivery.",
+      "detail": "Git Flow, with develop, release and hotfix branches, suits versioned releases but produces large merges. Choose by release cadence.",
+      "related": "git-branching-strategy",
+      "tags": ["workflow"]
+    },
+    {
+      "id": "rev-git-conflict",
+      "category": "git",
+      "term": "Merge conflicts",
+      "short": "Git cannot reconcile two edits to the same lines.",
+      "medium": "Resolve by editing the markers, then git add the file and continue the merge or rebase. git merge --abort or git rebase --abort backs out.",
+      "detail": "Conflicts are smaller and rarer when branches are short. A rebase can surface the same conflict once per replayed commit, which is a reason to keep branches current.",
+      "related": "git-merge-vs-rebase",
+      "tags": ["collaboration"]
+    },
+    {
+      "id": "rev-git-bisect",
+      "category": "git",
+      "term": "bisect",
+      "short": "Binary-search history to find the commit that broke something.",
+      "medium": "git bisect start, mark a good and a bad commit, and Git checks out the midpoint. Test, mark good or bad, and repeat until it names the culprit.",
+      "detail": "git bisect run automates it by running a script that exits zero for good and non-zero for bad, which turns a manual hunt into one command.",
+      "related": "git-cheatsheet",
+      "tags": ["debugging"]
+    }
+  ]
+}

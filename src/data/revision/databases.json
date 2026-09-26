@@ -1,0 +1,156 @@
+{
+  "category": "databases",
+  "intro": "The database concepts that come up in almost every backend interview.",
+  "entries": [
+    {
+      "id": "rev-db-acid",
+      "category": "databases",
+      "term": "ACID",
+      "short": "Atomicity, consistency, isolation, durability.",
+      "medium": "Atomicity means all statements commit or none do. Consistency means constraints hold. Isolation means concurrent transactions do not see partial work. Durability means a committed change survives a crash, usually via a write-ahead log.",
+      "detail": "Isolation is the knob you actually tune. The rest are largely table stakes for a relational engine.",
+      "related": "db-acid",
+      "tags": ["transactions"]
+    },
+    {
+      "id": "rev-db-isolation",
+      "category": "databases",
+      "term": "Isolation levels",
+      "short": "Trade concurrency for protection against read anomalies.",
+      "medium": "Read committed prevents dirty reads and is the common default. Repeatable read takes a snapshot per transaction. Serializable makes transactions behave as if serial, and may abort one to retry. The anomalies are dirty read, non-repeatable read and phantom read.",
+      "detail": "MVCC lets readers and writers avoid blocking each other, which is why PostgreSQL and others implement isolation through versioned rows rather than read locks.",
+      "related": "db-transactions-isolation",
+      "tags": ["transactions", "concurrency"]
+    },
+    {
+      "id": "rev-db-mvcc",
+      "category": "databases",
+      "term": "MVCC",
+      "short": "Readers see a snapshot; writers create new row versions.",
+      "medium": "Multi-version concurrency control keeps multiple versions of a row so a read sees a consistent snapshot without locking. Readers never block writers and writers never block readers.",
+      "detail": "The cost is that old versions must be vacuumed away, which is why PostgreSQL has autovacuum and why long-running transactions can bloat tables.",
+      "related": "db-transactions-isolation",
+      "tags": ["transactions", "concurrency"]
+    },
+    {
+      "id": "rev-db-index",
+      "category": "databases",
+      "term": "Index",
+      "short": "A sorted structure that turns a scan into a seek.",
+      "medium": "A B-tree maps column values to rows, so equality and range lookups skip the full table. Every write also maintains each index, so indexes speed reads and slow writes.",
+      "detail": "An index is only used when the query can use it. Functions on the column and leading wildcards disable it.",
+      "related": "db-indexes",
+      "tags": ["indexes", "performance"]
+    },
+    {
+      "id": "rev-db-composite-index",
+      "category": "databases",
+      "term": "Composite index",
+      "short": "An index over several columns, usable left to right.",
+      "medium": "An index on (a, b) serves filters on a, or on a and b, but not on b alone. Column order matters and should match the query's filter then sort.",
+      "detail": "Getting the order wrong is a common reason an index exists but is ignored.",
+      "related": "db-indexes",
+      "tags": ["indexes"]
+    },
+    {
+      "id": "rev-db-covering-index",
+      "category": "databases",
+      "term": "Covering index",
+      "short": "An index that already contains every column the query needs.",
+      "medium": "If all selected and filtered columns are in the index, the database answers from the index without reading the table. This is often the biggest win for a hot read query.",
+      "detail": "It costs more storage and write time because more columns are duplicated in the index.",
+      "related": "db-indexes",
+      "tags": ["indexes", "performance"]
+    },
+    {
+      "id": "rev-db-normalization",
+      "category": "databases",
+      "term": "Normalization",
+      "short": "Store each fact once to remove update anomalies.",
+      "medium": "1NF makes columns atomic, 2NF removes partial dependencies on part of a composite key, 3NF removes dependencies between non-key columns. Most transactional schemas aim for 3NF.",
+      "detail": "Denormalization duplicates data deliberately to speed reads, but you then own keeping copies consistent.",
+      "related": "db-normalization",
+      "tags": ["modelling"]
+    },
+    {
+      "id": "rev-db-n-plus-one",
+      "category": "databases",
+      "term": "N+1 queries",
+      "short": "One query for a list, then one per row.",
+      "medium": "Usually caused by accessing a lazy relation inside a loop. Fix with a join or a single IN query over the collected ids. Verify the actual query count rather than trusting eager-loading by name.",
+      "detail": "It is invisible with a few rows and crippling at scale, which is why query-count logging belongs in development.",
+      "related": "db-n-plus-one",
+      "tags": ["query", "performance"]
+    },
+    {
+      "id": "rev-db-keyset-pagination",
+      "category": "databases",
+      "term": "Keyset pagination",
+      "short": "Page by filtering on the last seen key, not by OFFSET.",
+      "medium": "OFFSET walks and discards all skipped rows, so deep pages are slow and can shift when rows are inserted. Keyset pagination filters on an indexed unique column and seeks straight to the page.",
+      "detail": "Use a composite cursor such as (created_at, id) to break ties. You lose random access to page N, which feeds do not need.",
+      "related": "db-gotcha-offset-pagination",
+      "tags": ["query", "pagination"]
+    },
+    {
+      "id": "rev-db-replication",
+      "category": "databases",
+      "term": "Replication",
+      "short": "Copies of the data for reads and failover.",
+      "medium": "A primary takes writes and streams them to replicas. Async replication is fast but can lose the last writes on failover and serves slightly stale reads. Synchronous waits for acknowledgement at the cost of latency.",
+      "detail": "Read-your-writes can break if a read hits a replica that has not caught up, so route a user's reads to the primary briefly after they write.",
+      "related": "db-cheatsheet",
+      "tags": ["scaling"]
+    },
+    {
+      "id": "rev-db-sharding",
+      "category": "databases",
+      "term": "Sharding",
+      "short": "Partition data across nodes by a key.",
+      "medium": "Horizontal partitioning spreads rows across databases, usually by a shard key such as user id. Choose a key with even spread, or one shard becomes a hot spot.",
+      "detail": "Sharding makes cross-shard joins and transactions expensive, so it is a late-stage scaling step, not a default.",
+      "related": "db-cheatsheet",
+      "tags": ["scaling"]
+    },
+    {
+      "id": "rev-db-cap",
+      "category": "databases",
+      "term": "CAP theorem",
+      "short": "Under a network partition, choose consistency or availability.",
+      "medium": "Partition tolerance is not optional in a distributed system, so the real choice is CP or AP. CP refuses some requests to stay correct; AP answers with possibly stale data.",
+      "detail": "Payments lean CP, feeds lean AP. Strong consistency is enforced with quorums, leaders or coordination, and it costs latency.",
+      "related": "db-sql-vs-nosql",
+      "tags": ["distributed"]
+    },
+    {
+      "id": "rev-db-locking",
+      "category": "databases",
+      "term": "Locking and deadlocks",
+      "short": "Lock the row you update; avoid taking locks in different orders.",
+      "medium": "select ... for update takes a row lock to prevent lost updates. Two transactions each holding a lock the other wants form a deadlock; the database detects it and aborts one.",
+      "detail": "Keep transactions short, touch rows in a consistent order, and set a lock timeout so a request fails instead of hanging.",
+      "related": "db-transactions-isolation",
+      "tags": ["transactions", "concurrency"]
+    },
+    {
+      "id": "rev-db-sql-injection",
+      "category": "databases",
+      "term": "SQL injection",
+      "short": "Untrusted input concatenated into SQL becomes executable code.",
+      "medium": "Prepared statements send the query and the values separately, so a value can never change the query structure. Parameterise every query, including the ORM's raw escape hatches.",
+      "detail": "Escaping by hand is fragile. Parameters are the defence, and least-privilege database users limit the blast radius.",
+      "related": "db-cheatsheet",
+      "tags": ["security"]
+    },
+    {
+      "id": "rev-db-connection-pool",
+      "category": "databases",
+      "term": "Connection pool",
+      "short": "Reuse a small set of connections instead of opening one per request.",
+      "medium": "Opening a connection is expensive, so the pool keeps a bounded set alive and hands them out. Total connections across all app instances must stay under the database's limit, or the database refuses connections.",
+      "detail": "A pool that is too small queues requests; too large and it overwhelms the database. Size it against the database's max connections divided by the number of instances.",
+      "related": "db-cheatsheet",
+      "tags": ["performance", "operations"]
+    }
+  ]
+}

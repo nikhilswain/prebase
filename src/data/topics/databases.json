@@ -1,0 +1,356 @@
+[
+  {
+    "id": "db-acid",
+    "slug": "acid",
+    "category": "databases",
+    "type": "question",
+    "title": "What is ACID?",
+    "summary": "Atomicity, consistency, isolation and durability: the guarantees a transaction gives you.",
+    "difficulty": "medium",
+    "tags": ["transactions", "reliability"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-01",
+    "shortAnswer": "ACID describes the guarantees of a database transaction. Atomicity means all statements commit or none do. Consistency means the transaction moves the database from one valid state to another, respecting constraints. Isolation means concurrent transactions do not see each other's partial work. Durability means once committed, the change survives a crash.",
+    "explanation": [
+      "Atomicity is implemented with rollback: if any statement fails, the database undoes the ones already applied. The classic example is a transfer, where a debit without a matching credit must never persist.",
+      "Isolation is the interesting one, because it is a spectrum. Stronger isolation prevents more anomalies but allows less concurrency. Most databases default to read committed, which stops dirty reads but allows non-repeatable reads and phantoms.",
+      "Durability usually relies on a write-ahead log: the change is written to a durable log before it is considered committed, so a crash can replay it. This is why an fsync on commit costs latency.",
+      "Consistency in ACID is not the C in CAP. Here it means constraint enforcement, not linearisability across replicas."
+    ],
+    "keyPoints": [
+      "Atomicity: all or nothing",
+      "Consistency: constraints hold before and after",
+      "Isolation: concurrent transactions do not interfere",
+      "Durability: committed data survives crashes, usually via a WAL"
+    ],
+    "example": {
+      "language": "sql",
+      "caption": "Both updates commit together or neither does.",
+      "code": "begin;\nupdate accounts set balance = balance - 100 where id = 1;\nupdate accounts set balance = balance + 100 where id = 2;\ncommit;"
+    },
+    "commonMistakes": [
+      "Confusing ACID consistency with the CAP theorem's consistency",
+      "Assuming the default isolation level prevents every anomaly",
+      "Thinking a rollback also reverts side effects outside the database"
+    ],
+    "followUps": [
+      "Which isolation level is the default, and what does it allow?",
+      "How is durability implemented under the hood?",
+      "What happens to an in-flight transaction when the process crashes?"
+    ],
+    "realWorld": "Payments, inventory and anything with a balance depend on atomic multi-row updates and durable commits.",
+    "related": ["db-transactions-isolation", "db-cheatsheet", "db-normalization"]
+  },
+  {
+    "id": "db-indexes",
+    "slug": "indexes",
+    "category": "databases",
+    "type": "question",
+    "title": "How does an index speed up a query, and what does it cost?",
+    "summary": "A sorted structure that turns a full scan into a targeted lookup, at the cost of write speed and space.",
+    "difficulty": "medium",
+    "tags": ["indexes", "performance", "query"],
+    "featured": true,
+    "reviewStatus": "verified",
+    "updated": "2026-09-01",
+    "shortAnswer": "An index is a secondary structure, usually a B-tree, that keeps the indexed column values in sorted order with pointers to the rows. A lookup on an indexed column can seek straight to the matching entries instead of scanning every row. The costs are extra storage and slower writes, because every insert, update and delete has to maintain the index too.",
+    "explanation": [
+      "A B-tree keeps the tree shallow, so finding a value takes a handful of page reads even across millions of rows. Range queries such as between or order by benefit because the entries are already ordered.",
+      "Indexes only help when the query can use them. Wrapping the column in a function, or a leading wildcard like, prevents the index from being used. A composite index on (a, b) can serve filters on a, or a and b, but not b alone, because of the leftmost-prefix rule.",
+      "A covering index includes every column the query needs, so the database answers from the index alone without touching the table. This is often the biggest single win for a hot read query.",
+      "Every write pays to update each affected index. A table with many indexes has slow inserts and updates, so index deliberately rather than by reflex."
+    ],
+    "keyPoints": [
+      "B-tree gives fast equality and range lookups",
+      "Composite indexes follow the leftmost-prefix rule",
+      "Functions on the column and leading wildcards disable the index",
+      "Each index slows writes and consumes space"
+    ],
+    "example": {
+      "language": "sql",
+      "caption": "A composite index that covers the filter and the sort.",
+      "code": "create index idx_orders_user_created\n  on orders (user_id, created_at desc);\n\n-- uses the index for both the filter and the order\nselect id, total from orders\nwhere user_id = 42\norder by created_at desc\nlimit 20;"
+    },
+    "commonMistakes": [
+      "Indexing every column and wondering why writes are slow",
+      "Expecting an index to help a query that applies a function to the column",
+      "Forgetting the leftmost-prefix rule for composite indexes"
+    ],
+    "followUps": [
+      "When would you add a composite index instead of two single-column ones?",
+      "What is a covering index?",
+      "How would you find the slow queries in a production database?"
+    ],
+    "realWorld": "The first thing you do with a slow list endpoint is check whether the filter and sort columns are indexed.",
+    "related": ["db-n-plus-one", "db-gotcha-offset-pagination", "db-cheatsheet"]
+  },
+  {
+    "id": "db-transactions-isolation",
+    "slug": "transactions-and-isolation",
+    "category": "databases",
+    "type": "concept",
+    "title": "Transactions and Isolation Levels",
+    "summary": "Isolation levels trade concurrency for protection against dirty reads, non-repeatable reads and phantoms.",
+    "difficulty": "hard",
+    "tags": ["transactions", "concurrency"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-01",
+    "definition": "An isolation level defines how much one transaction can see of another's uncommitted or concurrent changes. The SQL standard names four: read uncommitted, read committed, repeatable read and serializable. Higher levels prevent more anomalies but allow less concurrency.",
+    "explanation": [
+      "A dirty read sees another transaction's uncommitted data. Read committed prevents it and is the default in PostgreSQL. A non-repeatable read is reading the same row twice in one transaction and getting different values, which read committed still allows. A phantom read is a re-run query returning new rows that were inserted in between.",
+      "Repeatable read takes a snapshot at the start of the transaction, so every read sees the same data. Serializable goes further and makes concurrent transactions behave as if they ran one at a time, usually by detecting conflicts and forcing a retry.",
+      "PostgreSQL and other MVCC databases implement reads through versioned rows, so readers never block writers. The cost moves to writes and to the retry logic serializable requires.",
+      "The practical rule: use the lowest level that is correct for the operation, and make write operations idempotent so a retry on a serialization failure is safe."
+    ],
+    "keyPoints": [
+      "Dirty read, non-repeatable read and phantom read are the anomalies",
+      "Read committed is the usual default",
+      "Repeatable read uses a snapshot",
+      "Serializable may abort and require a retry"
+    ],
+    "example": {
+      "language": "sql",
+      "caption": "Lock the row you are about to update to avoid a lost update.",
+      "code": "begin;\nselect balance from accounts where id = 1 for update;\nupdate accounts set balance = balance - 100 where id = 1;\ncommit;"
+    },
+    "related": ["db-acid", "db-cheatsheet", "db-gotcha-offset-pagination"]
+  },
+  {
+    "id": "db-n-plus-one",
+    "slug": "n-plus-one",
+    "category": "databases",
+    "type": "question",
+    "title": "What is the N+1 query problem?",
+    "summary": "One query for a list, then one more per row, turning a single page load into hundreds of round trips.",
+    "difficulty": "medium",
+    "tags": ["query", "performance", "orm"],
+    "featured": true,
+    "reviewStatus": "verified",
+    "updated": "2026-09-01",
+    "shortAnswer": "N+1 happens when you load a list of N rows and then issue one extra query per row to fetch related data, so a page that should take one or two queries takes N+1. It is usually invisible in development with a few rows and crippling in production. The fix is to fetch the related data in a single query: a join, an IN query, or eager loading.",
+    "explanation": [
+      "ORMs make it easy to trigger accidentally. Accessing a lazy relation inside a loop, such as order.customer.name for every order, issues a query per order. The code reads naturally, which is exactly why it slips through review.",
+      "The fixes are a join that returns the parent and child columns together, or a second query with where id in (...) over the collected parent ids, then a map in application code. Both turn N+1 into 2.",
+      "Eager loading in the ORM does the same thing when configured correctly. The trap is that some eager-loading modes still issue a query per relation, so verify the actual query count rather than trusting the API name.",
+      "Detect it by logging query counts per request in development, or by watching the database's query rate under load. A request that issues hundreds of near-identical queries is the signature."
+    ],
+    "keyPoints": [
+      "N+1 is one query for the list plus one per row",
+      "Lazy relations accessed in a loop are the usual cause",
+      "Fix with a join or a single IN query",
+      "Verify query counts, do not trust eager-loading by name"
+    ],
+    "example": {
+      "language": "sql",
+      "caption": "One join instead of one query per order.",
+      "code": "-- instead of a query per order:\nselect o.id, o.total, c.name\nfrom orders o\njoin customers c on c.id = o.customer_id\nwhere o.user_id = 42;"
+    },
+    "commonMistakes": [
+      "Assuming the ORM always batches relation loads",
+      "Fixing it with a per-row cache that still hits the database once per miss",
+      "Only testing with a handful of rows, where N+1 is harmless"
+    ],
+    "followUps": [
+      "How would you detect N+1 in a running system?",
+      "When is a second query better than a join?",
+      "How do you prevent it in code review?"
+    ],
+    "realWorld": "Almost every slow list endpoint in an ORM-backed app traces back to N+1 or a missing index.",
+    "related": ["db-indexes", "db-sql-vs-nosql", "db-cheatsheet"]
+  },
+  {
+    "id": "db-sql-vs-nosql",
+    "slug": "sql-vs-nosql",
+    "category": "databases",
+    "type": "comparison",
+    "title": "SQL vs NoSQL",
+    "summary": "Relational tables with joins and strong guarantees, versus document or key-value stores built to scale out.",
+    "difficulty": "medium",
+    "tags": ["modelling", "architecture"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-01",
+    "options": [
+      { "name": "SQL (relational)", "summary": "Tables, joins, transactions, fixed schema" },
+      { "name": "NoSQL (document, key-value, wide-column)", "summary": "Flexible schema, denormalised, scales horizontally" }
+    ],
+    "rows": [
+      { "label": "Schema", "values": ["Defined up front, migrations change it", "Flexible, varies per document"] },
+      { "label": "Relationships", "values": ["Joins across tables", "Embedding or application-side joins"] },
+      { "label": "Transactions", "values": ["Multi-row ACID transactions", "Often per-document, sometimes multi-document"] },
+      { "label": "Scaling", "values": ["Vertical first, then read replicas and sharding", "Horizontal by design, sharded by key"] },
+      { "label": "Consistency", "values": ["Strong by default", "Often tunable, frequently eventual"] },
+      { "label": "Best for", "values": ["Money, inventory, anything with invariants", "High-volume logs, feeds, catalogues, caches"] }
+    ],
+    "verdict": "Choose by access pattern and invariants, not by fashion. If the data has relationships and correctness rules that must hold across rows, a relational database is usually the right default. Reach for a document or key-value store when the data is naturally a self-contained document, the access pattern is by key, and you need to scale writes across many nodes.",
+    "pickWhen": [
+      { "option": "SQL", "guidance": "The data is relational, transactions matter, and the queries are not known in advance." },
+      { "option": "NoSQL", "guidance": "The shape is document-like, access is by key, and horizontal write scale matters more than joins." }
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "A document store embeds the order lines so one read returns everything.",
+      "code": "// document: everything for one order in a single read\n{\n  id: 'ord_1',\n  user: { id: 42, name: 'Ada' },\n  lines: [\n    { sku: 'A1', qty: 2, price: 9.99 },\n    { sku: 'B7', qty: 1, price: 24.0 }\n  ]\n}"
+    },
+    "commonMistakes": [
+      "Picking NoSQL for a relational domain and rebuilding joins in application code",
+      "Assuming NoSQL means no schema, then fighting inconsistent documents",
+      "Believing a relational database cannot scale, when read replicas and partitioning go a long way"
+    ],
+    "related": ["db-normalization", "db-n-plus-one", "db-cheatsheet"]
+  },
+  {
+    "id": "db-normalization",
+    "slug": "normalization",
+    "category": "databases",
+    "type": "concept",
+    "title": "Normalization and Denormalization",
+    "summary": "Organise tables to remove duplication and anomalies, then denormalize deliberately where reads demand it.",
+    "difficulty": "medium",
+    "tags": ["modelling", "schema"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-01",
+    "definition": "Normalization structures tables so each fact is stored once, removing redundancy and the update, insert and delete anomalies that come with it. The normal forms are progressive rules: 1NF removes repeating groups, 2NF removes partial dependencies on part of a composite key, 3NF removes dependencies between non-key columns.",
+    "explanation": [
+      "The point is that a single fact lives in one place. If a customer's address is duplicated on every order, updating it means updating many rows and any miss leaves inconsistent data.",
+      "Most transactional schemas aim for 3NF. It keeps writes correct and makes the schema understandable, at the cost of joins on read.",
+      "Denormalization is the deliberate reverse: duplicate a value or precompute a total to avoid an expensive join or aggregate on a hot read path. The trade-off is that you now own keeping the copies in sync, usually through application code, triggers or a background job.",
+      "The modern middle ground is to keep the source of truth normalized and serve reads from a materialized view, a cache or a read model that is rebuilt when data changes."
+    ],
+    "keyPoints": [
+      "Each fact stored once removes update anomalies",
+      "1NF atomic columns, 2NF no partial key dependency, 3NF no transitive dependency",
+      "Denormalize only with a plan to keep copies consistent",
+      "Materialized views give denormalized reads over normalized data"
+    ],
+    "example": {
+      "language": "sql",
+      "caption": "The normalized version stores the customer once and references it.",
+      "code": "create table customers (\n  id bigint primary key,\n  name text not null,\n  address text not null\n);\n\ncreate table orders (\n  id bigint primary key,\n  customer_id bigint references customers(id),\n  total numeric not null\n);"
+    },
+    "related": ["db-sql-vs-nosql", "db-acid", "db-cheatsheet"]
+  },
+  {
+    "id": "db-gotcha-offset-pagination",
+    "slug": "gotcha-offset-pagination",
+    "category": "databases",
+    "type": "gotcha",
+    "title": "OFFSET pagination gets slower on deep pages",
+    "summary": "Page 10 000 still makes the database count and discard the first 200 000 rows.",
+    "difficulty": "medium",
+    "tags": ["query", "performance", "pagination", "gotcha"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-01",
+    "scenario": "An infinite-scroll list is fast at the top and crawls after a few hundred pages. The query looks trivial and the index exists, yet the later pages take hundreds of milliseconds.",
+    "problem": "OFFSET does not skip work. The database still walks the first offset rows of the ordered result and throws them away, so the cost grows linearly with the page number. Deep pages also risk returning duplicates or skipping rows when new rows are inserted while the user pages through, because the offset shifts.",
+    "example": {
+      "language": "sql",
+      "caption": "The database reads and discards 200 000 rows before returning 20.",
+      "code": "select id, title\nfrom posts\norder by created_at desc\nlimit 20 offset 200000;"
+    },
+    "fix": "Use keyset pagination, also called cursor pagination. Order by a unique, indexed column, remember the last value the client saw, and filter on it. The query seeks directly into the index, so every page costs the same. Return a cursor, usually an encoded (created_at, id) pair, so ties are handled. The trade-off is that you cannot jump to an arbitrary page number, which most feeds do not need.",
+    "keyPoints": [
+      "OFFSET cost grows with the page number",
+      "Inserts during paging cause duplicates or gaps",
+      "Keyset pagination filters on the last seen key",
+      "Cursor pagination cannot jump to page N, and usually does not need to"
+    ],
+    "related": ["db-indexes", "db-transactions-isolation", "db-cheatsheet"]
+  },
+  {
+    "id": "db-challenge-second-highest",
+    "slug": "challenge-second-highest-salary",
+    "category": "databases",
+    "type": "challenge",
+    "title": "Second-highest salary per department",
+    "summary": "Write a query that returns the second-highest salary in each department, including ties.",
+    "difficulty": "medium",
+    "tags": ["sql", "window-functions", "exercise"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-01",
+    "prompt": "Given an employees table with columns id, name, department_id and salary, return the employees with the second-highest salary in each department. If two employees tie for the highest salary, the next distinct salary is the second highest.",
+    "constraints": [
+      "One row per employee who earns the second-highest distinct salary in their department",
+      "Departments with fewer than two distinct salaries should not appear",
+      "Use a single query"
+    ],
+    "hints": [
+      "dense_rank numbers distinct values, rank skips after ties.",
+      "Window functions let you rank within a partition in one pass."
+    ],
+    "solution": {
+      "code": {
+        "language": "sql",
+        "code": "with ranked as (\n  select\n    id,\n    name,\n    department_id,\n    salary,\n    dense_rank() over (\n      partition by department_id\n      order by salary desc\n    ) as rnk\n  from employees\n)\nselect id, name, department_id, salary\nfrom ranked\nwhere rnk = 2;"
+      },
+      "explanation": [
+        "dense_rank assigns 1 to the highest salary in each department, 2 to the next distinct salary, and so on, with tied salaries sharing a rank. That makes rnk = 2 mean the second-highest distinct salary, which matches the ties requirement.",
+        "rank would skip numbers after a tie, so two people tied at the top would leave no row with rank 2. row_number would break ties arbitrarily. Choosing the right ranking function is the point of the question.",
+        "Partitioning by department restarts the numbering per group, so no separate query per department is needed."
+      ]
+    },
+    "related": ["db-indexes", "db-n-plus-one", "db-cheatsheet"]
+  },
+  {
+    "id": "db-cheatsheet",
+    "slug": "database-cheat-sheet",
+    "category": "databases",
+    "type": "cheat-sheet",
+    "title": "Databases Cheat Sheet",
+    "summary": "Transactions, indexes, isolation and the query patterns interviewers ask about.",
+    "difficulty": "medium",
+    "tags": ["reference", "cheat-sheet"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-01",
+    "description": "A quick reference for relational and document databases: guarantees, indexing, isolation and pagination.",
+    "sections": [
+      {
+        "title": "ACID",
+        "items": [
+          { "label": "Atomicity", "value": "All statements commit or none do", "note": "Rollback on failure" },
+          { "label": "Consistency", "value": "Constraints hold before and after", "note": "Not the C in CAP" },
+          { "label": "Isolation", "value": "Concurrent transactions do not interfere" },
+          { "label": "Durability", "value": "Committed data survives a crash", "note": "Write-ahead log" }
+        ]
+      },
+      {
+        "title": "Isolation levels and anomalies",
+        "items": [
+          { "label": "Read uncommitted", "value": "Dirty reads possible" },
+          { "label": "Read committed", "value": "No dirty reads; non-repeatable and phantoms possible", "note": "Common default" },
+          { "label": "Repeatable read", "value": "Snapshot per transaction; phantoms possible" },
+          { "label": "Serializable", "value": "No anomalies; may abort and retry" }
+        ]
+      },
+      {
+        "title": "Indexing",
+        "items": [
+          { "label": "B-tree", "value": "Equality and range lookups", "note": "The default index type" },
+          { "label": "Composite", "value": "Leftmost-prefix rule applies", "code": "create index on t (a, b);", "language": "sql" },
+          { "label": "Covering", "value": "Index contains every column the query needs" },
+          { "label": "Breaks the index", "value": "Functions on the column, leading wildcards" }
+        ]
+      },
+      {
+        "title": "Query patterns",
+        "items": [
+          { "label": "Keyset pagination", "value": "Filter on the last seen key", "code": "where (created_at, id) < ($1, $2) order by created_at desc, id desc limit 20", "language": "sql" },
+          { "label": "Avoid N+1", "value": "One join or one IN query" },
+          { "label": "Row lock", "value": "select ... for update", "note": "Prevents lost updates" },
+          { "label": "Upsert", "value": "insert ... on conflict do update", "language": "sql" }
+        ]
+      },
+      {
+        "title": "Scaling",
+        "items": [
+          { "label": "Read replicas", "value": "Offload reads, accept replication lag" },
+          { "label": "Sharding", "value": "Partition by key across nodes", "note": "Choose a key with even spread" },
+          { "label": "Connection pool", "value": "Reuse connections", "note": "Pool size times instances must fit the database limit" },
+          { "label": "CAP", "value": "Under a partition, choose consistency or availability" }
+        ]
+      }
+    ],
+    "related": ["db-acid", "db-indexes", "db-transactions-isolation", "db-n-plus-one", "db-gotcha-offset-pagination"]
+  }
+]

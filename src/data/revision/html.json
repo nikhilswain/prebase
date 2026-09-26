@@ -1,0 +1,126 @@
+{
+  "category": "html",
+  "intro": "The HTML and platform fundamentals behind accessible, fast pages.",
+  "entries": [
+    {
+      "id": "rev-html-semantics",
+      "category": "html",
+      "term": "Semantic HTML",
+      "short": "Use elements for what they mean, not how they look.",
+      "medium": "button, nav, article, main and friends carry meaning that screen readers, search engines and reader modes use. Native elements also bring keyboard behaviour and focus for free.",
+      "detail": "The first rule of ARIA is to prefer a native element over adding a role to a div. Most accessibility bugs are really semantics bugs.",
+      "related": "html-semantics",
+      "tags": ["semantics", "accessibility"]
+    },
+    {
+      "id": "rev-html-defer-async",
+      "category": "html",
+      "term": "defer vs async",
+      "short": "Both download in parallel; defer runs after parsing and keeps order.",
+      "medium": "defer executes after the HTML is parsed, in source order, just before DOMContentLoaded. async runs as soon as it downloads, in any order, and can interrupt parsing. type=module is deferred by default.",
+      "detail": "Use defer or modules for app code that depends on order and the DOM. Use async only for independent scripts like analytics.",
+      "related": "html-defer-async",
+      "tags": ["loading", "scripts"]
+    },
+    {
+      "id": "rev-html-parsing",
+      "category": "html",
+      "term": "Parsing and the DOM",
+      "short": "Incremental and error-tolerant; the DOM can differ from the source.",
+      "medium": "The parser repairs bad markup, inserting tbody and closing tags, so the DOM is not always the source you wrote. Scripts without defer or async block the parser; CSS blocks rendering but not parsing.",
+      "detail": "This timing is exactly why defer, async and DOMContentLoaded exist.",
+      "related": "html-dom-parsing",
+      "tags": ["dom", "rendering"]
+    },
+    {
+      "id": "rev-html-data-attributes",
+      "category": "html",
+      "term": "data-* attributes",
+      "short": "Valid custom attributes for extra data on an element.",
+      "medium": "Read through dataset in camelCase; values are always strings. Good for passing server-rendered values to scripts and for behaviour hooks.",
+      "detail": "Do not use them for state that assistive tech needs. Use ARIA or native attributes there.",
+      "related": "html-data-attributes",
+      "tags": ["dom", "attributes"]
+    },
+    {
+      "id": "rev-html-labels",
+      "category": "html",
+      "term": "Labels",
+      "short": "label for=id or wrap the input, so the field is named.",
+      "medium": "The association makes the field announce its name and lets a click focus or toggle it. Groups of radios or checkboxes are named with fieldset and legend. Placeholders are not labels.",
+      "detail": "Every control needs an accessible name. Icon-only buttons need aria-label or visually hidden text.",
+      "related": "html-forms-labels",
+      "tags": ["forms", "accessibility"]
+    },
+    {
+      "id": "rev-html-button",
+      "category": "html",
+      "term": "button vs div",
+      "short": "A div is not focusable, has no role and ignores the keyboard.",
+      "medium": "A button is focusable, activates on Enter and Space, is announced as a button and submits forms. Faking it with a div needs role, tabindex and key handlers, and still misses form behaviour.",
+      "detail": "Use an anchor for navigation and a button for actions. Getting the div right costs more than using the element that already works.",
+      "related": "html-gotcha-div-button",
+      "tags": ["semantics", "accessibility"]
+    },
+    {
+      "id": "rev-html-landmarks",
+      "category": "html",
+      "term": "Landmarks and headings",
+      "short": "header, nav, main, aside and footer let users jump around.",
+      "medium": "Landmarks give a screen reader user a map of the page. Headings give an outline. main should appear once per page, and heading levels should not skip for visual reasons.",
+      "detail": "These structures are also what reader modes and search engines use to find the main content.",
+      "related": "html-semantics",
+      "tags": ["accessibility", "semantics"]
+    },
+    {
+      "id": "rev-html-images",
+      "category": "html",
+      "term": "Images",
+      "short": "alt describes the image, or is empty if it is decorative.",
+      "medium": "Meaningful images need alt text that conveys the same information. Decorative images use alt=\"\" so they are skipped. Add width and height to reserve space and avoid layout shift.",
+      "detail": "Lazy-load offscreen images with loading=\"lazy\" and decoding=\"async\", but keep the hero eager for LCP.",
+      "related": "html-cheatsheet",
+      "tags": ["images", "performance"]
+    },
+    {
+      "id": "rev-html-forms-validation",
+      "category": "html",
+      "term": "Native form features",
+      "short": "Input types and constraints give validation and better keyboards for free.",
+      "medium": "type=email, tel, url, number and date bring mobile keyboards and basic validation. required, min, max, maxlength and pattern add constraints. autocomplete helps autofill.",
+      "detail": "Native validation is a first line, not a replacement for server-side validation, which is the one that matters for security.",
+      "related": "html-forms-labels",
+      "tags": ["forms"]
+    },
+    {
+      "id": "rev-html-viewport",
+      "category": "html",
+      "term": "Viewport meta",
+      "short": "Tells mobile browsers to use the device width.",
+      "medium": "width=device-width, initial-scale=1 makes the layout match the device and prevents the browser from zooming out. Without it, media queries behave as if the page were desktop width.",
+      "detail": "Do not disable zoom by setting maximum-scale or user-scalable=no, which blocks users who need to magnify.",
+      "related": "html-cheatsheet",
+      "tags": ["responsive", "metadata"]
+    },
+    {
+      "id": "rev-html-metadata",
+      "category": "html",
+      "term": "Page metadata",
+      "short": "title, description and Open Graph shape search and sharing.",
+      "medium": "Each page needs a unique, descriptive title and a meta description. Open Graph tags control the preview when the link is shared. A canonical link avoids duplicate-content issues.",
+      "detail": "The title is what a screen reader announces first and what search results show, so write it for humans, not keywords.",
+      "related": "html-cheatsheet",
+      "tags": ["metadata", "seo"]
+    },
+    {
+      "id": "rev-html-aria",
+      "category": "html",
+      "term": "ARIA, used sparingly",
+      "short": "It changes what is announced, not what the element does.",
+      "medium": "ARIA names, roles and states describe custom widgets to assistive tech, but it adds no behaviour. role=button still needs keyboard handling. aria-label names an element; aria-expanded reports state.",
+      "detail": "The rule: use a native element if one exists, and only reach for ARIA to fill the gap. No ARIA is better than bad ARIA.",
+      "related": "html-semantics",
+      "tags": ["accessibility"]
+    }
+  ]
+}

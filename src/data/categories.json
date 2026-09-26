@@ -49,27 +49,27 @@
     "name": "HTML",
     "shortName": "HTML",
     "description": "Semantics, document structure and the platform primitives that everything else is built on.",
-    "accent": "#8b8b96",
+    "accent": "#e07a3f",
     "order": 6,
-    "status": "planned"
+    "status": "live"
   },
   {
     "id": "nextjs",
     "name": "Next.js",
     "shortName": "Next.js",
     "description": "Routing, rendering strategies and server/client boundaries in the Next.js App Router.",
-    "accent": "#8b8b96",
+    "accent": "#4b5563",
     "order": 7,
-    "status": "planned"
+    "status": "live"
   },
   {
     "id": "nodejs",
     "name": "Node.js",
     "shortName": "Node.js",
     "description": "The runtime, the event loop and building server-side JavaScript that holds up.",
-    "accent": "#8b8b96",
+    "accent": "#3fa34d",
     "order": 8,
-    "status": "planned"
+    "status": "live"
   },
   {
     "id": "express",
@@ -85,9 +85,9 @@
     "name": "Databases",
     "shortName": "Databases",
     "description": "Relational and document databases, indexing, transactions and query modelling.",
-    "accent": "#8b8b96",
+    "accent": "#1f9d8f",
     "order": 10,
-    "status": "planned"
+    "status": "live"
   },
   {
     "id": "browser-internals",
@@ -112,9 +112,9 @@
     "name": "Performance",
     "shortName": "Performance",
     "description": "Core Web Vitals, measurement and making interfaces feel instant.",
-    "accent": "#8b8b96",
+    "accent": "#d98a1f",
     "order": 13,
-    "status": "planned"
+    "status": "live"
   },
   {
     "id": "accessibility",
@@ -139,27 +139,27 @@
     "name": "Security",
     "shortName": "Security",
     "description": "The web threat model: XSS, CSRF, CORS, injection and defence in depth.",
-    "accent": "#8b8b96",
+    "accent": "#c73e3e",
     "order": 16,
-    "status": "planned"
+    "status": "live"
   },
   {
     "id": "git",
     "name": "Git",
     "shortName": "Git",
     "description": "Version control mental models: branching, merging, rebasing and recovery.",
-    "accent": "#8b8b96",
+    "accent": "#a855f7",
     "order": 17,
-    "status": "planned"
+    "status": "live"
   },
   {
     "id": "system-design",
     "name": "System Design",
     "shortName": "System Design",
     "description": "Scaling, caching, queues, consistency and designing systems on a whiteboard.",
-    "accent": "#8b8b96",
+    "accent": "#5a67d8",
     "order": 18,
-    "status": "planned"
+    "status": "live"
   },
   {
     "id": "full-stack",

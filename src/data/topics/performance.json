@@ -1,0 +1,240 @@
+[
+  {
+    "id": "perf-core-web-vitals",
+    "slug": "core-web-vitals",
+    "category": "performance",
+    "type": "concept",
+    "title": "Core Web Vitals",
+    "summary": "LCP, INP and CLS: the three metrics Google uses to summarise real user experience.",
+    "difficulty": "medium",
+    "tags": ["metrics", "web-vitals"],
+    "featured": true,
+    "reviewStatus": "verified",
+    "updated": "2026-09-02",
+    "definition": "Core Web Vitals are three field metrics. Largest Contentful Paint (LCP) measures how long the largest visible element takes to render, and should be under 2.5 seconds. Interaction to Next Paint (INP) measures the latency from an interaction to the next paint, and should be under 200 milliseconds. Cumulative Layout Shift (CLS) measures unexpected movement of content, and should be under 0.1.",
+    "explanation": [
+      "LCP is about loading. The element is usually the hero image or the largest heading. It is improved by faster server response, preloading the LCP resource, avoiding render-blocking CSS and JavaScript, and not lazy-loading the hero image.",
+      "INP replaced First Input Delay. It captures the worst interaction latency across the visit, so it reflects the responsiveness of the whole page, not just the first tap. Long tasks on the main thread are the usual cause, so INP is improved by breaking up long work, deferring non-urgent JavaScript and keeping event handlers light.",
+      "CLS is about stability. It is caused by images and embeds without reserved space, fonts that swap with different metrics, and content injected above what the user is reading. Reserve dimensions, preload fonts or use a size-adjusted fallback, and never insert content above the current viewport.",
+      "Field data from real users is what counts, gathered through the web-vitals library or the Chrome UX Report. Lab tools like Lighthouse are useful for diagnosis but can differ from what users experience, so treat field and lab data as complementary."
+    ],
+    "keyPoints": [
+      "LCP under 2.5s, INP under 200ms, CLS under 0.1",
+      "LCP is loading, INP is responsiveness, CLS is stability",
+      "INP reflects the worst interaction, not the first",
+      "Field data decides, lab data diagnoses"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "Collect the vitals in the field and send them to your analytics.",
+      "code": "import { onLCP, onINP, onCLS } from 'web-vitals';\n\nconst report = (metric) =>\n  navigator.sendBeacon('/analytics', JSON.stringify({\n    name: metric.name,\n    value: metric.value,\n    id: metric.id,\n  }));\n\nonLCP(report);\nonINP(report);\nonCLS(report);"
+    },
+    "related": ["perf-reduce-load-time", "perf-cheatsheet", "perf-gotcha-layout-thrashing"]
+  },
+  {
+    "id": "perf-reduce-load-time",
+    "slug": "reduce-load-time",
+    "category": "performance",
+    "type": "question",
+    "title": "How would you make a page load faster?",
+    "summary": "Cut the critical path: less render-blocking work, smaller payloads, and a fast first response.",
+    "difficulty": "medium",
+    "tags": ["loading", "optimization"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-02",
+    "shortAnswer": "Start by measuring, then attack the critical path. Get the HTML to the browser quickly, remove render-blocking CSS and JavaScript, shrink the JavaScript bundle, serve images in a modern format at the right size, preload the LCP resource, and cache aggressively. Most wins come from doing less up front, not from micro-optimising code.",
+    "explanation": [
+      "Measure first. Look at the LCP breakdown and the waterfall to see whether time goes to server response, resource loading or main-thread work. Optimising without that is guesswork.",
+      "Reduce the bytes that block rendering. Inline critical CSS for the first screen and defer the rest. Ship JavaScript as modules with defer, code-split by route, and drop unused dependencies. Every kilobyte of JavaScript costs both download and parse time.",
+      "Fix images, which are usually the largest resource. Use AVIF or WebP, serve the correct dimensions with srcset, and preload the hero image. Do not lazy-load the LCP image, and do reserve width and height to avoid layout shift.",
+      "Use the network and cache. Serve from a CDN close to the user, enable compression, and set long cache lifetimes on hashed assets. Use a service worker or HTTP caching so repeat visits are near-instant.",
+      "Prefetch what the user will do next. Prefetch on hover, prerender likely routes, and warm connections with preconnect for critical third parties."
+    ],
+    "keyPoints": [
+      "Measure before optimising",
+      "Remove render-blocking CSS and JS",
+      "Shrink and code-split JavaScript",
+      "Modern images at the right size, hero preloaded",
+      "CDN, compression and long cache lifetimes"
+    ],
+    "example": {
+      "language": "html",
+      "caption": "Preload the hero image and defer the app script.",
+      "code": "<link rel=\"preload\" as=\"image\" href=\"/hero.avif\" fetchpriority=\"high\" />\n<link rel=\"preconnect\" href=\"https://cdn.example.com\" />\n<script type=\"module\" src=\"/app.js\"></script>"
+    },
+    "commonMistakes": [
+      "Lazy-loading the hero image and hurting LCP",
+      "Shipping one large bundle instead of route-level code splitting",
+      "Serving oversized JPEGs and letting CSS scale them down"
+    ],
+    "followUps": [
+      "How do you find what is blocking render?",
+      "What would you prefetch and when?",
+      "How does caching change the picture on repeat visits?"
+    ],
+    "realWorld": "Load time is the first impression of performance, and most of it is decided by the HTML, the critical CSS and the largest image.",
+    "related": ["perf-core-web-vitals", "perf-rendering-pipeline", "perf-cheatsheet"]
+  },
+  {
+    "id": "perf-rendering-pipeline",
+    "slug": "rendering-pipeline",
+    "category": "performance",
+    "type": "concept",
+    "title": "The Rendering Pipeline and Long Tasks",
+    "summary": "Style, layout, paint and composite run on the main thread, and long tasks delay every interaction.",
+    "difficulty": "medium",
+    "tags": ["rendering", "main-thread"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-02",
+    "definition": "After JavaScript runs, the browser turns the DOM and CSSOM into a render tree, computes layout, paints pixels and composites layers. All of that except compositing runs on the main thread, which is also where your JavaScript runs. A long task is any task that occupies the main thread for more than 50 milliseconds, and it blocks input, animation and rendering.",
+    "explanation": [
+      "Layout is the expensive step. It computes the geometry of every affected element, and touching a layout property forces it to run again. Paint turns boxes into pixels, and some properties such as box-shadow and border-radius are more expensive to paint than others.",
+      "Transform and opacity can be handled by the compositor without layout or paint, which is why animating them stays smooth. Animating width, top or margin forces layout and paint on every frame.",
+      "A long task is the root cause of poor INP. If a task runs for 300ms, any tap during it waits up to 300ms before the handler even starts. Break work into smaller chunks with yield points, move heavy computation to a worker, and keep the initial JavaScript small.",
+      "The scheduler helps if you let it. scheduler.yield() and prioritizing user-blocking work let the browser interleave input with your code. requestIdleCallback runs low-priority work when the thread is free."
+    ],
+    "keyPoints": [
+      "Style, layout, paint and composite; only compositing escapes the main thread",
+      "Long tasks over 50ms block input and rendering",
+      "Animate transform and opacity, not layout properties",
+      "Break up work, use workers, and yield to the main thread"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "Yield between chunks so input can be handled.",
+      "code": "async function processAll(items) {\n  for (const item of items) {\n    process(item);\n    // give the browser a chance to handle input and paint\n    await scheduler.yield();\n  }\n}"
+    },
+    "related": ["perf-gotcha-layout-thrashing", "perf-core-web-vitals", "perf-cheatsheet"]
+  },
+  {
+    "id": "perf-gotcha-layout-thrashing",
+    "slug": "gotcha-layout-thrashing",
+    "category": "performance",
+    "type": "gotcha",
+    "title": "Layout thrashing",
+    "summary": "Reading a layout property after every write forces the browser to recompute layout over and over.",
+    "difficulty": "medium",
+    "tags": ["rendering", "dom", "gotcha"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-02",
+    "scenario": "A loop that positions elements or measures the DOM runs quickly with a few items and janks badly with a few hundred. The profiler shows repeated layout, not one long layout.",
+    "problem": "Reading a layout-dependent property such as offsetHeight or getBoundingClientRect forces the browser to flush pending style and layout changes so it can return an accurate value. If you write to the DOM and then read, then write and read again, every iteration triggers a synchronous reflow. The browser cannot batch the work because you keep asking for the result.",
+    "example": {
+      "language": "javascript",
+      "caption": "Read then write, then read then write again: a forced reflow per item.",
+      "code": "// thrashing: write, then read, on every iteration\nfor (const el of items) {\n  el.style.width = '100px';\n  console.log(el.offsetWidth); // forces layout\n}"
+    },
+    "fix": "Batch reads and writes. Read everything you need first, then apply all the writes, so the browser performs layout once. requestAnimationFrame gives a clean place to write before the next paint, and FastDOM or a similar helper can automate the separation. Animating transform instead of layout properties removes the problem entirely.",
+    "keyPoints": [
+      "Interleaved read/write forces synchronous reflow",
+      "Batch all reads, then all writes",
+      "Animate transform and opacity to avoid layout",
+      "Use requestAnimationFrame for batched visual updates"
+    ],
+    "related": ["perf-rendering-pipeline", "perf-cheatsheet", "perf-core-web-vitals"]
+  },
+  {
+    "id": "perf-long-lists",
+    "slug": "long-lists-and-virtualization",
+    "category": "performance",
+    "type": "question",
+    "title": "How do you render a very long list without janking?",
+    "summary": "Only render what is visible, keep DOM size down, and avoid heavy work per row.",
+    "difficulty": "hard",
+    "tags": ["rendering", "lists", "virtualization"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-02",
+    "shortAnswer": "Do not put thousands of rows in the DOM. Virtualize, so only the rows near the viewport exist and the container is sized to the full list, or paginate and load more on demand. Keep each row cheap to render, give rows a stable key, and avoid measuring the DOM during scroll.",
+    "explanation": [
+      "Every node costs memory and makes style and layout more expensive. A few thousand rows slow down the initial render, the scroll and any re-render, even if the user only ever sees twenty.",
+      "Virtualization renders a window of rows based on scroll position and uses spacer elements or absolute positioning to preserve the scroll height. The scrollbar behaves correctly and the DOM stays small. Libraries such as TanStack Virtual do the hard parts.",
+      "Scrolling must stay off the main thread where possible. Avoid reading layout in scroll handlers, since that forces reflow, and avoid re-rendering the whole list on every scroll event. Keep row components memoised and pass stable props.",
+      "If virtualization is overkill, pagination or a load-more button reduces the DOM and the network at once, and is often the better product choice for tabular data."
+    ],
+    "keyPoints": [
+      "DOM size itself is a cost",
+      "Virtualize to keep only visible rows mounted",
+      "No layout reads in scroll handlers",
+      "Memoise rows and use stable keys"
+    ],
+    "example": {
+      "language": "jsx",
+      "caption": "The idea behind virtualization: render a window, not the whole list.",
+      "code": "const start = Math.floor(scrollTop / rowHeight);\nconst end = start + visibleCount;\nconst rows = items.slice(start, end);\n\nreturn (\n  <div style={{ height: items.length * rowHeight }}>\n    {rows.map((row, i) => (\n      <Row key={row.id} style={{ top: (start + i) * rowHeight }} {...row} />\n    ))}\n  </div>\n);"
+    },
+    "commonMistakes": [
+      "Rendering every row and hiding the rest with CSS",
+      "Reading getBoundingClientRect inside a scroll handler",
+      "Using array index as the key when the list reorders"
+    ],
+    "followUps": [
+      "How does virtualization keep the scrollbar accurate?",
+      "When is pagination a better choice than virtualization?",
+      "What makes a row expensive to render?"
+    ],
+    "related": ["perf-rendering-pipeline", "perf-reduce-load-time", "perf-cheatsheet"]
+  },
+  {
+    "id": "perf-cheatsheet",
+    "slug": "performance-cheat-sheet",
+    "category": "performance",
+    "type": "cheat-sheet",
+    "title": "Web Performance Cheat Sheet",
+    "summary": "Metrics, loading, rendering and the tools to measure them.",
+    "difficulty": "medium",
+    "tags": ["reference", "cheat-sheet"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-02",
+    "description": "A quick reference for measuring and improving how fast a page loads and responds.",
+    "sections": [
+      {
+        "title": "Core Web Vitals",
+        "items": [
+          { "label": "LCP", "value": "Largest Contentful Paint, under 2.5s", "note": "Loading" },
+          { "label": "INP", "value": "Interaction to Next Paint, under 200ms", "note": "Responsiveness" },
+          { "label": "CLS", "value": "Cumulative Layout Shift, under 0.1", "note": "Stability" }
+        ]
+      },
+      {
+        "title": "Reduce load time",
+        "items": [
+          { "label": "Critical CSS", "value": "Inline the first screen, defer the rest" },
+          { "label": "JavaScript", "value": "defer, code-split by route, drop unused deps" },
+          { "label": "Images", "value": "AVIF or WebP, correct size, width and height set" },
+          { "label": "LCP image", "value": "Preload, do not lazy-load, fetchpriority high" },
+          { "label": "Caching", "value": "CDN, compression, long lifetimes on hashed assets" }
+        ]
+      },
+      {
+        "title": "Avoid layout shift",
+        "items": [
+          { "label": "Reserve space", "value": "width and height on images and embeds" },
+          { "label": "Fonts", "value": "Preload, or use a size-adjusted fallback" },
+          { "label": "Never inject above", "value": "No content inserted above the viewport" }
+        ]
+      },
+      {
+        "title": "Main thread",
+        "items": [
+          { "label": "Long task", "value": "Over 50ms blocks input and rendering" },
+          { "label": "Animate", "value": "transform and opacity only", "note": "Compositor, not layout" },
+          { "label": "Batch DOM", "value": "All reads, then all writes", "note": "Avoids forced reflow" },
+          { "label": "Yield", "value": "scheduler.yield, requestIdleCallback" },
+          { "label": "Offload", "value": "Workers for heavy computation" }
+        ]
+      },
+      {
+        "title": "Tools",
+        "items": [
+          { "label": "Field", "value": "web-vitals library, Chrome UX Report", "note": "What counts" },
+          { "label": "Lab", "value": "Lighthouse, Performance panel", "note": "Diagnosis" },
+          { "label": "Flame chart", "value": "Performance panel to find long tasks" },
+          { "label": "Coverage", "value": "Find unused CSS and JavaScript" }
+        ]
+      }
+    ],
+    "related": ["perf-core-web-vitals", "perf-reduce-load-time", "perf-rendering-pipeline", "perf-gotcha-layout-thrashing", "perf-long-lists"]
+  }
+]

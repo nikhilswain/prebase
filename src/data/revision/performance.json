@@ -1,0 +1,136 @@
+{
+  "category": "performance",
+  "intro": "How to measure and improve load and interaction performance.",
+  "entries": [
+    {
+      "id": "rev-perf-lcp",
+      "category": "performance",
+      "term": "LCP",
+      "short": "Largest Contentful Paint: how fast the main content renders.",
+      "medium": "Under 2.5 seconds is good. Improve it with a fast server response, preloading the LCP resource, removing render-blocking CSS and JavaScript, and never lazy-loading the hero image.",
+      "detail": "The LCP element is usually the hero image or the largest heading. Find it in the field data, then optimise that specific resource.",
+      "related": "perf-core-web-vitals",
+      "tags": ["metrics", "loading"]
+    },
+    {
+      "id": "rev-perf-inp",
+      "category": "performance",
+      "term": "INP",
+      "short": "Interaction to Next Paint: worst interaction latency.",
+      "medium": "Under 200ms is good. It reflects the worst interaction across the visit, not the first. Long tasks on the main thread are the usual cause, so break up work, defer non-urgent JavaScript and keep handlers light.",
+      "detail": "INP replaced First Input Delay and is a better signal of responsiveness because it covers the whole session.",
+      "related": "perf-core-web-vitals",
+      "tags": ["metrics", "responsiveness"]
+    },
+    {
+      "id": "rev-perf-cls",
+      "category": "performance",
+      "term": "CLS",
+      "short": "Cumulative Layout Shift: unexpected movement of content.",
+      "medium": "Under 0.1 is good. Reserve width and height on images and embeds, preload fonts or use a size-adjusted fallback, and never inject content above the viewport.",
+      "detail": "Movement caused by user interaction, such as expanding an accordion, does not count toward CLS.",
+      "related": "perf-core-web-vitals",
+      "tags": ["metrics", "stability"]
+    },
+    {
+      "id": "rev-perf-critical-path",
+      "category": "performance",
+      "term": "Critical rendering path",
+      "short": "The minimum work needed to render the first screen.",
+      "medium": "HTML arrives, CSS blocks rendering, JavaScript can block parsing. Inline critical CSS for the first screen, defer the rest, and keep render-blocking resources small.",
+      "detail": "Most load-time wins come from doing less up front rather than micro-optimising code.",
+      "related": "perf-reduce-load-time",
+      "tags": ["loading"]
+    },
+    {
+      "id": "rev-perf-long-task",
+      "category": "performance",
+      "term": "Long tasks",
+      "short": "Any main-thread task over 50ms blocks input and paint.",
+      "medium": "If a task runs 300ms, a tap waits up to 300ms before its handler starts. Break work into chunks with yield points, offload heavy computation to a worker, and keep initial JavaScript small.",
+      "detail": "The Performance panel flame chart shows long tasks directly. They are the usual root cause of poor INP.",
+      "related": "perf-rendering-pipeline",
+      "tags": ["main-thread"]
+    },
+    {
+      "id": "rev-perf-compositor",
+      "category": "performance",
+      "term": "Transform and opacity",
+      "short": "The only properties the compositor animates without layout or paint.",
+      "medium": "Animating width, top or margin forces layout and paint every frame. Animating transform and opacity stays on the compositor and remains smooth under load.",
+      "detail": "This is the same rule that keeps animations off the main thread, and it matters most on low-end devices.",
+      "related": "perf-rendering-pipeline",
+      "tags": ["rendering", "animation"]
+    },
+    {
+      "id": "rev-perf-thrashing",
+      "category": "performance",
+      "term": "Layout thrashing",
+      "short": "Reads interleaved with writes force a reflow per iteration.",
+      "medium": "Reading offsetHeight or getBoundingClientRect after a write forces synchronous layout. Batch all reads first, then all writes, so layout happens once.",
+      "detail": "requestAnimationFrame gives a clean place to apply visual writes before the next paint.",
+      "related": "perf-gotcha-layout-thrashing",
+      "tags": ["rendering", "dom"]
+    },
+    {
+      "id": "rev-perf-virtualization",
+      "category": "performance",
+      "term": "Virtualization",
+      "short": "Render only the rows near the viewport.",
+      "medium": "A container sized to the full list plus a window of visible rows keeps the DOM small. Spacers or absolute positioning preserve the scroll height so the scrollbar stays correct.",
+      "detail": "TanStack Virtual handles measurement and dynamic row heights. Pagination is often a better product choice for tables.",
+      "related": "perf-long-lists",
+      "tags": ["rendering", "lists"]
+    },
+    {
+      "id": "rev-perf-images",
+      "category": "performance",
+      "term": "Images",
+      "short": "Usually the largest resource; format and size matter most.",
+      "medium": "Use AVIF or WebP, serve the right dimensions with srcset and sizes, and set width and height to reserve space. Preload the LCP image and do not lazy-load it.",
+      "detail": "Lazy-load offscreen images with loading=lazy, and use decoding=async so decoding does not block.",
+      "related": "perf-reduce-load-time",
+      "tags": ["images"]
+    },
+    {
+      "id": "rev-perf-js-budget",
+      "category": "performance",
+      "term": "JavaScript cost",
+      "short": "Every kilobyte costs download, parse and execute time.",
+      "medium": "Code-split by route, defer with modules, and drop unused dependencies. Check coverage to find code that ships but never runs.",
+      "detail": "On mid-range phones, execution time dominates. Shipping less JavaScript is usually the highest-leverage change.",
+      "related": "perf-reduce-load-time",
+      "tags": ["loading", "javascript"]
+    },
+    {
+      "id": "rev-perf-caching",
+      "category": "performance",
+      "term": "Caching",
+      "short": "The fastest request is the one you never make.",
+      "medium": "Serve from a CDN, enable compression, and set long cache lifetimes on content-hashed assets. Use immutable for hashed files and short lifetimes for HTML.",
+      "detail": "Repeat visits are dominated by cache strategy, which is why hashing filenames and caching forever works so well.",
+      "related": "perf-cheatsheet",
+      "tags": ["caching"]
+    },
+    {
+      "id": "rev-perf-fonts",
+      "category": "performance",
+      "term": "Fonts",
+      "short": "Fonts can delay text or shift it when they swap.",
+      "medium": "Preload the primary font, subset to the characters you need, and use font-display: swap to avoid invisible text. Metric-compatible fallbacks reduce shift when the real font loads.",
+      "detail": "A font swap with different metrics is a common cause of CLS on text-heavy pages.",
+      "related": "perf-cheatsheet",
+      "tags": ["fonts", "stability"]
+    },
+    {
+      "id": "rev-perf-field-vs-lab",
+      "category": "performance",
+      "term": "Field vs lab data",
+      "short": "Real users decide; lab tools diagnose.",
+      "medium": "Field data from the web-vitals library or the Chrome UX Report reflects real devices and networks. Lighthouse and the Performance panel are controlled and useful for finding causes.",
+      "detail": "Optimising only for a fast lab machine misses the slow devices that produce the field numbers.",
+      "related": "perf-core-web-vitals",
+      "tags": ["measurement"]
+    }
+  ]
+}

@@ -1,0 +1,366 @@
+[
+  {
+    "id": "node-event-loop",
+    "slug": "event-loop",
+    "category": "nodejs",
+    "type": "question",
+    "title": "How does the Node.js event loop work?",
+    "summary": "A single thread runs JavaScript, and the loop moves ready callbacks onto it phase by phase.",
+    "difficulty": "medium",
+    "tags": ["runtime", "async", "event-loop"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-01",
+    "shortAnswer": "Node runs your JavaScript on one thread. The event loop is a loop that, on each pass, runs whatever callbacks are ready: expired timers, pending I/O callbacks, the poll phase where most I/O completes, then the check phase for setImmediate, then close callbacks. Between every phase it drains the microtask queue, so promise callbacks always run before the loop moves on.",
+    "explanation": [
+      "The loop has six phases in order: timers, pending callbacks, idle/prepare, poll, check and close. Each phase has a queue of callbacks, and the loop runs that queue until it is empty or a callback limit is hit, then moves on.",
+      "The poll phase is where Node spends most of its time. If there is no work, it waits for I/O and blocks efficiently instead of spinning. This is why an idle Node process uses almost no CPU.",
+      "Microtasks (promise then/catch/finally and process.nextTick) are not a phase. They run after the current operation finishes, before the loop continues. nextTick has its own queue that drains before the promise queue.",
+      "The practical consequence: anything synchronous blocks every other connection. A 200ms CPU-bound function stalls all in-flight requests for 200ms, because there is no second thread to pick up the slack."
+    ],
+    "keyPoints": [
+      "One JavaScript thread, many background threads for I/O",
+      "Phases run in order: timers, pending, poll, check, close",
+      "Microtasks drain between phases and between callbacks",
+      "Synchronous work blocks every other request"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "The timer fires before setImmediate on the first pass; the promise runs before both.",
+      "code": "setTimeout(() => console.log('timeout'), 0);\nsetImmediate(() => console.log('immediate'));\nPromise.resolve().then(() => console.log('promise'));\nconsole.log('sync');\n\n// sync\n// promise\n// timeout\n// immediate"
+    },
+    "commonMistakes": [
+      "Assuming async code runs on another thread rather than being scheduled back onto the same one",
+      "Treating process.nextTick like setImmediate",
+      "Blocking the loop with JSON.parse, sync file reads or heavy crypto on the request path"
+    ],
+    "followUps": [
+      "What happens to other requests while a synchronous function is running?",
+      "When would setImmediate run before setTimeout with a zero delay?",
+      "How does the loop keep an idle server from burning CPU?",
+      "Where do microtasks run relative to the phases?"
+    ],
+    "realWorld": "Every Node web server depends on this: handlers must return to the loop quickly so the next request can be served.",
+    "related": ["node-nexttick-setimmediate", "node-libuv-threadpool", "js-event-loop", "node-gotcha-blocking"]
+  },
+  {
+    "id": "node-nexttick-setimmediate",
+    "slug": "nexttick-vs-setimmediate",
+    "category": "nodejs",
+    "type": "question",
+    "title": "process.nextTick vs setImmediate vs setTimeout(0)",
+    "summary": "nextTick runs before the loop continues, setImmediate in the check phase, setTimeout in the timers phase.",
+    "difficulty": "medium",
+    "tags": ["async", "scheduling"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-01",
+    "shortAnswer": "process.nextTick defers a callback to run right after the current operation, before the event loop proceeds. setImmediate runs in the check phase of the next loop iteration. setTimeout(fn, 0) runs in the timers phase, which may be before or after the check phase depending on where in the loop you scheduled it. All three are asynchronous, but nextTick is the most immediate.",
+    "explanation": [
+      "nextTick exists so APIs can guarantee a callback fires after the caller's current code finishes but before any I/O is processed. It is the tool for consistency, not for scheduling work over time.",
+      "Because the nextTick queue is drained completely before moving on, recursively calling nextTick can starve I/O and timers. Node caps it at 1000 by default for this reason.",
+      "setImmediate is the safe way to yield to I/O: it always runs after the current poll phase, so it never starves the loop.",
+      "When called from inside an I/O callback, setImmediate is deterministic and runs before a zero-delay timer. When called at the top level, the order between setTimeout(0) and setImmediate is not guaranteed."
+    ],
+    "keyPoints": [
+      "nextTick: before the loop continues, same tick",
+      "setImmediate: check phase, next iteration",
+      "setTimeout(0): timers phase, subject to the 1ms clamp",
+      "Recursive nextTick can starve the loop"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "Inside an I/O callback the order is stable: immediate then timeout.",
+      "code": "const fs = require('node:fs');\n\nfs.readFile(__filename, () => {\n  setTimeout(() => console.log('timeout'), 0);\n  setImmediate(() => console.log('immediate'));\n});\n\n// immediate\n// timeout"
+    },
+    "commonMistakes": [
+      "Using nextTick to defer heavy work, which delays I/O instead of yielding to it",
+      "Relying on setTimeout(0) vs setImmediate ordering at the top level",
+      "Expecting nextTick to run after I/O"
+    ],
+    "followUps": [
+      "Why can nextTick starve the event loop?",
+      "Which one should you use to defer work without blocking I/O?",
+      "How do promise microtasks compare to nextTick?"
+    ],
+    "related": ["node-event-loop", "node-libuv-threadpool"]
+  },
+  {
+    "id": "node-libuv-threadpool",
+    "slug": "libuv-and-thread-pool",
+    "category": "nodejs",
+    "type": "concept",
+    "title": "libuv and the Thread Pool",
+    "summary": "The C library under Node that handles async I/O, with a small thread pool for work the OS cannot do asynchronously.",
+    "difficulty": "medium",
+    "tags": ["runtime", "concurrency"],
+    "reviewStatus": "unreviewed",
+    "updated": "2026-09-01",
+    "definition": "libuv is the cross-platform C library that gives Node its event loop and asynchronous I/O. Where the operating system offers non-blocking primitives (sockets, pipes), libuv uses them directly. For work it cannot do that way, it uses a fixed-size thread pool.",
+    "explanation": [
+      "Sockets and networking are handled by the OS event mechanism, so they never touch the thread pool. That is why Node scales to tens of thousands of connections with a handful of threads.",
+      "File system operations, DNS lookups via getaddrinfo, and some crypto and compression run on the thread pool, because there is no portable async API for them. The default pool size is four threads, configurable with UV_THREADPOOL_SIZE.",
+      "This is the subtle source of a classic production bug: a burst of slow file reads or bcrypt hashes can saturate all four threads, so unrelated fs and DNS calls queue behind them even though the CPU looks idle.",
+      "The pool is for offloading blocking work, not for parallelism in your JavaScript. Your code still runs on one thread; the pool only lets blocking native calls complete off it."
+    ],
+    "keyPoints": [
+      "Networking uses the OS, not the thread pool",
+      "fs, DNS and crypto run on a default pool of four threads",
+      "Saturating the pool delays unrelated I/O",
+      "UV_THREADPOOL_SIZE tunes the pool, not your JS parallelism"
+    ],
+    "example": {
+      "language": "bash",
+      "caption": "Raising the pool size before the process starts.",
+      "code": "UV_THREADPOOL_SIZE=8 node server.js"
+    },
+    "related": ["node-event-loop", "node-single-thread", "node-streams-backpressure"]
+  },
+  {
+    "id": "node-single-thread",
+    "slug": "single-threaded-concurrency",
+    "category": "nodejs",
+    "type": "question",
+    "title": "How does Node handle many requests if it is single-threaded?",
+    "summary": "It never waits. It starts I/O, registers a callback and moves on, so one thread juggles thousands of in-flight requests.",
+    "difficulty": "easy",
+    "tags": ["concurrency", "runtime"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-01",
+    "shortAnswer": "Node is single-threaded for JavaScript but not for I/O. When a request needs the database or the file system, Node starts the operation, stores a callback and immediately returns to the loop to handle the next request. When the operation completes, its callback is queued and run on the same thread. Concurrency comes from overlapping waiting, not from parallel execution of your code.",
+    "explanation": [
+      "This model is efficient because most server work is waiting on I/O, not computing. One thread that never blocks can keep thousands of connections moving.",
+      "The trade-off is that CPU-bound work is a bottleneck. A synchronous hash or a large JSON.parse monopolises the only thread, and every other request waits. This is the case for worker_threads or a separate service.",
+      "It also means you cannot keep per-process in-memory state as a source of truth when you run multiple instances, which is why sessions usually live in a shared store."
+    ],
+    "keyPoints": [
+      "Concurrency through non-blocking I/O, not parallel JS",
+      "One slow synchronous task blocks everything",
+      "CPU work belongs in worker_threads or another process",
+      "Shared state cannot live in one process's memory across instances"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "The await yields the thread back to the loop while the database responds.",
+      "code": "app.get('/users', async (req, res) => {\n  const users = await db.query('select * from users');\n  res.json(users);\n});"
+    },
+    "commonMistakes": [
+      "Believing each request gets its own thread",
+      "Doing CPU-heavy work inline in a request handler",
+      "Storing sessions in a module-level object when running more than one process"
+    ],
+    "followUps": [
+      "What kind of work would you move to a worker thread?",
+      "Why does a synchronous hash hurt throughput?",
+      "How do you scale Node across CPU cores?"
+    ],
+    "related": ["node-event-loop", "node-cluster-vs-worker-threads", "node-libuv-threadpool"]
+  },
+  {
+    "id": "node-streams-backpressure",
+    "slug": "streams-and-backpressure",
+    "category": "nodejs",
+    "type": "concept",
+    "title": "Streams and Backpressure",
+    "summary": "Process data in chunks instead of buffering it all, and slow the producer when the consumer cannot keep up.",
+    "difficulty": "medium",
+    "tags": ["streams", "memory", "performance"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-01",
+    "definition": "A stream is an abstraction for data that arrives over time in chunks. Readable streams produce data, writable streams consume it, duplex streams do both, and transform streams rewrite chunks as they pass. Backpressure is the mechanism that stops a fast producer from overwhelming a slow consumer.",
+    "explanation": [
+      "Reading a large file with readFile loads the whole thing into memory. A read stream emits chunks and lets you handle them one at a time, so memory stays flat regardless of file size.",
+      "Writable streams buffer writes and return false from write() when the internal buffer is full. That signal is backpressure: pause the source, wait for the drain event, then resume. pipe() and pipeline() wire this up for you.",
+      "Forgetting to honour backpressure is how a server runs out of memory under load: the producer keeps writing faster than the consumer can drain, and the buffer grows without bound.",
+      "pipeline() from node:stream/promises is preferred over pipe() because it propagates errors and cleans up every stream in the chain when one fails."
+    ],
+    "keyPoints": [
+      "Chunked processing keeps memory flat",
+      "write() returning false means pause and wait for drain",
+      "pipe and pipeline handle backpressure automatically",
+      "pipeline propagates errors and destroys the chain"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "A gzip pipeline that never buffers the whole file.",
+      "code": "import { createReadStream, createWriteStream } from 'node:fs';\nimport { createGzip } from 'node:zlib';\nimport { pipeline } from 'node:stream/promises';\n\nawait pipeline(\n  createReadStream('input.log'),\n  createGzip(),\n  createWriteStream('input.log.gz'),\n);"
+    },
+    "commonMistakes": [
+      "Concatenating all chunks and buffering them, defeating the point",
+      "Using pipe() and ignoring errors, which leaves streams dangling",
+      "Writing to a stream in a loop without checking the return value"
+    ],
+    "followUps": [
+      "What does backpressure mean in practice?",
+      "Why prefer pipeline over pipe?",
+      "How would you stream a large CSV to an HTTP response?"
+    ],
+    "realWorld": "Uploading and downloading files, proxying responses and reading logs all rely on streams to stay within a fixed memory budget.",
+    "related": ["node-single-thread", "node-gotcha-blocking", "node-cheatsheet"]
+  },
+  {
+    "id": "node-cluster-vs-worker-threads",
+    "slug": "cluster-vs-worker-threads",
+    "category": "nodejs",
+    "type": "comparison",
+    "title": "cluster vs worker_threads vs child_process",
+    "summary": "Cluster forks processes to share a port, worker_threads run CPU work in threads, child_process runs external commands.",
+    "difficulty": "hard",
+    "tags": ["concurrency", "scaling", "runtime"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-01",
+    "options": [
+      { "name": "cluster", "summary": "Multiple processes sharing one server port" },
+      { "name": "worker_threads", "summary": "Threads inside one process, can share memory" },
+      { "name": "child_process", "summary": "Separate processes, for external programs or isolation" }
+    ],
+    "rows": [
+      { "label": "Unit", "values": ["Process", "Thread", "Process"] },
+      { "label": "Shares memory", "values": ["No, IPC only", "Yes, via SharedArrayBuffer", "No, IPC or stdio"] },
+      { "label": "Startup cost", "values": ["Higher, a full V8 instance each", "Lower than a process", "Higher, a full V8 instance each"] },
+      { "label": "Good for", "values": ["Using all CPU cores for a web server", "CPU-bound work off the main loop", "Running binaries, strong isolation"] },
+      { "label": "Port sharing", "values": ["Yes, the primary hands off the port", "N/A", "No"] }
+    ],
+    "verdict": "Reach for cluster when you want to saturate multiple cores with the same server. Reach for worker_threads when a single request needs heavy computation but you want to keep the loop responsive. Reach for child_process when you are shelling out to another program or want hard isolation.",
+    "pickWhen": [
+      { "option": "cluster", "guidance": "Your bottleneck is many concurrent connections and idle cores, and you run a standard HTTP server." },
+      { "option": "worker_threads", "guidance": "One request does CPU-heavy work such as image processing, parsing or encryption." },
+      { "option": "child_process", "guidance": "You need to run an external tool or isolate untrusted code from the main process." }
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "Forking one worker per available core.",
+      "code": "import cluster from 'node:cluster';\nimport { availableParallelism } from 'node:os';\n\nif (cluster.isPrimary) {\n  for (let i = 0; i < availableParallelism(); i++) cluster.fork();\n} else {\n  // each worker runs the server and shares the port\n  server.listen(3000);\n}"
+    },
+    "commonMistakes": [
+      "Using cluster to fix CPU work inside one request, which worker_threads handles better",
+      "Assuming cluster workers share in-memory state",
+      "Spawning a child process per request instead of a pool"
+    ],
+    "related": ["node-single-thread", "node-libuv-threadpool", "node-event-loop"]
+  },
+  {
+    "id": "node-gotcha-blocking",
+    "slug": "gotcha-blocking-event-loop",
+    "category": "nodejs",
+    "type": "gotcha",
+    "title": "Blocking the event loop",
+    "summary": "One synchronous heavy call stalls every other request on the server, and the logs show nothing wrong.",
+    "difficulty": "medium",
+    "tags": ["performance", "runtime", "gotcha"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-01",
+    "scenario": "Under load, response times spike to seconds, the CPU is pegged at one core, and profiling shows most of the time inside a single function rather than in the database.",
+    "problem": "The event loop is single-threaded, so any synchronous work blocks all other callbacks. JSON.parse of a large payload, a synchronous read, a big regular-expression match, a synchronous hash or a tight loop all run to completion before the loop can serve anyone else. Because the work is your own code, no external call appears slow and the usual dashboards look fine.",
+    "example": {
+      "language": "javascript",
+      "caption": "The synchronous hash blocks the loop; the async variant does not.",
+      "code": "import { pbkdf2Sync, pbkdf2 } from 'node:crypto';\n\n// blocks every other request for the duration\nconst key = pbkdf2Sync(password, salt, 210000, 64, 'sha512');\n\n// offloads the work, the loop stays free\nawait new Promise((resolve, reject) =>\n  pbkdf2(password, salt, 210000, 64, 'sha512', (err, key) =>\n    err ? reject(err) : resolve(key),\n  ),\n);"
+    },
+    "fix": "Move CPU-bound work off the loop. Prefer async variants of crypto and fs. For unavoidable computation, offload to a worker_threads pool, split the work into chunks with setImmediate between them, or move it to a separate service. Measure with the event loop lag metric or clinic/doctor so blocking shows up before users notice.",
+    "keyPoints": [
+      "Synchronous work blocks all connections, not just the current one",
+      "Look for sync APIs: readFileSync, pbkdf2Sync, execSync",
+      "Heavy regex and JSON.parse are easy to miss",
+      "Monitor event loop lag as a first-class signal"
+    ],
+    "related": ["node-event-loop", "node-cluster-vs-worker-threads", "node-streams-backpressure"]
+  },
+  {
+    "id": "node-challenge-concurrency-limit",
+    "slug": "challenge-concurrency-limit",
+    "category": "nodejs",
+    "type": "challenge",
+    "title": "Run async tasks with a concurrency limit",
+    "summary": "Process an array of async tasks with at most N running at once, preserving result order.",
+    "difficulty": "hard",
+    "tags": ["async", "concurrency", "exercise"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-01",
+    "prompt": "Write a function mapLimit(items, limit, worker) that calls an async worker for every item, runs at most limit workers at any moment, and resolves with the results in the original order. Do not use a library.",
+    "constraints": [
+      "At most limit tasks in flight at once",
+      "Results keep the input order",
+      "Reject if any task rejects"
+    ],
+    "hints": [
+      "A shared index that workers pull from is simpler than batching.",
+      "Start limit workers, and have each one take the next item until the list is empty."
+    ],
+    "solution": {
+      "code": {
+        "language": "javascript",
+        "code": "async function mapLimit(items, limit, worker) {\n  const results = new Array(items.length);\n  let next = 0;\n\n  async function run() {\n    while (next < items.length) {\n      const index = next++;\n      results[index] = await worker(items[index], index);\n    }\n  }\n\n  const pool = Array.from(\n    { length: Math.min(limit, items.length) },\n    () => run(),\n  );\n\n  await Promise.all(pool);\n  return results;\n}"
+      },
+      "explanation": [
+        "Each worker loops, claiming the next index with next++ before awaiting, so no two workers take the same item. Because the increment happens synchronously before the await, the claim is atomic on the single thread.",
+        "Results are written by index, so the output order matches the input even though completion order does not.",
+        "Promise.all rejects on the first failure. In production you often want Promise.allSettled or a manual abort to stop the remaining work, which is worth mentioning in the interview."
+      ]
+    },
+    "related": ["node-single-thread", "node-cluster-vs-worker-threads", "node-event-loop"]
+  },
+  {
+    "id": "node-cheatsheet",
+    "slug": "node-cheat-sheet",
+    "category": "nodejs",
+    "type": "cheat-sheet",
+    "title": "Node.js Cheat Sheet",
+    "summary": "The runtime, the async model and the modules that come up most.",
+    "difficulty": "medium",
+    "tags": ["reference", "cheat-sheet"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-01",
+    "description": "A quick reference for the Node.js runtime, its scheduling model and the built-in modules you are expected to know.",
+    "sections": [
+      {
+        "title": "Event loop phases",
+        "items": [
+          { "label": "1. timers", "value": "setTimeout and setInterval callbacks that are due" },
+          { "label": "2. pending callbacks", "value": "Deferred system callbacks" },
+          { "label": "3. poll", "value": "Retrieve new I/O, run I/O callbacks, block when idle" },
+          { "label": "4. check", "value": "setImmediate callbacks" },
+          { "label": "5. close", "value": "close events such as socket close" },
+          { "label": "Microtasks", "value": "nextTick queue, then promise queue, drained between phases" }
+        ]
+      },
+      {
+        "title": "Scheduling",
+        "items": [
+          { "label": "process.nextTick", "value": "Before the loop continues", "note": "Can starve I/O if recursive" },
+          { "label": "setImmediate", "value": "Check phase of the next iteration", "note": "Safest way to yield to I/O" },
+          { "label": "setTimeout(fn, 0)", "value": "Timers phase", "note": "Clamped to about 1ms" }
+        ]
+      },
+      {
+        "title": "Concurrency tools",
+        "items": [
+          { "label": "libuv thread pool", "value": "fs, DNS, crypto", "note": "Default 4 threads, UV_THREADPOOL_SIZE" },
+          { "label": "worker_threads", "value": "CPU work in threads", "note": "Can share memory" },
+          { "label": "cluster", "value": "Processes sharing a port", "note": "Use all cores for a server" },
+          { "label": "child_process", "value": "Run external programs", "note": "spawn, exec, fork" }
+        ]
+      },
+      {
+        "title": "Modules to know",
+        "items": [
+          { "label": "node:fs", "value": "createReadStream, promises API", "note": "Prefer streams for large files" },
+          { "label": "node:stream", "value": "Readable, Writable, Duplex, Transform", "note": "pipeline for safe wiring" },
+          { "label": "node:crypto", "value": "randomUUID, createHash, timingSafeEqual", "note": "Async variants avoid blocking" },
+          { "label": "node:events", "value": "EventEmitter", "note": "on, once, off, emit" },
+          { "label": "node:path", "value": "join, resolve, dirname", "note": "Never concatenate paths by hand" }
+        ]
+      },
+      {
+        "title": "ESM vs CommonJS",
+        "items": [
+          { "label": "import / export", "value": "ESM, static and hoisted", "note": "Set type: module in package.json" },
+          { "label": "require / module.exports", "value": "CommonJS, synchronous", "note": "Default for .cjs" },
+          { "label": "import.meta.url", "value": "The ESM replacement for __dirname" }
+        ]
+      }
+    ],
+    "related": ["node-event-loop", "node-streams-backpressure", "node-cluster-vs-worker-threads", "node-libuv-threadpool"]
+  }
+]

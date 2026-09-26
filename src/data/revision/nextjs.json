@@ -1,0 +1,136 @@
+{
+  "category": "nextjs",
+  "intro": "The App Router model: components, rendering and caching.",
+  "entries": [
+    {
+      "id": "rev-next-app-router",
+      "category": "nextjs",
+      "term": "App Router",
+      "short": "Folders define routes; special filenames define behaviour.",
+      "medium": "page.tsx makes a route, layout.tsx is a shell that persists across navigation, loading.tsx is a Suspense fallback, error.tsx is an error boundary, and route.ts is an API endpoint. Route groups with parentheses organise files without changing the URL.",
+      "detail": "Layouts keep their state because they do not re-render when navigating between their children, which is why a sidebar or player does not reset.",
+      "related": "nextjs-app-router",
+      "tags": ["routing"]
+    },
+    {
+      "id": "rev-next-server-client",
+      "category": "nextjs",
+      "term": "Server vs Client Components",
+      "short": "Server by default; use client adds interactivity and ships JS.",
+      "medium": "Server Components run on the server, can read data directly and ship no JavaScript. 'use client' marks a component and its imports as client, enabling state, effects and handlers. A server component can render a client one, not the reverse.",
+      "detail": "Keep the boundary low. Marking a whole page client pulls its subtree into the bundle, so push 'use client' down to the interactive leaves and use children to compose server UI into client wrappers.",
+      "related": "nextjs-server-client",
+      "tags": ["rsc", "components"]
+    },
+    {
+      "id": "rev-next-rendering",
+      "category": "nextjs",
+      "term": "Static vs dynamic rendering",
+      "short": "Static by default, dynamic when the route uses request data.",
+      "medium": "Reading cookies or headers, using searchParams, or calling noStore makes a route dynamic and per-request. force-dynamic forces it, revalidate gives ISR, and revalidatePath or revalidateTag refresh on demand.",
+      "detail": "Caching is opt-out, not opt-in. Understanding which call makes a route dynamic is the crux of most Next.js questions.",
+      "related": "nextjs-rendering",
+      "tags": ["rendering"]
+    },
+    {
+      "id": "rev-next-caching",
+      "category": "nextjs",
+      "term": "Caching layers",
+      "short": "Memoization, Data Cache, Full Route Cache, Router Cache.",
+      "medium": "Request memoization deduplicates fetches within one render. The Data Cache persists fetch results across requests. The Full Route Cache stores static HTML. The Router Cache keeps client segments for fast navigation.",
+      "detail": "Stale data after a mutation usually comes from the Router Cache, which is why revalidatePath and router.refresh exist.",
+      "related": "nextjs-caching",
+      "tags": ["caching"]
+    },
+    {
+      "id": "rev-next-fetch",
+      "category": "nextjs",
+      "term": "Data fetching",
+      "short": "Fetch in the Server Component that needs the data.",
+      "medium": "await the data directly in a Server Component; there is no useEffect or loading state to manage. Identical fetches are deduplicated automatically. cache: 'no-store' opts out; next.revalidate sets a lifetime.",
+      "detail": "Fetching next to the component that uses it removes prop drilling and keeps the data on the server.",
+      "related": "nextjs-rendering",
+      "tags": ["data"]
+    },
+    {
+      "id": "rev-next-server-actions",
+      "category": "nextjs",
+      "term": "Server Actions",
+      "short": "Functions that run on the server, called from the client.",
+      "medium": "A function marked 'use server' can be invoked from a form or event handler and runs on the server, so it can touch the database or secrets directly. Use them for mutations, then revalidate the affected paths or tags.",
+      "detail": "They still need their own authorization checks. Being server-only does not mean being safe from a malicious caller.",
+      "related": "nextjs-caching",
+      "tags": ["data", "mutations"]
+    },
+    {
+      "id": "rev-next-hydration",
+      "category": "nextjs",
+      "term": "Hydration mismatch",
+      "short": "Server HTML does not match the client's first render.",
+      "medium": "Causes are values that differ between environments: Date, Math.random, localStorage, window, locale formatting, and invalid HTML nesting. React discards and re-renders the subtree when it mismatches.",
+      "detail": "Render environment-dependent values after mount, or suppressHydrationWarning on the specific element when the difference is intentional such as a theme class.",
+      "related": "nextjs-gotcha-hydration",
+      "tags": ["hydration", "gotcha"]
+    },
+    {
+      "id": "rev-next-layouts",
+      "category": "nextjs",
+      "term": "Layouts",
+      "short": "Nested shells that preserve state across navigation.",
+      "medium": "A layout wraps its segment and all children and does not re-render when navigating within the segment. The root layout must render html and body.",
+      "detail": "This is how shared chrome stays mounted, and it is the main structural difference from the Pages Router.",
+      "related": "nextjs-app-router",
+      "tags": ["routing"]
+    },
+    {
+      "id": "rev-next-loading-error",
+      "category": "nextjs",
+      "term": "loading and error",
+      "short": "Convention files that give Suspense and error boundaries per segment.",
+      "medium": "loading.tsx shows a fallback while the segment streams in. error.tsx catches render errors in the segment and lets the user retry. They apply automatically without wiring Suspense or a boundary by hand.",
+      "detail": "Streaming with Suspense lets parts of the page arrive early, which improves perceived performance for slow data.",
+      "related": "nextjs-cheatsheet",
+      "tags": ["ux"]
+    },
+    {
+      "id": "rev-next-middleware",
+      "category": "nextjs",
+      "term": "Middleware",
+      "short": "Runs before a request completes, at the edge.",
+      "medium": "middleware.ts runs on every matching request and can rewrite, redirect, set headers, or gate access based on cookies. It runs before rendering, so it is a good place for auth redirects and A/B routing.",
+      "detail": "It runs on the edge runtime with limited APIs, so keep it light and do not do heavy work or database calls there.",
+      "related": "nextjs-cheatsheet",
+      "tags": ["routing", "auth"]
+    },
+    {
+      "id": "rev-next-images",
+      "category": "nextjs",
+      "term": "next/image",
+      "short": "Optimised images with sizing, formats and lazy loading.",
+      "medium": "The Image component serves modern formats, generates responsive sizes, and reserves space to prevent layout shift. Set width and height or fill, and add priority to the LCP image.",
+      "detail": "Forgetting priority on the hero image is a common cause of a poor LCP.",
+      "related": "nextjs-cheatsheet",
+      "tags": ["images", "performance"]
+    },
+    {
+      "id": "rev-next-link",
+      "category": "nextjs",
+      "term": "next/link and prefetch",
+      "short": "Client navigation with automatic prefetching.",
+      "medium": "Link navigates client-side without a full reload and prefetches routes when they enter the viewport, making navigation near-instant. Use router.refresh to refetch server data for the current route.",
+      "detail": "Prefetching plus the Router Cache is why back and forward navigation in a Next app feels immediate.",
+      "related": "nextjs-cheatsheet",
+      "tags": ["routing", "performance"]
+    },
+    {
+      "id": "rev-next-pages-router",
+      "category": "nextjs",
+      "term": "Pages Router",
+      "short": "The older model with getStaticProps and getServerSideProps.",
+      "medium": "Data fetching was expressed as exported functions: getStaticProps for build-time, getServerSideProps for per-request. Layouts and shared state were manual, usually via _app.",
+      "detail": "It still works, but new projects use the App Router, and mixing the two has different caching and component models.",
+      "related": "nextjs-app-router",
+      "tags": ["routing", "history"]
+    }
+  ]
+}

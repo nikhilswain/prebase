@@ -1,0 +1,136 @@
+{
+  "category": "security",
+  "intro": "The web threat model and defences that come up in frontend and full-stack interviews.",
+  "entries": [
+    {
+      "id": "rev-sec-xss",
+      "category": "security",
+      "term": "XSS",
+      "short": "Untrusted data runs as script in your origin.",
+      "medium": "Stored persists the payload, reflected bounces it off a request, DOM happens when client code writes untrusted data into a sink. Prevent with output encoding for the context, avoid innerHTML and raw-HTML escape hatches, and sanitize HTML with a library like DOMPurify.",
+      "detail": "CSP and HttpOnly reduce the impact but do not replace encoding. Framework auto-escaping is bypassed the moment you use dangerouslySetInnerHTML.",
+      "related": "sec-xss",
+      "tags": ["xss", "injection"]
+    },
+    {
+      "id": "rev-sec-csrf",
+      "category": "security",
+      "term": "CSRF",
+      "short": "Another site makes the browser send an authenticated request.",
+      "medium": "Cookies are attached automatically, so the request looks authenticated. Defend with SameSite cookies, a CSRF token another origin cannot read, Fetch Metadata or origin checks, and no side effects on GET.",
+      "detail": "HttpOnly does not prevent CSRF: the browser still sends the cookie. Bearer tokens in a header from memory largely avoid the classic attack.",
+      "related": "sec-csrf",
+      "tags": ["csrf", "cookies"]
+    },
+    {
+      "id": "rev-sec-same-origin",
+      "category": "security",
+      "term": "Same-origin policy",
+      "short": "Script cannot read responses from another origin.",
+      "medium": "An origin is scheme, host and port. The policy restricts reading, not sending. CORS is the server granting specific origins permission to read, via response headers.",
+      "detail": "It is a browser rule. Servers and scripts are not bound by it, which is why the server must still authorize every request.",
+      "related": "sec-cors-same-origin",
+      "tags": ["cors", "browser"]
+    },
+    {
+      "id": "rev-sec-cors",
+      "category": "security",
+      "term": "CORS",
+      "short": "Response headers that allow specific origins to read.",
+      "medium": "Non-simple requests trigger a preflight OPTIONS. Credentialed requests require Access-Control-Allow-Credentials and an exact origin, never the wildcard. CORS is not authentication or authorization.",
+      "detail": "Reflecting any Origin is equivalent to allowing all. Add Vary: Origin when the response depends on the request origin.",
+      "related": "sec-cors-same-origin",
+      "tags": ["cors"]
+    },
+    {
+      "id": "rev-sec-cookies",
+      "category": "security",
+      "term": "Cookie flags",
+      "short": "HttpOnly, Secure and SameSite each stop a different thing.",
+      "medium": "HttpOnly hides the cookie from script, blunting token theft by XSS. Secure sends it only over HTTPS. SameSite=Lax blocks most cross-site POSTs, and Strict is stronger but breaks inbound navigations.",
+      "detail": "SameSite=None requires Secure. None of these stop a server that fails to authorize, and HttpOnly does not stop CSRF.",
+      "related": "sec-csrf",
+      "tags": ["cookies"]
+    },
+    {
+      "id": "rev-sec-token-storage",
+      "category": "security",
+      "term": "Token storage",
+      "short": "localStorage is XSS-readable; HttpOnly cookies need CSRF defence.",
+      "medium": "localStorage is the easiest and the weakest, since any XSS reads it. HttpOnly cookies resist theft but are sent automatically. A common balance is a short-lived access token in memory plus a refresh token in an HttpOnly, Secure, SameSite cookie.",
+      "detail": "Whichever you pick, keep access tokens short-lived, rotate refresh tokens, and remember storage never fixes broken authorization.",
+      "related": "sec-token-storage",
+      "tags": ["auth", "tokens"]
+    },
+    {
+      "id": "rev-sec-csp",
+      "category": "security",
+      "term": "CSP",
+      "short": "A header that allow-lists where content may load from.",
+      "medium": "script-src is the key directive. Disallowing inline scripts and using a per-response nonce blocks injected scripts. Deploy in Report-Only mode first to find what would break.",
+      "detail": "It is defence in depth, not a replacement for output encoding. unsafe-inline or a broad allow-list provides little protection.",
+      "related": "sec-csp",
+      "tags": ["csp", "headers"]
+    },
+    {
+      "id": "rev-sec-injection",
+      "category": "security",
+      "term": "SQL injection",
+      "short": "Untrusted input concatenated into a query becomes code.",
+      "medium": "Parameterised queries send the query and the values separately, so a value can never change the structure. Use them everywhere, including raw ORM escape hatches.",
+      "detail": "Least-privilege database users limit the blast radius if something slips through.",
+      "related": "sec-cheatsheet",
+      "tags": ["injection"]
+    },
+    {
+      "id": "rev-sec-clickjacking",
+      "category": "security",
+      "term": "Clickjacking",
+      "short": "Your page is framed and overlaid to hijack clicks.",
+      "medium": "Block framing with CSP frame-ancestors 'none' or 'self'. X-Frame-Options is the older header and is largely superseded by frame-ancestors.",
+      "detail": "For embeds you must allow, sandbox the iframe and validate postMessage origins rather than trusting the message data.",
+      "related": "sec-cheatsheet",
+      "tags": ["browser"]
+    },
+    {
+      "id": "rev-sec-headers",
+      "category": "security",
+      "term": "Security headers",
+      "short": "A small set of headers that close common gaps.",
+      "medium": "Content-Security-Policy restricts sources. Strict-Transport-Security forces HTTPS. X-Content-Type-Options: nosniff stops MIME sniffing. Referrer-Policy limits leakage. frame-ancestors prevents framing.",
+      "detail": "Set them at the edge or in the server framework so they apply to every response, not just some routes.",
+      "related": "sec-cheatsheet",
+      "tags": ["headers"]
+    },
+    {
+      "id": "rev-sec-secrets",
+      "category": "security",
+      "term": "Secrets in the frontend",
+      "short": "Anything shipped to the browser is public.",
+      "medium": "Bundled API keys, tokens and credentials are readable by anyone. Keep secrets on the server and proxy calls that need them. Use short-lived, scoped tokens for third-party services.",
+      "detail": "Environment variables prefixed for client exposure are compiled into the bundle, so treat them as public.",
+      "related": "sec-cheatsheet",
+      "tags": ["secrets"]
+    },
+    {
+      "id": "rev-sec-supply-chain",
+      "category": "security",
+      "term": "Supply chain",
+      "short": "Your dependencies are part of your attack surface.",
+      "medium": "Lockfiles, automated audits, and Subresource Integrity hashes for third-party scripts reduce risk. Pin versions and review what you install.",
+      "detail": "A compromised transitive dependency can run in your build or your page, so least-install and audit are real controls.",
+      "related": "sec-cheatsheet",
+      "tags": ["dependencies"]
+    },
+    {
+      "id": "rev-sec-authorization",
+      "category": "security",
+      "term": "Authn vs authz",
+      "short": "Authentication is who you are; authorization is what you may do.",
+      "medium": "Never trust the client for authorization. Check ownership and role on the server for every request, including object-level checks so a user cannot read another user's record by changing an id.",
+      "detail": "Broken object-level authorization is one of the most common real-world API vulnerabilities, and CORS does nothing to prevent it.",
+      "related": "sec-cheatsheet",
+      "tags": ["auth"]
+    }
+  ]
+}
