@@ -1,0 +1,63 @@
+---
+interface Props {
+  class?: string;
+}
+const { class: className } = Astro.props;
+---
+
+<button
+  type="button"
+  data-search-trigger
+  aria-label="Search the knowledge base"
+  class:list={[
+    'group flex h-9 items-center gap-2 rounded-md border border-line bg-surface-2 px-2.5 text-sm text-ink-3 transition-colors duration-150 ease-out hover:border-line-strong hover:text-ink-2 md:w-60 md:justify-start',
+    className,
+  ]}
+>
+  <svg
+    width="15"
+    height="15"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    aria-hidden="true"
+    class="shrink-0"
+  >
+    <circle cx="11" cy="11" r="7"></circle>
+    <path d="m20 20-3.2-3.2"></path>
+  </svg>
+  <span class="hidden md:inline">Search</span>
+  <kbd
+    class="ml-auto hidden items-center gap-0.5 rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[10px] leading-4 text-ink-3 md:flex"
+  >
+    <span class="text-[12px] leading-none">⌘</span>K
+  </kbd>
+</button>
+
+<script is:inline>
+  (() => {
+    const open = () => {
+      window.__prepbaseOpenSearch = true;
+      window.dispatchEvent(new CustomEvent('prepbase:open-search'));
+    };
+
+    document.querySelectorAll('[data-search-trigger]').forEach((btn) => {
+      btn.addEventListener('click', open);
+    });
+
+    if (!window.__prepbaseSearchHotkey) {
+      window.__prepbaseSearchHotkey = true;
+      document.addEventListener('keydown', (event) => {
+        if (
+          (event.metaKey || event.ctrlKey) &&
+          event.key.toLowerCase() === 'k'
+        ) {
+          event.preventDefault();
+          open();
+        }
+      });
+    }
+  })();
+</script>

@@ -1,0 +1,50 @@
+export const SITE = {
+  name: 'prepbase',
+  domain: 'prepbase.dev',
+  url: 'https://prepbase.dev',
+  title: 'prepbase — revise for developer interviews',
+  tagline: 'Everything you need to revise for a developer interview.',
+  description:
+    'A fast, structured interview knowledge base covering JavaScript, React, TypeScript, CSS, frontend development and more. Search, understand, revise, move on.',
+  locale: 'en',
+  ogImage: '/og.png',
+} as const;
+
+export type NavItem = {
+  label: string;
+  href: string;
+  match?: string;
+};
+
+export const NAV: NavItem[] = [
+  { label: 'Explore', href: '/explore' },
+  { label: 'Quick Revision', href: '/quick-revision' },
+  { label: 'Interview Mode', href: '/interview' },
+  { label: 'Cheat Sheets', href: '/cheat-sheets' },
+];
+
+export const FOOTER_GROUPS: { title: string; links: NavItem[] }[] = [
+  {
+    title: 'Learn',
+    links: [
+      { label: 'Explore topics', href: '/explore' },
+      { label: 'Quick Revision', href: '/quick-revision' },
+      { label: 'Cheat Sheets', href: '/cheat-sheets' },
+      { label: 'Comparisons', href: '/comparisons' },
+    ],
+  },
+  {
+    title: 'Practice',
+    links: [
+      { label: 'Interview Mode', href: '/interview' },
+      { label: 'Code Challenges', href: '/challenges' },
+      { label: 'Interview Questions', href: '/questions' },
+    ],
+  },
+];
+
+export const REVIEW_STATUS_LABEL: Record<string, string> = {
+  unreviewed: 'Unreviewed',
+  'community-reviewed': 'Community reviewed',
+  verified: 'Verified',
+};

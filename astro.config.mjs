@@ -9,6 +9,11 @@ export default defineConfig({
   site: 'https://prepbase.dev',
   trailingSlash: 'never',
   integrations: [react(), sitemap()],
+  markdown: {
+    shikiConfig: {
+      themes: { light: 'github-light', dark: 'github-dark' },
+    },
+  },
   prefetch: {
     prefetchAll: true,
     defaultStrategy: 'hover',

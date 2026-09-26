@@ -1,0 +1,43 @@
+---
+interface Props {
+  class?: string;
+}
+const { class: className } = Astro.props;
+---
+
+<a
+  href="/"
+  class:list={[
+    'group inline-flex items-center gap-2.5 rounded-md font-medium text-ink',
+    className,
+  ]}
+  aria-label="prepbase home"
+>
+  <span
+    class="grid size-7 place-items-center rounded-[9px] bg-accent text-accent-ink shadow-xs transition-transform duration-150 ease-out group-active:scale-95"
+  >
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 16 16"
+      fill="none"
+      aria-hidden="true"
+      class="translate-x-px"
+    >
+      <path
+        d="M2.5 4.75 5.75 8 2.5 11.25"
+        stroke="currentColor"
+        stroke-width="1.7"
+        stroke-linecap="round"
+        stroke-linejoin="round"></path>
+      <path
+        d="M8.5 11.5h4"
+        stroke="currentColor"
+        stroke-width="1.7"
+        stroke-linecap="round"></path>
+    </svg>
+  </span>
+  <span class="text-[15px] tracking-tight">
+    <span class="font-semibold">prep</span><span class="text-ink-2">base</span>
+  </span>
+</a>
