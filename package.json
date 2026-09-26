@@ -10,7 +10,9 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
-    "og": "node scripts/generate-og.mjs",
+    "og": "node scripts/generate-assets.mjs",
+    "assets": "node scripts/generate-assets.mjs",
+    "deploy": "astro build && wrangler deploy",
     "astro": "astro"
   },
   "dependencies": {
@@ -25,10 +27,13 @@
     "tailwindcss": "^4.3.3"
   },
   "allowScripts": {
-    "esbuild": true
+    "esbuild": true,
+    "workerd": true,
+    "sharp": true
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "wrangler": "^4.141.0"
   }
 }

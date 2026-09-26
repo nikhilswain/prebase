@@ -29,7 +29,36 @@ Other scripts:
 npm run build     # static build to dist/
 npm run preview   # preview the build
 npm run check     # astro check + TypeScript
-npm run og        # regenerate public/og.png
+npm run assets    # regenerate favicons, icons and og.png
+npm run deploy    # build and deploy to Cloudflare Workers
+```
+
+## Deploying to Cloudflare Workers
+
+The site is a static build served by Cloudflare Workers static assets. The
+binding lives in `wrangler.jsonc`:
+
+- `assets.directory` is `./dist`, so the Worker serves the Astro output
+- `assets.html_handling` is `drop-trailing-slash`, matching Astro's
+  `trailingSlash: "never"` and the canonical URLs
+- `assets.not_found_handling` is `404-page`, serving the generated `404.html`
+
+In the Cloudflare dashboard (Workers Builds) set:
+
+| Setting | Value |
+| --- | --- |
+| Build command | `npm run build` |
+| Deploy command | `npx wrangler deploy` |
+| Node version | `22` (see `.nvmrc`) |
+| `SITE_URL` | your production URL |
+
+Without a Wrangler config the Worker deploys with no assets attached and every
+route returns 404, so keep `wrangler.jsonc` in sync with the Worker name.
+
+Verify the config without deploying:
+
+```bash
+npm run build && npx wrangler deploy --dry-run
 ```
 
 ## Project structure
