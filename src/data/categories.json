@@ -76,9 +76,9 @@
     "name": "Express",
     "shortName": "Express",
     "description": "Routing, middleware and structuring HTTP APIs.",
-    "accent": "#8b8b96",
+    "accent": "#e11d48",
     "order": 9,
-    "status": "planned"
+    "status": "live"
   },
   {
     "id": "databases",
@@ -94,18 +94,18 @@
     "name": "Browser Internals",
     "shortName": "Browser",
     "description": "Parsing, rendering, the JS engine and how the browser schedules work.",
-    "accent": "#8b8b96",
+    "accent": "#0284c7",
     "order": 11,
-    "status": "planned"
+    "status": "live"
   },
   {
     "id": "web-apis",
     "name": "Web APIs",
     "shortName": "Web APIs",
     "description": "Fetch, storage, observers and the platform APIs available in every browser.",
-    "accent": "#8b8b96",
+    "accent": "#7c3aed",
     "order": 12,
-    "status": "planned"
+    "status": "live"
   },
   {
     "id": "performance",
@@ -121,18 +121,18 @@
     "name": "Accessibility",
     "shortName": "A11y",
     "description": "Semantics, keyboard interaction, screen readers and inclusive interfaces.",
-    "accent": "#8b8b96",
+    "accent": "#c026d3",
     "order": 14,
-    "status": "planned"
+    "status": "live"
   },
   {
     "id": "testing",
     "name": "Testing",
     "shortName": "Testing",
     "description": "Unit, integration and end-to-end testing strategy.",
-    "accent": "#8b8b96",
+    "accent": "#65a30d",
     "order": 15,
-    "status": "planned"
+    "status": "live"
   },
   {
     "id": "security",
@@ -166,8 +166,8 @@
     "name": "Full Stack Development",
     "shortName": "Full Stack",
     "description": "Connecting the client, the server and the data layer end to end.",
-    "accent": "#8b8b96",
+    "accent": "#b45309",
     "order": 19,
-    "status": "planned"
+    "status": "live"
   }
 ]

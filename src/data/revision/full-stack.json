@@ -1,0 +1,126 @@
+{
+  "category": "full-stack",
+  "intro": "How the client, the server and the data layer fit together.",
+  "entries": [
+    {
+      "id": "rev-fs-lifecycle",
+      "category": "full-stack",
+      "term": "Request lifecycle",
+      "short": "DNS, edge, balancer, server, data, back.",
+      "medium": "DNS resolves the name, a CDN or edge may answer from cache, a load balancer routes to a healthy instance, the handler runs, data is read from cache or database, and the response travels back.",
+      "detail": "Each hop is a place to cache, time out, retry or fail. Knowing the path is how you locate latency.",
+      "related": "fs-request-lifecycle",
+      "tags": ["architecture"]
+    },
+    {
+      "id": "rev-fs-session",
+      "category": "full-stack",
+      "term": "Sessions",
+      "short": "Server-side state, revocable.",
+      "medium": "The client holds an opaque id in a cookie and the state lives on the server, usually in a shared store so any instance can read it. Deleting the session logs the user out immediately.",
+      "detail": "Revocability is the main advantage over a JWT, which stays valid until it expires.",
+      "related": "fs-auth-session",
+      "tags": ["auth"]
+    },
+    {
+      "id": "rev-fs-jwt",
+      "category": "full-stack",
+      "term": "JWT",
+      "short": "Self-contained signed claims, verified without a lookup.",
+      "medium": "The server verifies the signature and trusts the claims, which scales well and works across services. The cost is that it is valid until expiry, so early revocation needs a denylist or short lifetimes.",
+      "detail": "Never store secrets in a JWT payload. It is signed, not encrypted, so anyone can read it.",
+      "related": "fs-auth-session",
+      "tags": ["auth"]
+    },
+    {
+      "id": "rev-fs-refresh",
+      "category": "full-stack",
+      "term": "Access and refresh tokens",
+      "short": "Short access token plus a revocable refresh token.",
+      "medium": "The access token is short-lived for cheap verification. The refresh token is long-lived and stored server-side so it can be revoked. Logout revokes the refresh token, and the access token dies on its own soon after.",
+      "detail": "Store the refresh token in an HttpOnly, Secure, SameSite cookie so script cannot read it.",
+      "related": "fs-auth-session",
+      "tags": ["auth"]
+    },
+    {
+      "id": "rev-fs-contract",
+      "category": "full-stack",
+      "term": "Client-server contract",
+      "short": "Agree on resources, shapes and errors up front.",
+      "medium": "Define the resources and the exact request and response shapes, then share types or generate a typed client so the two sides cannot drift. Design endpoints around what the UI needs, not around tables.",
+      "detail": "The error shape and loading states are part of the contract too. The client needs to tell empty from not-loaded.",
+      "related": "fs-api-design",
+      "tags": ["api"]
+    },
+    {
+      "id": "rev-fs-authorization",
+      "category": "full-stack",
+      "term": "Authorization",
+      "short": "The server decides; the client only hides.",
+      "medium": "Check ownership and role on the server for every request, including object-level checks so a user cannot read another user's record by changing an id. Hiding a button in the UI is not access control.",
+      "detail": "Broken object-level authorization is one of the most common real-world API vulnerabilities.",
+      "related": "fs-api-design",
+      "tags": ["auth", "security"]
+    },
+    {
+      "id": "rev-fs-monolith",
+      "category": "full-stack",
+      "term": "Monolith vs microservices",
+      "short": "One deployable versus many services.",
+      "medium": "A monolith gives transactions, one deploy and simple debugging. Microservices give independent scaling and team autonomy at the cost of distributed data, network failure and more operations.",
+      "detail": "Start with a modular monolith and extract a service when it actually needs to scale or be owned separately.",
+      "related": "fs-monolith-vs-microservices",
+      "tags": ["architecture"]
+    },
+    {
+      "id": "rev-fs-cache-layers",
+      "category": "full-stack",
+      "term": "Cache layers",
+      "short": "The same value can be cached in five places.",
+      "medium": "Browser, edge, application, database and client state. A write usually invalidates the database but not the rest, so a stale copy survives wherever the read hits first.",
+      "detail": "Invalidate every layer on write, prefer deleting entries over updating them, and use cache tags to purge precisely.",
+      "related": "fs-gotcha-stale-cache",
+      "tags": ["caching", "consistency"]
+    },
+    {
+      "id": "rev-fs-async-work",
+      "category": "full-stack",
+      "term": "Off the request path",
+      "short": "Slow follow-up work belongs in a queue.",
+      "medium": "Email, reports, image processing and notifications should be enqueued so the request returns fast. A worker handles them and can retry, with a dead-letter queue for repeated failures.",
+      "detail": "This is the difference between a snappy request and one that blocks on a third party.",
+      "related": "sd-message-queues",
+      "tags": ["async"]
+    },
+    {
+      "id": "rev-fs-errors",
+      "category": "full-stack",
+      "term": "Partial failure",
+      "short": "In a distributed system, some calls will fail.",
+      "medium": "Every network call needs a timeout, retries with backoff for transient failures, and a circuit breaker to stop hammering a failing dependency. Degrade gracefully rather than failing the whole request.",
+      "detail": "Idempotent writes make retries safe. Without that, a retry can double-charge or double-create.",
+      "related": "fs-request-lifecycle",
+      "tags": ["reliability"]
+    },
+    {
+      "id": "rev-fs-boundaries",
+      "category": "full-stack",
+      "term": "Client and server boundaries",
+      "short": "Presentation on the client, rules and secrets on the server.",
+      "medium": "Keep authorization, business rules and secrets on the server. Keep presentation, interaction and caching on the client. Decide this boundary deliberately, because it determines what you can trust.",
+      "detail": "Anything shipped to the browser is public, so no secret or rule that matters can live only there.",
+      "related": "fs-api-design",
+      "tags": ["architecture"]
+    },
+    {
+      "id": "rev-fs-observability",
+      "category": "full-stack",
+      "term": "Observability",
+      "short": "Logs, metrics and traces across every hop.",
+      "medium": "A request crosses many components, so a correlation id that travels with it ties the logs together. Metrics catch trends, traces show where time goes, and alerts catch the rest.",
+      "detail": "Without a shared id, debugging a full-stack issue means guessing which component to look at first.",
+      "related": "fs-cheatsheet",
+      "tags": ["operations"]
+    }
+  ]
+}

@@ -1,0 +1,249 @@
+[
+  {
+    "id": "express-middleware",
+    "slug": "middleware",
+    "category": "express",
+    "type": "concept",
+    "title": "Middleware",
+    "summary": "Functions that run in order on the way to a route, each able to read, change, end or pass the request on.",
+    "difficulty": "medium",
+    "tags": ["middleware", "pipeline"],
+    "featured": true,
+    "reviewStatus": "verified",
+    "updated": "2026-09-04",
+    "definition": "Middleware is a function with access to the request, the response and a next callback. Express runs middleware in the order it is registered, and each one either ends the response or calls next to pass control along. Everything from logging to authentication to parsing the body is middleware.",
+    "explanation": [
+      "The pipeline is the mental model. A request enters at the top and travels through each matching middleware in order until one sends a response or the route handler runs. Order matters, so body parsing must come before handlers that read the body, and auth must come before routes that require it.",
+      "A middleware can be global, mounted on a path, or mounted on a router. app.use(logger) runs for every request; app.use('/admin', requireAdmin) runs only for that path. Router-level middleware keeps a feature's concerns together.",
+      "Calling next passes control on. Calling next(err) skips straight to the error-handling middleware. Ending the response with res.send and not calling next stops the chain, which is the usual way a middleware rejects a request.",
+      "Error-handling middleware is the special case: it takes four arguments, (err, req, res, next), and Express identifies it by that arity. Registering it last means it catches everything that called next(err)."
+    ],
+    "keyPoints": [
+      "Middleware runs in registration order",
+      "next() passes on, next(err) jumps to error handling",
+      "Global, path-scoped and router-scoped mounting",
+      "Error handlers have four arguments and go last"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "Order is the whole story.",
+      "code": "app.use(express.json());          // parse body first\napp.use(logger);                  // then log\napp.use('/admin', requireAdmin);  // scoped auth\napp.get('/users', listUsers);     // the handler\napp.use(errorHandler);            // catches next(err)"
+    },
+    "commonMistakes": [
+      "Registering body parsing after the routes that need it",
+      "Forgetting to call next or end the response, so the request hangs",
+      "Putting the error handler before the routes so it never runs"
+    ],
+    "related": ["express-error-handling", "express-gotcha-async-errors", "express-cheatsheet"]
+  },
+  {
+    "id": "express-error-handling",
+    "slug": "error-handling",
+    "category": "express",
+    "type": "question",
+    "title": "How does error handling work in Express?",
+    "summary": "Route errors call next(err) and land in a four-argument error handler registered last.",
+    "difficulty": "medium",
+    "tags": ["errors", "middleware"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-04",
+    "shortAnswer": "When something goes wrong, call next(err) and Express skips the remaining normal middleware and routes, running the error-handling middleware instead. Error handlers take four arguments and should be registered after all routes. A good one logs the error, decides what the client should see, and never leaks a stack trace in production.",
+    "explanation": [
+      "The four-argument signature is how Express identifies an error handler. A handler with three arguments is treated as normal middleware and will not catch errors.",
+      "Synchronous throws inside a handler are caught by Express automatically. Rejected promises are not, which is why async handlers need a wrapper or Express 5, which forwards rejections for you.",
+      "Centralise the mapping from error to response. Define application error types with a status code and a safe message, and have the handler translate them. An unknown error becomes a 500 with a generic message and a logged stack, never the stack itself.",
+      "Separate operational errors, which you expect and handle, from programmer errors, which are bugs. Operational errors such as a failed validation or a missing record return a specific status. Unexpected errors should be logged with enough context to debug and alert on."
+    ],
+    "keyPoints": [
+      "next(err) jumps to the error handler",
+      "Error handlers take four arguments and go last",
+      "Sync throws are caught; rejected promises need help",
+      "Map known errors to statuses, hide internals for unknown ones"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "A central error handler that maps known errors and hides the rest.",
+      "code": "class HttpError extends Error {\n  constructor(status, message) {\n    super(message);\n    this.status = status;\n  }\n}\n\nfunction errorHandler(err, req, res, next) {\n  if (err instanceof HttpError) {\n    return res.status(err.status).json({ error: err.message });\n  }\n  console.error(err);\n  res.status(500).json({ error: 'Internal server error' });\n}\n\napp.use(errorHandler);"
+    },
+    "commonMistakes": [
+      "Writing a three-argument handler and wondering why errors are not caught",
+      "Sending err.message or a stack trace to the client",
+      "Throwing inside an async handler and expecting Express to catch it"
+    ],
+    "followUps": [
+      "Why does an async handler's rejection escape Express?",
+      "What should a 500 response contain?",
+      "How do you distinguish operational errors from bugs?"
+    ],
+    "realWorld": "A single error handler that maps application errors to statuses is the difference between consistent API responses and a leaky, inconsistent one.",
+    "related": ["express-middleware", "express-gotcha-async-errors", "express-rest-design"]
+  },
+  {
+    "id": "express-routing",
+    "slug": "routing",
+    "category": "express",
+    "type": "concept",
+    "title": "Routing and Routers",
+    "summary": "Match method and path to a handler, and group related routes into mountable routers.",
+    "difficulty": "easy",
+    "tags": ["routing", "rest"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-04",
+    "definition": "Routing maps an HTTP method and a URL path to a handler. Express supports path parameters, wildcards and routers, which are self-contained sets of routes that you mount at a path so a feature's endpoints live together.",
+    "explanation": [
+      "Routes are declared as app.METHOD(path, handler) or app.route(path).all(...). Paths can contain named parameters such as /users/:id, which appear on req.params, and optional or wildcard segments for more flexible matching.",
+      "A router is a mini-application. You create one, define routes on it, and mount it with app.use('/users', usersRouter). Inside the router, paths are relative, so the same router can be mounted at a different prefix without changes.",
+      "Order still matters. Express tries routes in registration order and uses the first match, so a specific route like /users/me must be registered before a parameterised /users/:id, or 'me' will be captured as an id.",
+      "Keep route handlers thin. Put the logic in a service layer and let the handler validate input, call the service, and shape the response. That keeps the HTTP concerns separate from the business logic and makes the logic testable on its own."
+    ],
+    "keyPoints": [
+      "app.METHOD maps method and path to a handler",
+      "Routers group a feature's routes and mount at a prefix",
+      "Registration order decides which route matches",
+      "Keep handlers thin, logic in a service layer"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "A users router mounted at /users.",
+      "code": "import { Router } from 'express';\nconst router = Router();\n\nrouter.get('/', listUsers);\nrouter.get('/me', getCurrentUser);   // before /:id\nrouter.get('/:id', getUser);\nrouter.post('/', createUser);\n\nexport default router;\n\n// app.js\napp.use('/users', usersRouter);"
+    },
+    "related": ["express-middleware", "express-rest-design", "express-cheatsheet"]
+  },
+  {
+    "id": "express-rest-design",
+    "slug": "rest-api-design",
+    "category": "express",
+    "type": "question",
+    "title": "How do you design a clean REST API?",
+    "summary": "Resources as nouns, methods as verbs, status codes that mean something, and predictable errors.",
+    "difficulty": "medium",
+    "tags": ["rest", "api", "design"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-04",
+    "shortAnswer": "Model the API as resources, use nouns in the path and let the HTTP method express the action: GET to read, POST to create, PUT or PATCH to update, DELETE to remove. Return meaningful status codes, use a consistent error shape, paginate collections, and version the API so you can change it without breaking clients.",
+    "explanation": [
+      "GET /users and GET /users/42 are resources. Avoid verbs in paths like /getUser; the method is the verb. Use nested paths for genuine ownership such as /users/42/orders, and query parameters for filtering, sorting and pagination.",
+      "Status codes carry meaning. 200 for a successful read, 201 for a created resource with a Location header, 204 for a successful delete, 400 for a bad request, 401 for unauthenticated, 403 for unauthorized, 404 for missing, 409 for a conflict, 422 for validation, 429 for rate limited, and 500 for a server fault.",
+      "Be consistent about errors. A single shape such as { error: { code, message, details } } across every endpoint means clients handle failures in one place. Never return a 200 with an error inside it.",
+      "Collections need pagination, and cursor pagination beats offset for large or changing data. Version the API, commonly in the path such as /v1/, so you can evolve it. Make writes idempotent where possible, and return the created or updated resource so the client does not have to guess."
+    ],
+    "keyPoints": [
+      "Resources as nouns, HTTP methods as verbs",
+      "Meaningful status codes, not 200 for everything",
+      "One consistent error shape",
+      "Paginate collections and version the API"
+    ],
+    "example": {
+      "language": "http",
+      "caption": "A create that tells the client what happened and where.",
+      "code": "POST /v1/users\nContent-Type: application/json\n\n{ \"email\": \"ada@example.com\" }\n\nHTTP/1.1 201 Created\nLocation: /v1/users/42\n\n{ \"id\": 42, \"email\": \"ada@example.com\" }"
+    },
+    "commonMistakes": [
+      "Putting verbs in URLs like /createUser",
+      "Returning 200 with an error body so clients cannot tell failure from success",
+      "Shipping an unpaginated list endpoint that returns every row"
+    ],
+    "followUps": [
+      "When would you use PATCH instead of PUT?",
+      "How would you version an API?",
+      "What is the difference between 401 and 403?"
+    ],
+    "related": ["express-routing", "express-error-handling", "express-cheatsheet"]
+  },
+  {
+    "id": "express-gotcha-async-errors",
+    "slug": "gotcha-async-errors",
+    "category": "express",
+    "type": "gotcha",
+    "title": "Async errors do not reach the error handler",
+    "summary": "A rejected promise in an async handler is unhandled, so the request hangs or crashes the process.",
+    "difficulty": "medium",
+    "tags": ["errors", "async", "gotcha"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-04",
+    "scenario": "An async route handler throws, but instead of a clean 500 the client waits until it times out, and in some setups the process crashes with an unhandled rejection.",
+    "problem": "Express catches synchronous throws because it calls your handler inside a try/catch. When the handler is async, it returns a promise, and a rejection is not a synchronous throw, so Express never sees it. The error is lost and the response is never sent.",
+    "example": {
+      "language": "javascript",
+      "caption": "The rejection escapes Express; the wrapper forwards it.",
+      "code": "// broken: the rejection is unhandled\napp.get('/users/:id', async (req, res) => {\n  const user = await db.findUser(req.params.id); // may reject\n  res.json(user);\n});\n\n// fixed with a small wrapper\nconst asyncHandler = (fn) => (req, res, next) =>\n  Promise.resolve(fn(req, res, next)).catch(next);\n\napp.get('/users/:id', asyncHandler(async (req, res) => {\n  const user = await db.findUser(req.params.id);\n  res.json(user);\n}));"
+    },
+    "fix": "Wrap async handlers so rejections are forwarded with next(err), or use Express 5, which forwards rejected promises automatically. A tiny asyncHandler helper is the common pattern on Express 4, or a library that does the same. Either way, make sure every await that can fail ends up in the error handler, and add a process-level unhandledRejection handler as a backstop that logs and exits cleanly.",
+    "keyPoints": [
+      "Express catches sync throws, not promise rejections",
+      "Wrap async handlers to forward errors with next",
+      "Express 5 handles this automatically",
+      "Keep a process-level handler as a backstop"
+    ],
+    "related": ["express-error-handling", "express-middleware", "node-event-loop"]
+  },
+  {
+    "id": "express-cheatsheet",
+    "slug": "express-cheat-sheet",
+    "category": "express",
+    "type": "cheat-sheet",
+    "title": "Express Cheat Sheet",
+    "summary": "Middleware order, routing, error handling and the pieces of a clean API.",
+    "difficulty": "medium",
+    "tags": ["reference", "cheat-sheet"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-04",
+    "description": "A quick reference for structuring an Express app and its API.",
+    "sections": [
+      {
+        "title": "App setup order",
+        "items": [
+          { "label": "1. Security headers", "value": "helmet()" },
+          { "label": "2. Body parsing", "value": "express.json()", "note": "Before routes that read the body" },
+          { "label": "3. Logging", "value": "morgan or a custom logger" },
+          { "label": "4. Routes", "value": "app.use('/users', usersRouter)" },
+          { "label": "5. 404 handler", "value": "After all routes" },
+          { "label": "6. Error handler", "value": "Four arguments, registered last" }
+        ]
+      },
+      {
+        "title": "Routing",
+        "items": [
+          { "label": "Route", "value": "app.get(path, handler)" },
+          { "label": "Params", "value": "/users/:id -> req.params.id" },
+          { "label": "Query", "value": "?page=2 -> req.query.page" },
+          { "label": "Router", "value": "Router() mounted with app.use('/prefix', router)" },
+          { "label": "Order", "value": "/users/me before /users/:id" }
+        ]
+      },
+      {
+        "title": "Middleware",
+        "items": [
+          { "label": "Signature", "value": "(req, res, next)" },
+          { "label": "Pass on", "value": "next()" },
+          { "label": "Error", "value": "next(err) jumps to the error handler" },
+          { "label": "Scoped", "value": "app.use('/admin', requireAdmin)" },
+          { "label": "Async", "value": "Wrap so rejections call next(err)" }
+        ]
+      },
+      {
+        "title": "Status codes",
+        "items": [
+          { "label": "200 / 201 / 204", "value": "OK, created, no content" },
+          { "label": "400 / 422", "value": "Bad request, validation failed" },
+          { "label": "401 / 403", "value": "Unauthenticated, unauthorized" },
+          { "label": "404 / 409", "value": "Not found, conflict" },
+          { "label": "429 / 500", "value": "Rate limited, server error" }
+        ]
+      },
+      {
+        "title": "API hygiene",
+        "items": [
+          { "label": "Resources", "value": "Nouns in paths, methods as verbs" },
+          { "label": "Errors", "value": "One consistent shape across endpoints" },
+          { "label": "Pagination", "value": "Cursor for large or changing data" },
+          { "label": "Versioning", "value": "/v1/ in the path" },
+          { "label": "Validation", "value": "Validate input at the edge, e.g. zod" }
+        ]
+      }
+    ],
+    "related": ["express-middleware", "express-error-handling", "express-routing", "express-rest-design", "express-gotcha-async-errors"]
+  }
+]

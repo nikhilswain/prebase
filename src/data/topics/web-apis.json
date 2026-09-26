@@ -1,0 +1,236 @@
+[
+  {
+    "id": "web-fetch",
+    "slug": "fetch-and-abort",
+    "category": "web-apis",
+    "type": "concept",
+    "title": "fetch, AbortController and Timeouts",
+    "summary": "The modern request API: promise-based, cancellable, and unlike XHR it does not reject on HTTP errors.",
+    "difficulty": "medium",
+    "tags": ["fetch", "network", "async"],
+    "featured": true,
+    "reviewStatus": "verified",
+    "updated": "2026-09-04",
+    "definition": "fetch makes an HTTP request and returns a promise for a Response. It is promise-based and cancellable through an AbortController. Crucially, it only rejects on network failure, not on HTTP error statuses, so a 500 response is a fulfilled promise with response.ok false.",
+    "explanation": [
+      "The two-step response is the thing people forget. The promise resolves as soon as the headers arrive, and you then read the body with response.json() or response.text(), which is a second async step. So a typical call is two awaits, and error handling belongs around both.",
+      "Cancellation uses an AbortController. You pass controller.signal to fetch and call controller.abort() to cancel, which rejects the promise with an AbortError. This is how you cancel a request when a component unmounts or the user types a new search term, preventing race conditions and stale updates.",
+      "Timeouts are built from the same signal. AbortSignal.timeout(ms) aborts after a duration, and AbortSignal.any([...]) combines several signals, so you can cancel on unmount or on a timeout with one signal.",
+      "Because fetch does not reject on 4xx or 5xx, you must check response.ok yourself and throw if it is false. Many bugs come from treating a 404 as success and parsing an error page as JSON."
+    ],
+    "keyPoints": [
+      "fetch resolves on HTTP errors; check response.ok",
+      "Reading the body is a second await",
+      "AbortController cancels; AbortSignal.timeout sets a deadline",
+      "Cancel stale requests to avoid race conditions"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "Check ok, read the body, and time out.",
+      "code": "async function getUser(id, { signal } = {}) {\n  const res = await fetch(`/api/users/${id}`, {\n    signal: AbortSignal.any([signal, AbortSignal.timeout(5000)]),\n  });\n  if (!res.ok) {\n    throw new Error(`Request failed: ${res.status}`);\n  }\n  return res.json();\n}"
+    },
+    "commonMistakes": [
+      "Assuming a 500 rejects the promise",
+      "Forgetting to read the body, so the response is a stream, not data",
+      "Not cancelling in-flight requests when the component unmounts"
+    ],
+    "followUps": [
+      "Does fetch reject on a 404?",
+      "How do you cancel a fetch request?",
+      "How would you avoid a race when a user types quickly?"
+    ],
+    "realWorld": "Search-as-you-type, infinite scroll and form submissions all need cancellation and a timeout, or they leak requests and update with stale data.",
+    "related": ["web-observers", "web-gotcha-fetch-errors", "web-cheatsheet"]
+  },
+  {
+    "id": "web-observers",
+    "slug": "observers",
+    "category": "web-apis",
+    "type": "concept",
+    "title": "Intersection, Resize and Mutation Observers",
+    "summary": "React to elements entering the viewport, changing size, or changing in the DOM without polling.",
+    "difficulty": "medium",
+    "tags": ["observers", "dom", "performance"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-04",
+    "definition": "Observers are browser APIs that notify you when something about an element changes, without polling on scroll or a timer. IntersectionObserver reports when an element enters or leaves the viewport or a root element. ResizeObserver reports size changes. MutationObserver reports DOM changes.",
+    "explanation": [
+      "IntersectionObserver is the modern way to do lazy loading, infinite scroll and scroll reveals. You give it a callback and a root and threshold, and it tells you when the element crosses those boundaries. Because it is asynchronous and computed by the browser, it is far cheaper than listening to scroll and reading getBoundingClientRect, which forces layout.",
+      "ResizeObserver replaces the old pattern of window resize plus measurement, and it works for any element, not just the window. It is the tool for responsive components that need to know their own size, such as a chart that redraws to fit its container.",
+      "MutationObserver watches for DOM changes: added or removed nodes, attribute changes, text changes. It is useful when you must react to third-party code changing the DOM, and it replaces the deprecated mutation events.",
+      "All three are asynchronous and batched, delivering changes in a batch rather than one callback per change. Disconnect them when no longer needed so they do not hold references and leak."
+    ],
+    "keyPoints": [
+      "IntersectionObserver for viewport and lazy loading",
+      "ResizeObserver for element size, not just window",
+      "MutationObserver for DOM changes, replacing mutation events",
+      "They are async and batched; disconnect to avoid leaks"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "Lazy-load images as they approach the viewport.",
+      "code": "const observer = new IntersectionObserver(\n  (entries) => {\n    for (const entry of entries) {\n      if (!entry.isIntersecting) continue;\n      entry.target.src = entry.target.dataset.src;\n      observer.unobserve(entry.target);\n    }\n  },\n  { rootMargin: '200px' },\n);\n\ndocument.querySelectorAll('img[data-src]').forEach((img) => observer.observe(img));"
+    },
+    "commonMistakes": [
+      "Using scroll listeners and layout reads instead of IntersectionObserver",
+      "Forgetting to disconnect an observer and leaking the callback",
+      "Assuming the callback fires synchronously after observe"
+    ],
+    "related": ["web-fetch", "perf-long-lists", "web-cheatsheet"]
+  },
+  {
+    "id": "web-storage-api",
+    "slug": "storage-apis",
+    "category": "web-apis",
+    "type": "concept",
+    "title": "Web Storage and IndexedDB",
+    "summary": "Simple synchronous key-value for small values, and an async database for volume.",
+    "difficulty": "medium",
+    "tags": ["storage", "indexeddb"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-04",
+    "definition": "The Web Storage API provides localStorage and sessionStorage, synchronous key-value stores that hold strings. IndexedDB is a separate, asynchronous, transactional database for large structured data. Both are scoped to an origin.",
+    "explanation": [
+      "localStorage persists until cleared and is shared across tabs of the same origin. sessionStorage is cleared when the tab closes and is not shared with other tabs. Both are synchronous, so a large read or write blocks the main thread, and both store only strings, so objects need JSON.",
+      "The storage event fires in other tabs when localStorage changes, which is how you sync a theme or logout across tabs. It does not fire in the tab that made the change.",
+      "IndexedDB is the right tool for volume: many records, indexes, transactions and queries. The raw API is event-based and verbose, so in practice most code uses a wrapper such as idb or Dexie that gives it a promise interface.",
+      "Storage is subject to quota and can be evicted, especially for best-effort storage. Use navigator.storage.estimate to check usage and navigator.storage.persist to request that the origin's data is not evicted."
+    ],
+    "keyPoints": [
+      "localStorage persists, sessionStorage is per tab",
+      "Both are synchronous and string-only",
+      "The storage event syncs changes across tabs",
+      "IndexedDB for volume; wrappers make it usable"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "Sync a theme across tabs.",
+      "code": "window.addEventListener('storage', (event) => {\n  if (event.key === 'theme') applyTheme(event.newValue);\n});\n\n// in the tab that changes it\nlocalStorage.setItem('theme', 'dark');"
+    },
+    "related": ["browser-storage", "web-workers", "web-cheatsheet"]
+  },
+  {
+    "id": "web-workers",
+    "slug": "workers",
+    "category": "web-apis",
+    "type": "concept",
+    "title": "Web Workers and Service Workers",
+    "summary": "Off-main-thread JavaScript, and a network proxy that enables offline and fast repeat visits.",
+    "difficulty": "medium",
+    "tags": ["workers", "offline"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-04",
+    "definition": "A Web Worker runs JavaScript on a background thread with no access to the DOM, communicating by message passing. A Service Worker is a special worker that acts as a programmable network proxy between the page and the network, enabling offline support, caching and background features.",
+    "explanation": [
+      "Web Workers keep heavy computation off the main thread. Parsing a large file, processing an image, or running an encryption loop in a worker means the UI stays responsive. They cannot touch the DOM, so they return results by postMessage, and you can transfer ownership of large buffers to avoid copying.",
+      "A Service Worker is event-driven and lives between the page and the network. It can intercept fetch events, serve from the Cache API, and make the app work offline. It only runs on HTTPS, and it persists independently of the page.",
+      "Service workers enable the app-shell pattern: cache the shell, serve it instantly, and fill in data from the network. They also power push notifications and background sync. The trade-off is caching complexity and the need for a clear update and invalidation strategy.",
+      "Both kinds are managed by the browser, so you must handle lifecycle and messaging. Terminate workers you no longer need, and version your service worker cache so old assets are cleaned up."
+    ],
+    "keyPoints": [
+      "Web Workers run JS off the main thread, no DOM access",
+      "Communication is by postMessage; buffers can be transferred",
+      "Service Workers are a network proxy for offline and caching",
+      "Service Workers need HTTPS and a cache versioning strategy"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "A worker keeps the main thread free.",
+      "code": "// main.js\nconst worker = new Worker('/hash-worker.js');\nworker.postMessage({ file });\nworker.onmessage = (e) => showHash(e.data);\n\n// hash-worker.js\nself.onmessage = async ({ data }) => {\n  const hash = await sha256(data.file);\n  self.postMessage(hash);\n};"
+    },
+    "related": ["browser-processes", "web-storage-api", "web-cheatsheet"]
+  },
+  {
+    "id": "web-gotcha-fetch-errors",
+    "slug": "gotcha-fetch-does-not-reject",
+    "category": "web-apis",
+    "type": "gotcha",
+    "title": "fetch does not reject on HTTP errors",
+    "summary": "A 404 or 500 resolves successfully, so error handling that relies on catch never runs.",
+    "difficulty": "easy",
+    "tags": ["fetch", "errors", "gotcha"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-04",
+    "scenario": "A request to an endpoint that returns 500 is handled as a success. The code parses the error page as JSON, throws a confusing parse error, or silently renders empty state. The catch block never fires.",
+    "problem": "fetch only rejects on network failure, such as a DNS error or a lost connection. An HTTP response with any status code, including 404 and 500, is a successful fetch. The promise fulfils, and response.ok is false. Code that treats the fulfilled promise as success mis-handles every server error.",
+    "example": {
+      "language": "javascript",
+      "caption": "The 500 fulfils the promise; only the explicit check catches it.",
+      "code": "// broken: a 500 looks like success\nconst res = await fetch('/api/data');\nconst data = await res.json(); // may parse an error page\n\n// fixed: check ok and throw\nconst res = await fetch('/api/data');\nif (!res.ok) throw new Error(`HTTP ${res.status}`);\nconst data = await res.json();"
+    },
+    "fix": "Check response.ok after every fetch and throw for non-2xx statuses so the error propagates to your catch. Wrap fetch in a small helper that does the check and parses the body, and use it everywhere rather than repeating the logic. Distinguish network failures, where fetch rejects, from HTTP errors, where you throw, so the UI can show the right message.",
+    "keyPoints": [
+      "fetch rejects only on network failure",
+      "Any HTTP status fulfils the promise",
+      "Check response.ok and throw yourself",
+      "Wrap it in a helper to avoid repeating the check"
+    ],
+    "related": ["web-fetch", "web-cheatsheet", "express-error-handling"]
+  },
+  {
+    "id": "web-cheatsheet",
+    "slug": "web-apis-cheat-sheet",
+    "category": "web-apis",
+    "type": "cheat-sheet",
+    "title": "Web APIs Cheat Sheet",
+    "summary": "Network, observers, storage and workers, at a glance.",
+    "difficulty": "medium",
+    "tags": ["reference", "cheat-sheet"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-04",
+    "description": "A quick reference for the platform APIs that come up most in frontend work.",
+    "sections": [
+      {
+        "title": "Network",
+        "items": [
+          { "label": "fetch", "value": "Promise-based, does not reject on HTTP errors", "note": "Check response.ok" },
+          { "label": "Abort", "value": "AbortController and signal", "code": "fetch(url, { signal: controller.signal })", "language": "javascript" },
+          { "label": "Timeout", "value": "AbortSignal.timeout(5000)" },
+          { "label": "Combine", "value": "AbortSignal.any([a, b])" },
+          { "label": "Read body", "value": "res.json() or res.text() is a second await" }
+        ]
+      },
+      {
+        "title": "Observers",
+        "items": [
+          { "label": "IntersectionObserver", "value": "Entering the viewport, lazy load, infinite scroll" },
+          { "label": "ResizeObserver", "value": "Element size changes" },
+          { "label": "MutationObserver", "value": "DOM changes, replaces mutation events" },
+          { "label": "Remember", "value": "disconnect() when done" }
+        ]
+      },
+      {
+        "title": "Storage",
+        "items": [
+          { "label": "localStorage", "value": "Sync, string-only, persists" },
+          { "label": "sessionStorage", "value": "Sync, per tab" },
+          { "label": "IndexedDB", "value": "Async, large structured data", "note": "Use idb or Dexie" },
+          { "label": "storage event", "value": "Sync across tabs" },
+          { "label": "Persist", "value": "navigator.storage.persist()" }
+        ]
+      },
+      {
+        "title": "Workers",
+        "items": [
+          { "label": "Web Worker", "value": "Off-main-thread JS, no DOM", "note": "postMessage to communicate" },
+          { "label": "Transferable", "value": "Move buffers instead of copying" },
+          { "label": "Service Worker", "value": "Network proxy, offline, caching", "note": "HTTPS only" },
+          { "label": "Cache API", "value": "Store request and response pairs" }
+        ]
+      },
+      {
+        "title": "Other useful APIs",
+        "items": [
+          { "label": "BroadcastChannel", "value": "Messaging between tabs of an origin" },
+          { "label": "URLSearchParams", "value": "Build and parse query strings" },
+          { "label": "structuredClone", "value": "Deep clone without JSON" },
+          { "label": "navigator.onLine", "value": "Basic connectivity hint", "note": "Not reliable on its own" },
+          { "label": "crypto.randomUUID", "value": "Generate ids client-side" }
+        ]
+      }
+    ],
+    "related": ["web-fetch", "web-observers", "web-storage-api", "web-workers", "web-gotcha-fetch-errors"]
+  }
+]

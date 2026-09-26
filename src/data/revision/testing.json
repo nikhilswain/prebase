@@ -1,0 +1,126 @@
+{
+  "category": "testing",
+  "intro": "Test strategy and habits that keep a suite fast and trustworthy.",
+  "entries": [
+    {
+      "id": "rev-test-pyramid",
+      "category": "testing",
+      "term": "Test pyramid",
+      "short": "Many unit, fewer integration, few end-to-end.",
+      "medium": "Unit tests are fast and pinpoint failures, integration tests cover the wiring, end-to-end tests cover the whole path. The shape is about cost and brittleness: inverting it produces a slow, flaky suite.",
+      "detail": "The trophy shape is a common refinement for frontend: fewer unit tests on implementation details, more integration tests, a few critical end-to-end flows.",
+      "related": "test-pyramid",
+      "tags": ["strategy"]
+    },
+    {
+      "id": "rev-test-behavior",
+      "category": "testing",
+      "term": "Behaviour over implementation",
+      "short": "Assert on outcomes, not on internal calls.",
+      "medium": "A good test describes what the caller or user cares about, fails for one reason, and keeps passing when you refactor internals. If renaming a private method breaks it, it is testing the wrong thing.",
+      "detail": "Arrange, act, assert keeps it readable. Implementation-coupled tests are the main reason suites become a maintenance burden.",
+      "related": "test-behavior",
+      "tags": ["quality"]
+    },
+    {
+      "id": "rev-test-doubles",
+      "category": "testing",
+      "term": "Test doubles",
+      "short": "Stub returns, spy records, mock expects, fake implements.",
+      "medium": "A fake, such as an in-memory database, exercises more real code than a mock while staying fast. Over-mocking produces tests that pass while the system is broken because they verify the interaction you wrote.",
+      "detail": "Reserve mocks for external services, time and randomness, and control those explicitly rather than mocking everything.",
+      "related": "test-doubles",
+      "tags": ["mocking"]
+    },
+    {
+      "id": "rev-test-levels",
+      "category": "testing",
+      "term": "Unit vs integration vs e2e",
+      "short": "Different scope, speed, confidence and failure signal.",
+      "medium": "Unit tests point at the exact failure but give low confidence in the system. Integration tests cover the seams. End-to-end tests tell you something is broken but not where, and are the most brittle.",
+      "detail": "Most bugs live at the seams, so a healthy suite is heavier on integration than the classic pyramid suggests.",
+      "related": "test-unit-vs-integration-vs-e2e",
+      "tags": ["strategy"]
+    },
+    {
+      "id": "rev-test-flaky",
+      "category": "testing",
+      "term": "Flaky tests",
+      "short": "Passing and failing without a code change erodes trust.",
+      "medium": "Causes are timing and shared state: fixed sleeps, tests depending on order, real clocks and timezones, network calls, running animations. Wait for conditions with findBy or waitFor instead of sleeping.",
+      "detail": "Treat a flake as a bug. Re-running until green teaches the team to ignore red builds, and a real failure slips through.",
+      "related": "test-gotcha-flaky",
+      "tags": ["reliability"]
+    },
+    {
+      "id": "rev-test-tdd",
+      "category": "testing",
+      "term": "TDD",
+      "short": "Red, green, refactor in short cycles.",
+      "medium": "Write the failing test first, make it pass with the simplest code, then refactor. Writing the test first designs the interface from the caller's point of view.",
+      "detail": "The red step matters: a test that has never failed might assert nothing. TDD shines on logic and bug fixes, and is awkward for exploratory UI work.",
+      "related": "test-tdd",
+      "tags": ["process"]
+    },
+    {
+      "id": "rev-test-coverage",
+      "category": "testing",
+      "term": "Coverage",
+      "short": "A signal, not a target.",
+      "medium": "High coverage of trivial code proves nothing, and chasing a percentage leads to tests that assert nothing meaningful. Look at whether important paths and edge cases are covered instead.",
+      "detail": "Coverage is most useful for spotting whole modules that are never exercised.",
+      "related": "test-behavior",
+      "tags": ["metrics"]
+    },
+    {
+      "id": "rev-test-time",
+      "category": "testing",
+      "term": "Time and randomness",
+      "short": "Inject a clock and seed randomness for determinism.",
+      "medium": "Real dates and Math.random make tests non-deterministic. Inject a clock, freeze the date, or seed the random source so the same input always produces the same output.",
+      "detail": "This is usually a smaller change than mocking the surrounding modules, and it keeps more of the real code under test.",
+      "related": "test-doubles",
+      "tags": ["determinism"]
+    },
+    {
+      "id": "rev-test-async",
+      "category": "testing",
+      "term": "Testing async code",
+      "short": "Await the result; never sleep and hope.",
+      "medium": "Return or await the promise so the framework knows when the test is done. For UI, use queries that retry until a timeout, such as findBy and waitFor, rather than asserting immediately after an action.",
+      "detail": "Forgetting to await is a classic source of false passes, where the test finishes before the assertion runs.",
+      "related": "test-gotcha-flaky",
+      "tags": ["async"]
+    },
+    {
+      "id": "rev-test-components",
+      "category": "testing",
+      "term": "Component testing",
+      "short": "Render and interact the way a user would.",
+      "medium": "Query by role and accessible name rather than by class or test id, so the test asserts on what a user perceives and doubles as an accessibility check. Fire real events and assert on visible output.",
+      "detail": "This is the frontend version of behaviour over implementation, and it catches missing labels and broken keyboard interaction along the way.",
+      "related": "test-behavior",
+      "tags": ["frontend"]
+    },
+    {
+      "id": "rev-test-integration-db",
+      "category": "testing",
+      "term": "Testing against a real database",
+      "short": "Use a disposable real database, not a mocked one.",
+      "medium": "Integration tests should exercise the real query and constraints, so run them against a throwaway database, wrapped in a transaction that rolls back or reset between tests. Mocking the database hides the SQL bugs you most want to catch.",
+      "detail": "A test container gives a real engine per run, which is slower than a fake but catches migration, constraint and query errors.",
+      "related": "test-unit-vs-integration-vs-e2e",
+      "tags": ["integration", "databases"]
+    },
+    {
+      "id": "rev-test-ci",
+      "category": "testing",
+      "term": "Tests in CI",
+      "short": "Run on every change and keep the signal honest.",
+      "medium": "Run the fast suite on every push and the slow end-to-end suite before merge. Fail the build on a red test and fix it promptly, or the suite stops being a gate.",
+      "detail": "Parallelise and shard as the suite grows, and cache dependencies so feedback stays in minutes.",
+      "related": "test-cheatsheet",
+      "tags": ["ci"]
+    }
+  ]
+}

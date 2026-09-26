@@ -1,0 +1,126 @@
+{
+  "category": "accessibility",
+  "intro": "The accessibility rules that come up most in reviews and interviews.",
+  "entries": [
+    {
+      "id": "rev-a11y-pour",
+      "category": "accessibility",
+      "term": "POUR",
+      "short": "Perceivable, Operable, Understandable, Robust.",
+      "medium": "The four WCAG principles, each with success criteria at levels A, AA and AAA. AA is the common target and what most legislation references.",
+      "detail": "Robust means semantic, valid markup, which is why using the right element is the most common fix across all four principles.",
+      "related": "a11y-pour",
+      "tags": ["standards"]
+    },
+    {
+      "id": "rev-a11y-keyboard",
+      "category": "accessibility",
+      "term": "Keyboard access",
+      "short": "Everything interactive is reachable and operable without a mouse.",
+      "medium": "Native elements bring keyboard support for free. Tab order follows the DOM, so avoid positive tabindex. Focus must be visible, styled with :focus-visible rather than removed.",
+      "detail": "Putting the mouse away and using the page is the fastest accessibility test there is.",
+      "related": "a11y-keyboard",
+      "tags": ["keyboard", "focus"]
+    },
+    {
+      "id": "rev-a11y-focus",
+      "category": "accessibility",
+      "term": "Focus management",
+      "short": "Move focus when content appears, restore it when it goes.",
+      "medium": "Opening a dialog moves focus into it and traps it until close, then returns focus to the trigger. Mark the rest of the page inert so it is not focusable or announced.",
+      "detail": "The native dialog element with showModal handles focus, trapping and the backdrop for you.",
+      "related": "a11y-gotcha-focus-trap",
+      "tags": ["focus", "dialogs"]
+    },
+    {
+      "id": "rev-a11y-aria",
+      "category": "accessibility",
+      "term": "ARIA",
+      "short": "Changes what is announced, never what the element does.",
+      "medium": "Use it only to fill a gap a native element cannot cover, such as naming an icon-only button or reporting state. Prefer a native element over adding a role to a div.",
+      "detail": "Bad or redundant ARIA is worse than none. role=button on a div still needs focus, key handlers and form behaviour.",
+      "related": "a11y-aria",
+      "tags": ["aria"]
+    },
+    {
+      "id": "rev-a11y-name-role-state",
+      "category": "accessibility",
+      "term": "Name, role, state",
+      "short": "What assistive tech reads out for every control.",
+      "medium": "The accessible name comes from content, a label, aria-label or aria-labelledby. The role usually comes from the element. States such as aria-expanded and aria-checked must stay in sync with the UI.",
+      "detail": "Inspect the accessibility tree in DevTools to see exactly what is announced rather than guessing.",
+      "related": "a11y-names-roles-states",
+      "tags": ["aria", "screen-reader"]
+    },
+    {
+      "id": "rev-a11y-labels",
+      "category": "accessibility",
+      "term": "Labels",
+      "short": "Every control needs an accessible name.",
+      "medium": "Use a label with for=id or wrap the input. Groups of radios and checkboxes get a fieldset with a legend. Icon-only buttons get aria-label. Placeholders are not labels.",
+      "detail": "An unlabelled field is announced as just 'edit text', which gives the user no idea what to type.",
+      "related": "a11y-names-roles-states",
+      "tags": ["forms"]
+    },
+    {
+      "id": "rev-a11y-contrast",
+      "category": "accessibility",
+      "term": "Contrast",
+      "short": "4.5:1 for body text, 3:1 for large text and UI.",
+      "medium": "Large text is about 24px or 18.66px bold. Meaningful icons, input borders and focus indicators need 3:1 against their background. Disabled controls are exempt.",
+      "detail": "Muted gray text is the most common failure. Darkening it one step usually fixes it without hurting the design.",
+      "related": "a11y-contrast",
+      "tags": ["contrast", "color"]
+    },
+    {
+      "id": "rev-a11y-color-alone",
+      "category": "accessibility",
+      "term": "Color alone",
+      "short": "Never use color as the only way to convey meaning.",
+      "medium": "Errors marked only in red, charts distinguished only by hue and links that differ only by color all fail. Add an icon, a pattern, a label or an underline.",
+      "detail": "This affects people with color vision deficiency and anyone in bright sunlight, which is a much larger group than it sounds.",
+      "related": "a11y-contrast",
+      "tags": ["color"]
+    },
+    {
+      "id": "rev-a11y-headings",
+      "category": "accessibility",
+      "term": "Headings and landmarks",
+      "short": "A logical outline and regions let users navigate quickly.",
+      "medium": "One h1 per page and no skipped levels for visual reasons. header, nav, main, aside and footer give a map. main appears once.",
+      "detail": "Screen reader users jump by heading and landmark far more than they read linearly.",
+      "related": "a11y-cheatsheet",
+      "tags": ["semantics"]
+    },
+    {
+      "id": "rev-a11y-images",
+      "category": "accessibility",
+      "term": "Alt text",
+      "short": "Describe the image, or mark it decorative.",
+      "medium": "Meaningful images need alt that conveys the same information as the image. Decorative images use alt=\"\" so they are skipped. Avoid starting with 'image of'.",
+      "detail": "For complex images such as charts, the alt gives the takeaway and a longer description carries the detail.",
+      "related": "a11y-cheatsheet",
+      "tags": ["images"]
+    },
+    {
+      "id": "rev-a11y-motion",
+      "category": "accessibility",
+      "term": "Motion and animation",
+      "short": "Respect prefers-reduced-motion and avoid flashing.",
+      "medium": "Reduced motion means fewer and gentler animations, not zero: keep opacity and color, drop movement and parallax. Nothing should flash more than three times a second.",
+      "detail": "Auto-playing carousels should pause, and any moving content longer than five seconds needs a way to stop it.",
+      "related": "a11y-cheatsheet",
+      "tags": ["motion"]
+    },
+    {
+      "id": "rev-a11y-testing",
+      "category": "accessibility",
+      "term": "Testing",
+      "short": "Automated tools catch a subset; people and keyboards catch the rest.",
+      "medium": "axe and Lighthouse find missing names and contrast issues but miss focus order, meaning and keyboard traps. Test with the keyboard, at 200% zoom, and with a real screen reader.",
+      "detail": "The accessibility tree in DevTools shows exactly what is exposed, which is faster than guessing from the DOM.",
+      "related": "a11y-cheatsheet",
+      "tags": ["testing"]
+    }
+  ]
+}

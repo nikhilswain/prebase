@@ -1,0 +1,270 @@
+[
+  {
+    "id": "test-pyramid",
+    "slug": "test-pyramid",
+    "category": "testing",
+    "type": "concept",
+    "title": "The Test Pyramid",
+    "summary": "Many fast unit tests, fewer integration tests, and a thin layer of slow end-to-end tests.",
+    "difficulty": "easy",
+    "tags": ["strategy", "levels"],
+    "featured": true,
+    "reviewStatus": "verified",
+    "updated": "2026-09-04",
+    "definition": "The test pyramid describes a healthy mix of tests by scope and speed. The wide base is unit tests, which are fast, isolated and numerous. The middle is integration tests, which exercise several parts together. The narrow top is end-to-end tests, which drive the whole system through the UI. The shape keeps the suite fast and the feedback useful.",
+    "explanation": [
+      "Unit tests are cheap and pinpoint failures, but they cannot tell you whether the pieces work together. Integration tests cover the wiring: a route handler with a real database, a component with its data layer. End-to-end tests cover the whole path and catch what only shows up when everything runs together.",
+      "The pyramid is about cost. Unit tests run in milliseconds, integration tests in tens or hundreds, and end-to-end tests in seconds each and are the most brittle. Inverting the pyramid, lots of slow end-to-end tests and few unit tests, produces a suite that is slow and flaky.",
+      "The trophy shape is a common refinement for frontend work: fewer unit tests on implementation details, more integration tests that render a component and interact with it, and a small number of end-to-end tests for critical flows.",
+      "The right balance depends on the system. A library leans unit, an application leans integration, and every project needs a handful of end-to-end tests for the paths that must never break, such as signup and checkout."
+    ],
+    "keyPoints": [
+      "Unit fast and numerous, integration in the middle, end-to-end few and slow",
+      "The shape is about cost and brittleness",
+      "The trophy favours integration for frontend",
+      "Every project needs a few critical end-to-end flows"
+    ],
+    "example": {
+      "language": "text",
+      "caption": "What each level is good at.",
+      "code": "unit         pure functions, edge cases, fast feedback\nintegration  handler + database, component + store\ne2e          signup, checkout, the paths that must work"
+    },
+    "related": ["test-unit-vs-integration-vs-e2e", "test-behavior", "test-cheatsheet"]
+  },
+  {
+    "id": "test-behavior",
+    "slug": "test-behavior-not-implementation",
+    "category": "testing",
+    "type": "question",
+    "title": "What makes a good test?",
+    "summary": "It tests observable behaviour, fails for one reason, and does not break when you refactor.",
+    "difficulty": "medium",
+    "tags": ["quality", "design"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-04",
+    "shortAnswer": "A good test describes behaviour the user or caller cares about, exercises one thing, and asserts on the outcome rather than the implementation. It should fail for exactly one reason and keep passing when you refactor internals. If changing a private method name breaks the test, it is testing the wrong thing.",
+    "explanation": [
+      "Test behaviour, not implementation. Assert that submitting the form shows a confirmation, not that a particular function was called with particular arguments. Implementation-coupled tests are the main reason suites become a maintenance burden.",
+      "Arrange, act, assert keeps a test readable: set up the state, perform the action, assert the outcome. One logical assertion per test makes the failure obvious. A test that checks ten things tells you little when it fails.",
+      "Prefer real collaborators over mocks where practical. Mocks make a test fast and isolated, but a test that mocks everything verifies that your code calls your mocks, not that it works. Use real objects for simple dependencies and mock only slow, non-deterministic or external ones.",
+      "Coverage is a signal, not a goal. High coverage of trivial code proves nothing, and chasing a percentage leads to tests that assert nothing meaningful. Look at whether the important paths and edge cases are covered instead."
+    ],
+    "keyPoints": [
+      "Assert on outcomes, not implementation details",
+      "Arrange, act, assert; one reason to fail",
+      "Prefer real collaborators; mock the slow and external",
+      "Coverage is a signal, not a target"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "Behaviour on the left, implementation coupling on the right.",
+      "code": "// behaviour: survives a refactor\nexpect(await createUser({ email })).toMatchObject({ email });\n\n// implementation: breaks when internals change\nexpect(db.insert).toHaveBeenCalledWith('users', { email });"
+    },
+    "commonMistakes": [
+      "Asserting that a specific function was called rather than what happened",
+      "Mocking so much that the test only verifies the mocks",
+      "Chasing a coverage percentage with tests that assert nothing"
+    ],
+    "followUps": [
+      "When is mocking worth it?",
+      "How do you test something with a side effect?",
+      "Is high coverage a sign of good tests?"
+    ],
+    "related": ["test-doubles", "test-pyramid", "test-cheatsheet"]
+  },
+  {
+    "id": "test-doubles",
+    "slug": "test-doubles",
+    "category": "testing",
+    "type": "concept",
+    "title": "Test Doubles",
+    "summary": "Stubs, spies, mocks and fakes each replace a real dependency for a different reason.",
+    "difficulty": "medium",
+    "tags": ["mocking", "isolation"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-04",
+    "definition": "A test double is any object that stands in for a real dependency in a test. The common kinds are a stub, which returns canned answers, a spy, which records how it was called, a mock, which is set up with expectations about calls, and a fake, which is a working but simplified implementation.",
+    "explanation": [
+      "A stub answers. Give it a user to return and the code under test proceeds. A spy records. It wraps a function and lets you assert afterwards that it was called, without pre-defining expectations. A mock is stricter: you declare the calls you expect up front and the test fails if they do not happen.",
+      "A fake is a real implementation with shortcuts, such as an in-memory database. Fakes are often the best choice because they exercise more of the real code path than a mock while staying fast and deterministic.",
+      "The choice matters. Over-mocking produces tests that pass while the system is broken, because they verify the interaction you wrote rather than the outcome. Prefer fakes and real objects for simple dependencies, and reserve mocks for external services, time and randomness.",
+      "Time and randomness are the usual things worth controlling. Inject a clock, freeze the date, or seed the random source, so the test is deterministic without mocking the whole world."
+    ],
+    "keyPoints": [
+      "Stub returns, spy records, mock expects, fake implements",
+      "Fakes exercise more real code than mocks",
+      "Over-mocking verifies your mocks, not your system",
+      "Control time and randomness rather than everything"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "A fake clock instead of mocking every call.",
+      "code": "// inject time so the test is deterministic\nconst now = () => new Date('2026-01-01T00:00:00Z');\nconst service = new TokenService({ now });\n\nexpect(service.expiresAt()).toBe('2026-01-01T01:00:00.000Z');"
+    },
+    "related": ["test-behavior", "test-pyramid", "test-cheatsheet"]
+  },
+  {
+    "id": "test-unit-vs-integration-vs-e2e",
+    "slug": "unit-vs-integration-vs-e2e",
+    "category": "testing",
+    "type": "comparison",
+    "title": "Unit vs Integration vs End-to-End",
+    "summary": "Three scopes with different speed, confidence and failure diagnosis.",
+    "difficulty": "medium",
+    "tags": ["strategy", "levels"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-04",
+    "options": [
+      { "name": "Unit", "summary": "One piece in isolation" },
+      { "name": "Integration", "summary": "Several pieces together" },
+      { "name": "End-to-end", "summary": "The whole system through the UI" }
+    ],
+    "rows": [
+      { "label": "Scope", "values": ["A function or component alone", "A route with its database, a component with its store", "Browser to database and back"] },
+      { "label": "Speed", "values": ["Milliseconds", "Tens to hundreds of ms", "Seconds"] },
+      { "label": "Confidence", "values": ["Low for the system, high for the unit", "High for the wiring", "Highest for the user path"] },
+      { "label": "Failure signal", "values": ["Points at the exact unit", "Points at the boundary", "Tells you it is broken, not where"] },
+      { "label": "Brittleness", "values": ["Low, if behaviour-focused", "Moderate", "Highest, flaky and environment-sensitive"] },
+      { "label": "Count", "values": ["Many", "A good number", "A few critical flows"] }
+    ],
+    "verdict": "Write unit tests for logic with branches and edge cases, integration tests for the seams between your layers, and end-to-end tests only for the handful of flows that must never break. Most bugs live at the seams, so a healthy suite is heavier on integration than the classic pyramid suggests.",
+    "pickWhen": [
+      { "option": "Unit", "guidance": "Pure logic, calculations, reducers and edge cases where fast feedback matters." },
+      { "option": "Integration", "guidance": "A handler with its database, a component with real state, or any boundary between layers." },
+      { "option": "End-to-end", "guidance": "Signup, login, checkout and other paths where a failure is unacceptable." }
+    ],
+    "example": {
+      "language": "text",
+      "caption": "The same feature at three levels.",
+      "code": "unit         formatPrice(1999) === '$19.99'\nintegration  POST /orders creates an order and decrements stock\ne2e          a user can add to cart and complete checkout"
+    },
+    "commonMistakes": [
+      "Testing everything end-to-end and ending up with a slow, flaky suite",
+      "Only unit testing and missing bugs at the seams",
+      "Writing integration tests that mock the database and prove nothing"
+    ],
+    "related": ["test-pyramid", "test-behavior", "test-cheatsheet"]
+  },
+  {
+    "id": "test-gotcha-flaky",
+    "slug": "gotcha-flaky-tests",
+    "category": "testing",
+    "type": "gotcha",
+    "title": "Flaky tests",
+    "summary": "A test that passes and fails without a code change erodes trust in the whole suite.",
+    "difficulty": "medium",
+    "tags": ["reliability", "gotcha"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-04",
+    "scenario": "A test fails in CI, someone re-runs it and it passes, and everyone moves on. Over time the team starts ignoring red builds, and a real failure slips through because it looked like the usual flake.",
+    "problem": "Flakiness usually comes from timing and shared state. Waiting a fixed number of milliseconds for something asynchronous, tests that depend on each other or on execution order, real clocks and timezones, network calls, and animations that are still running when the assertion fires. The failure is intermittent, so it teaches the team to distrust the signal.",
+    "example": {
+      "language": "javascript",
+      "caption": "A fixed sleep is a race waiting to lose.",
+      "code": "// flaky: passes on a fast machine, fails on a slow one\nawait sleep(500);\nexpect(screen.getByText('Saved')).toBeVisible();\n\n// deterministic: wait for the actual condition\nawait expect(screen.findByText('Saved')).resolves.toBeVisible();"
+    },
+    "fix": "Wait for conditions, not for time. Use the framework's async queries and polling assertions, such as findBy and waitFor, which retry until a timeout. Isolate tests so they do not share state or depend on order, seed or freeze time and randomness, and stub network calls. Disable animations in the test environment. When a flake appears, treat it as a bug and fix the cause rather than re-running until it goes green.",
+    "keyPoints": [
+      "Flakes come from timing and shared state",
+      "Wait for conditions, never fixed sleeps",
+      "Isolate tests and control time and randomness",
+      "Quarantine and fix; do not normalise re-runs"
+    ],
+    "related": ["test-doubles", "test-pyramid", "test-cheatsheet"]
+  },
+  {
+    "id": "test-tdd",
+    "slug": "tdd",
+    "category": "testing",
+    "type": "concept",
+    "title": "Test-Driven Development",
+    "summary": "Write the failing test first, make it pass, then refactor, in small cycles.",
+    "difficulty": "medium",
+    "tags": ["process", "tdd"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-04",
+    "definition": "Test-driven development is a cycle of three short steps: red, write a test that fails; green, write the simplest code that makes it pass; refactor, improve the design with the test as a safety net. The test comes before the implementation.",
+    "explanation": [
+      "Writing the test first forces you to decide what the code should do before you decide how. That usually produces a cleaner interface, because you design it from the caller's point of view.",
+      "The red step matters. A test that has never failed might be asserting nothing. Seeing it fail for the right reason proves it is actually exercising the code.",
+      "The green step asks for the simplest thing that passes, not the most general. Generality comes from the refactor step and from the next test, which keeps the design from overreaching.",
+      "TDD is not always the right tool. It shines on logic with clear inputs and outputs and on bug fixes, where you write a failing test that reproduces the bug first. It is awkward for exploratory UI work and for code whose shape you do not yet understand, where a spike followed by tests is more practical."
+    ],
+    "keyPoints": [
+      "Red, green, refactor in short cycles",
+      "Test first designs the interface from the caller's view",
+      "See the test fail for the right reason",
+      "Great for logic and bug fixes, awkward for exploration"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "The cycle for a discount rule.",
+      "code": "// red\nexpect(applyDiscount(100, 0.1)).toBe(90);\n\n// green\nexport const applyDiscount = (price, rate) => price * (1 - rate);\n\n// refactor: handle invalid rates, add a test first"
+    },
+    "related": ["test-behavior", "test-pyramid", "test-cheatsheet"]
+  },
+  {
+    "id": "test-cheatsheet",
+    "slug": "testing-cheat-sheet",
+    "category": "testing",
+    "type": "cheat-sheet",
+    "title": "Testing Cheat Sheet",
+    "summary": "Levels, doubles, patterns and the habits that keep a suite trustworthy.",
+    "difficulty": "medium",
+    "tags": ["reference", "cheat-sheet"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-04",
+    "description": "A quick reference for test strategy, doubles and writing tests that survive refactoring.",
+    "sections": [
+      {
+        "title": "Levels",
+        "items": [
+          { "label": "Unit", "value": "One piece, fast, points at the exact failure" },
+          { "label": "Integration", "value": "Several pieces together, covers the seams" },
+          { "label": "End-to-end", "value": "Whole system, few and critical" },
+          { "label": "Balance", "value": "Heavier on integration than the classic pyramid" }
+        ]
+      },
+      {
+        "title": "Test doubles",
+        "items": [
+          { "label": "Stub", "value": "Returns canned answers" },
+          { "label": "Spy", "value": "Records how it was called" },
+          { "label": "Mock", "value": "Expects specific calls up front" },
+          { "label": "Fake", "value": "Working but simplified, e.g. in-memory DB", "note": "Often the best choice" }
+        ]
+      },
+      {
+        "title": "Good test habits",
+        "items": [
+          { "label": "Arrange, act, assert", "value": "One logical assertion per test" },
+          { "label": "Behaviour, not implementation", "value": "Survives a refactor" },
+          { "label": "One reason to fail", "value": "Clear failure message" },
+          { "label": "Deterministic", "value": "Control time, randomness and network" },
+          { "label": "Independent", "value": "No shared state or ordering" }
+        ]
+      },
+      {
+        "title": "Flakiness",
+        "items": [
+          { "label": "Wait for conditions", "value": "findBy, waitFor, polling assertions" },
+          { "label": "No fixed sleeps", "value": "A race waiting to lose" },
+          { "label": "Disable animations", "value": "In the test environment" },
+          { "label": "Quarantine and fix", "value": "Do not normalise re-runs" }
+        ]
+      },
+      {
+        "title": "When to test",
+        "items": [
+          { "label": "Logic", "value": "Branches, edge cases, calculations" },
+          { "label": "Bug fixes", "value": "Write the failing test first" },
+          { "label": "TDD", "value": "Red, green, refactor" },
+          { "label": "Coverage", "value": "A signal, not a target" }
+        ]
+      }
+    ],
+    "related": ["test-pyramid", "test-behavior", "test-doubles", "test-unit-vs-integration-vs-e2e", "test-gotcha-flaky", "test-tdd"]
+  }
+]

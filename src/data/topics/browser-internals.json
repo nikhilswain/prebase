@@ -1,0 +1,230 @@
+[
+  {
+    "id": "browser-js-engine",
+    "slug": "how-js-engines-run-code",
+    "category": "browser-internals",
+    "type": "concept",
+    "title": "How JavaScript Engines Run Code",
+    "summary": "Parse to bytecode, interpret, then optimise hot paths with a JIT, backed by garbage collection.",
+    "difficulty": "medium",
+    "tags": ["v8", "engine", "performance"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-04",
+    "definition": "A JavaScript engine such as V8 parses source into an abstract syntax tree, compiles it to bytecode, and runs it in an interpreter. When a function runs often enough to be considered hot, the engine compiles it to optimised machine code with a just-in-time compiler. A garbage collector reclaims memory that is no longer reachable.",
+    "explanation": [
+      "The pipeline is parse, compile to bytecode, interpret, then optimise. The interpreter starts running quickly so the page is interactive, and the optimising compiler catches up on hot code. If an optimisation assumption turns out to be wrong, the engine deoptimises and falls back to the interpreter.",
+      "The JIT optimises based on the shapes it sees. Objects created the same way share a hidden class, which lets property access become a fast offset lookup. Adding or deleting properties, or mixing types, changes the shape and can force the engine to slow down. Keeping objects monomorphic, always the same shape and property types, is the practical takeaway.",
+      "Garbage collection is generational. New objects are allocated in a young generation collected often and cheaply, and objects that survive are promoted to an old generation collected less often. Memory leaks happen when objects stay reachable, usually through a lingering closure, a forgotten listener or a growing cache.",
+      "The engine runs on the main thread, so a long synchronous function delays everything. Breaking work up, moving it to a worker, or reducing how much code ships are the levers that matter more than micro-optimisations."
+    ],
+    "keyPoints": [
+      "Parse, bytecode, interpret, then JIT-compile hot code",
+      "Hidden classes make property access fast; changing shape slows it down",
+      "Generational garbage collection; leaks come from lingering references",
+      "The engine is single-threaded and shares the main thread with rendering"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "Keeping an object's shape stable helps the JIT.",
+      "code": "// monomorphic: one shape, fast property access\nfunction makePoint(x, y) {\n  return { x, y };\n}\n\n// adding properties later changes the shape\nconst p = makePoint(1, 2);\np.z = 3; // now a different hidden class"
+    },
+    "related": ["browser-processes", "browser-event-loop-comparison", "perf-rendering-pipeline"]
+  },
+  {
+    "id": "browser-processes",
+    "slug": "processes-and-threads",
+    "category": "browser-internals",
+    "type": "concept",
+    "title": "Processes, Threads and the Main Thread",
+    "summary": "Modern browsers run multiple processes, and the renderer's main thread does JavaScript, layout and paint.",
+    "difficulty": "medium",
+    "tags": ["processes", "main-thread"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-04",
+    "definition": "A modern browser is multi-process. A browser process coordinates, renderer processes handle each site or tab, a network process handles requests, and a GPU process handles compositing. Inside a renderer, the main thread runs JavaScript, style, layout and paint, while other threads handle compositing, rasterisation and workers.",
+    "explanation": [
+      "Process isolation is a security boundary. Because each site usually gets its own renderer process, a compromised page cannot reach another site's memory. It also means a crashing tab does not take down the browser.",
+      "The main thread is the bottleneck for interactivity. Your JavaScript, style recalculation, layout and paint all queue on it. A long task there delays input and animation, which is exactly what Interaction to Next Paint measures.",
+      "Other threads help. The compositor can scroll and animate transform and opacity without the main thread, which is why those animations stay smooth. Raster threads turn paint into pixels. Web Workers run JavaScript off the main thread with no DOM access.",
+      "Site isolation and process-per-site are why cross-origin iframes can be expensive and why communication across them is restricted. The same security model that protects you also shapes performance."
+    ],
+    "keyPoints": [
+      "Browser, renderer, network and GPU processes",
+      "The renderer main thread runs JS, style, layout and paint",
+      "Compositor and raster threads keep scrolling and transforms smooth",
+      "Workers run JS off the main thread without DOM access"
+    ],
+    "example": {
+      "language": "text",
+      "caption": "The main thread's queue.",
+      "code": "main thread:  [ JS task ][ style ][ layout ][ paint ]\n              a long JS task delays everything after it\nother threads: compositor (scroll, transforms), raster, workers"
+    },
+    "related": ["browser-js-engine", "perf-rendering-pipeline", "web-workers"]
+  },
+  {
+    "id": "browser-storage",
+    "slug": "client-storage",
+    "category": "browser-internals",
+    "type": "concept",
+    "title": "Client-Side Storage",
+    "summary": "Cookies, localStorage, sessionStorage, IndexedDB and the Cache API, each with different size, lifetime and access.",
+    "difficulty": "medium",
+    "tags": ["storage", "cookies"],
+    "featured": true,
+    "reviewStatus": "verified",
+    "updated": "2026-09-04",
+    "definition": "Browsers offer several storage mechanisms. Cookies are small key-value pairs sent with every matching request. localStorage is synchronous, string-only and persists across sessions. sessionStorage is the same but scoped to a tab and cleared when it closes. IndexedDB is an asynchronous, transactional store for large structured data. The Cache API stores request and response pairs, used by service workers.",
+    "explanation": [
+      "Cookies are the only storage the server sees automatically, because they travel in the request headers. They are limited to about 4 KB each and add to every request, so they are for small values like a session id, not for data.",
+      "localStorage and sessionStorage are simple but synchronous, so reading or writing a large value blocks the main thread. They store strings only, so structured data needs JSON and parsing. They are per origin and shared across tabs, except sessionStorage which is per tab.",
+      "IndexedDB is the choice for volume. It is asynchronous, supports indexes and transactions, and can hold far more than localStorage. The API is verbose, so most projects use a wrapper such as idb or Dexie.",
+      "The Cache API holds HTTP responses for a service worker, which is what makes offline and fast repeat visits possible. Quota is generous but not unlimited, and the browser can evict under storage pressure, so request persistence with navigator.storage.persist when the data matters."
+    ],
+    "keyPoints": [
+      "Cookies are sent to the server automatically and are small",
+      "localStorage is synchronous, string-only and per origin",
+      "IndexedDB is async and suited to large structured data",
+      "Cache API stores responses for service workers and offline"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "localStorage is simple but blocking and string-only.",
+      "code": "localStorage.setItem('theme', 'dark');\nconst theme = localStorage.getItem('theme'); // 'dark'\n\n// structured data needs serialisation\nlocalStorage.setItem('user', JSON.stringify({ id: 1 }));"
+    },
+    "commonMistakes": [
+      "Storing large or structured data in localStorage and blocking the main thread",
+      "Putting auth tokens in localStorage where any XSS can read them",
+      "Assuming storage is permanent when the browser can evict it"
+    ],
+    "related": ["browser-gotcha-third-party-cookies", "web-storage-api", "sec-token-storage"]
+  },
+  {
+    "id": "browser-event-loop-comparison",
+    "slug": "browser-vs-node-event-loop",
+    "category": "browser-internals",
+    "type": "comparison",
+    "title": "Browser vs Node Event Loop",
+    "summary": "Both are single-threaded and non-blocking, but the browser interleaves rendering and Node has explicit I/O phases.",
+    "difficulty": "hard",
+    "tags": ["event-loop", "runtime"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-04",
+    "options": [
+      { "name": "Browser", "summary": "Task queue plus a rendering step" },
+      { "name": "Node.js", "summary": "Six named phases backed by libuv" }
+    ],
+    "rows": [
+      { "label": "Structure", "values": ["Task queue, microtask queue, render steps", "timers, pending, poll, check, close phases"] },
+      { "label": "Rendering", "values": ["A render opportunity between tasks when needed", "No rendering; it is a server runtime"] },
+      { "label": "I/O", "values": ["Web APIs and the OS, callbacks queued back", "libuv: OS event mechanism plus a thread pool"] },
+      { "label": "Microtasks", "values": ["Drained after each task, before rendering", "Drained between phases and callbacks"] },
+      { "label": "Scheduling helpers", "values": ["requestAnimationFrame, requestIdleCallback, scheduler.yield", "setImmediate, process.nextTick"] },
+      { "label": "Long task impact", "values": ["Blocks input and frames, hurting INP", "Blocks all other connections on the server"] }
+    ],
+    "verdict": "The model is the same idea in two environments: one JavaScript thread, a queue of callbacks, and microtasks that drain before the loop continues. The difference is what the loop does between tasks. In the browser it may render, which is why requestAnimationFrame is tied to frames. In Node it moves through I/O phases, which is why setImmediate exists and rendering does not.",
+    "pickWhen": [
+      { "option": "Browser", "guidance": "Think in terms of tasks, microtasks and frames; schedule visual work in requestAnimationFrame and yield with scheduler.yield." },
+      { "option": "Node.js", "guidance": "Think in phases; use setImmediate to yield to I/O and never block the loop with synchronous work." }
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "The same ordering rule in both: microtasks before the next task.",
+      "code": "console.log('sync');\nPromise.resolve().then(() => console.log('microtask'));\nsetTimeout(() => console.log('task'), 0);\n\n// sync, microtask, task -- in both the browser and Node"
+    },
+    "related": ["browser-js-engine", "node-event-loop", "perf-rendering-pipeline"]
+  },
+  {
+    "id": "browser-gotcha-third-party-cookies",
+    "slug": "gotcha-third-party-cookies",
+    "category": "browser-internals",
+    "type": "gotcha",
+    "title": "Third-party cookies are going away",
+    "summary": "Cookies sent in cross-site contexts are blocked or partitioned, which breaks embeds, SSO and analytics.",
+    "difficulty": "medium",
+    "tags": ["cookies", "privacy", "gotcha"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-04",
+    "scenario": "An embedded widget, an iframe login or a third-party analytics script stops working in some browsers. It turns out the feature relied on reading a cookie in a cross-site context, and the browser no longer sends it.",
+    "problem": "Browsers have tightened cross-site cookies to protect privacy. SameSite=Lax by default means cookies are not sent on cross-site subrequests. Safari blocks third-party cookies outright, and Chrome partitions them so a cookie set in one top-level site is not visible in another. Anything that assumed a shared cross-site cookie identity breaks.",
+    "example": {
+      "language": "http",
+      "caption": "A cross-site cookie now needs an explicit opt-in.",
+      "code": "Set-Cookie: sid=abc; Secure; SameSite=None\n\n# but None is blocked or partitioned by many browsers\n# for third-party contexts, so the cookie may not be sent at all"
+    },
+    "fix": "Move away from cross-site cookie identity. Use the Storage Access API to request access when an embed genuinely needs it, use postMessage between the embed and the parent, or use a token-based flow instead of relying on a shared cookie. For SSO, prefer top-level redirects or the FedCM API. For analytics, move to a first-party or server-side measurement path. The direction of travel is first-party data and explicit user permission, so designs that assume third-party cookies are fragile.",
+    "keyPoints": [
+      "SameSite=Lax by default stops cross-site cookie sends",
+      "Safari blocks, Chrome partitions third-party cookies",
+      "Use Storage Access API, postMessage or tokens instead",
+      "Design for first-party data and explicit consent"
+    ],
+    "related": ["browser-storage", "sec-csrf", "browser-cheatsheet"]
+  },
+  {
+    "id": "browser-cheatsheet",
+    "slug": "browser-internals-cheat-sheet",
+    "category": "browser-internals",
+    "type": "cheat-sheet",
+    "title": "Browser Internals Cheat Sheet",
+    "summary": "Engines, processes, storage and the event loop, at a glance.",
+    "difficulty": "medium",
+    "tags": ["reference", "cheat-sheet"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-04",
+    "description": "A quick reference for how the browser runs your code and stores your data.",
+    "sections": [
+      {
+        "title": "Engine pipeline",
+        "items": [
+          { "label": "1. Parse", "value": "Source to abstract syntax tree" },
+          { "label": "2. Bytecode", "value": "Compiled for the interpreter" },
+          { "label": "3. Interpret", "value": "Runs immediately so the page is interactive" },
+          { "label": "4. JIT", "value": "Hot functions compile to machine code" },
+          { "label": "5. Deoptimise", "value": "Falls back if assumptions break" }
+        ]
+      },
+      {
+        "title": "Processes and threads",
+        "items": [
+          { "label": "Browser process", "value": "Coordinates tabs and the UI" },
+          { "label": "Renderer process", "value": "One per site; runs your page" },
+          { "label": "Main thread", "value": "JS, style, layout, paint" },
+          { "label": "Compositor thread", "value": "Scroll and transform animations" },
+          { "label": "Workers", "value": "JS off the main thread, no DOM" }
+        ]
+      },
+      {
+        "title": "Storage",
+        "items": [
+          { "label": "Cookies", "value": "~4 KB, sent with requests", "note": "For session ids" },
+          { "label": "localStorage", "value": "Sync, string-only, per origin" },
+          { "label": "sessionStorage", "value": "Same, scoped to a tab" },
+          { "label": "IndexedDB", "value": "Async, large structured data" },
+          { "label": "Cache API", "value": "Request and response pairs, service workers" }
+        ]
+      },
+      {
+        "title": "Scheduling",
+        "items": [
+          { "label": "Microtasks", "value": "Promises, drain before the next task" },
+          { "label": "Tasks", "value": "Timers, events, network callbacks" },
+          { "label": "requestAnimationFrame", "value": "Before the next paint" },
+          { "label": "requestIdleCallback", "value": "Low-priority work when free" },
+          { "label": "scheduler.yield", "value": "Yield so input can be handled" }
+        ]
+      },
+      {
+        "title": "Privacy changes",
+        "items": [
+          { "label": "SameSite=Lax default", "value": "No cookie on cross-site subrequests" },
+          { "label": "Third-party cookies", "value": "Blocked or partitioned" },
+          { "label": "Storage Access API", "value": "Explicit access for embeds" },
+          { "label": "First-party data", "value": "The durable direction" }
+        ]
+      }
+    ],
+    "related": ["browser-js-engine", "browser-processes", "browser-storage", "browser-event-loop-comparison", "browser-gotcha-third-party-cookies"]
+  }
+]

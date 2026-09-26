@@ -1,0 +1,126 @@
+{
+  "category": "express",
+  "intro": "The Express patterns behind clean, predictable HTTP APIs.",
+  "entries": [
+    {
+      "id": "rev-express-middleware",
+      "category": "express",
+      "term": "Middleware",
+      "short": "Functions that run in order, each able to pass the request on.",
+      "medium": "Signature is (req, res, next). next() passes control on, next(err) jumps to the error handler, and ending the response stops the chain. Order matters: parsing before handlers, auth before protected routes.",
+      "detail": "Middleware can be global, scoped to a path, or mounted on a router. Keep it small and single-purpose.",
+      "related": "express-middleware",
+      "tags": ["middleware"]
+    },
+    {
+      "id": "rev-express-error-handler",
+      "category": "express",
+      "term": "Error handler",
+      "short": "A four-argument middleware registered last.",
+      "medium": "Express identifies it by the (err, req, res, next) signature. It should map known errors to statuses and hide internals for unknown ones, logging the stack server-side.",
+      "detail": "A three-argument handler is treated as normal middleware and never catches errors, which is a common mistake.",
+      "related": "express-error-handling",
+      "tags": ["errors"]
+    },
+    {
+      "id": "rev-express-async-errors",
+      "category": "express",
+      "term": "Async errors",
+      "short": "Rejected promises do not reach the error handler by default.",
+      "medium": "Express catches synchronous throws, not promise rejections. Wrap async handlers so the rejection calls next(err), or use Express 5 which forwards them automatically.",
+      "detail": "The symptom is a hanging request or an unhandled rejection crash rather than a clean 500.",
+      "related": "express-gotcha-async-errors",
+      "tags": ["errors", "async"]
+    },
+    {
+      "id": "rev-express-routing",
+      "category": "express",
+      "term": "Routing",
+      "short": "Map method and path to a handler; group routes in routers.",
+      "medium": "app.get(path, handler) declares a route. Params come from :id on req.params, query from req.query. A Router is a mini-app mounted at a prefix with relative paths inside.",
+      "detail": "First match wins, so register /users/me before /users/:id or 'me' is captured as an id.",
+      "related": "express-routing",
+      "tags": ["routing"]
+    },
+    {
+      "id": "rev-express-handlers-thin",
+      "category": "express",
+      "term": "Thin handlers",
+      "short": "HTTP concerns in the handler, logic in a service.",
+      "medium": "The handler validates input, calls a service, and shapes the response. Business logic lives in a service layer that does not know about req and res, which makes it testable on its own.",
+      "detail": "Fat handlers that mix validation, queries and response shaping are hard to test and easy to duplicate.",
+      "related": "express-routing",
+      "tags": ["design"]
+    },
+    {
+      "id": "rev-express-rest",
+      "category": "express",
+      "term": "REST design",
+      "short": "Resources as nouns, methods as verbs.",
+      "medium": "GET reads, POST creates, PUT or PATCH updates, DELETE removes. Use nested paths for ownership, query params for filter and pagination, and never put verbs in the path.",
+      "detail": "Return the created resource with a Location header on 201 so the client does not have to guess the id.",
+      "related": "express-rest-design",
+      "tags": ["rest", "api"]
+    },
+    {
+      "id": "rev-express-status",
+      "category": "express",
+      "term": "Status codes",
+      "short": "They carry meaning; do not return 200 for everything.",
+      "medium": "201 created, 204 no content, 400 bad request, 401 unauthenticated, 403 unauthorized, 404 not found, 409 conflict, 422 validation, 429 rate limited, 500 server fault.",
+      "detail": "401 means you are not authenticated; 403 means you are but you may not do this. Interviewers ask this one often.",
+      "related": "express-rest-design",
+      "tags": ["rest", "api"]
+    },
+    {
+      "id": "rev-express-error-shape",
+      "category": "express",
+      "term": "Error shape",
+      "short": "One consistent error format across every endpoint.",
+      "medium": "Something like { error: { code, message, details } } means clients handle failures in one place. Never return 200 with an error inside it, and never leak stack traces.",
+      "detail": "Consistency here is what makes a client SDK or a retry policy possible.",
+      "related": "express-error-handling",
+      "tags": ["api", "errors"]
+    },
+    {
+      "id": "rev-express-validation",
+      "category": "express",
+      "term": "Input validation",
+      "short": "Validate at the edge and reject early.",
+      "medium": "Parse and validate the body, params and query before the handler logic runs, using a schema library such as zod or joi. Return 422 with field-level details.",
+      "detail": "Validation is not a security boundary on its own, but it stops malformed data from reaching the database and gives clients clear errors.",
+      "related": "express-rest-design",
+      "tags": ["validation"]
+    },
+    {
+      "id": "rev-express-pagination",
+      "category": "express",
+      "term": "Pagination",
+      "short": "Every collection endpoint needs it.",
+      "medium": "Offset pagination is simple but slow and unstable on deep pages. Cursor pagination filters on the last seen key and stays constant-cost, which is what large collections should use.",
+      "detail": "Return the cursor in the response so the client can request the next page without computing offsets.",
+      "related": "express-cheatsheet",
+      "tags": ["api", "pagination"]
+    },
+    {
+      "id": "rev-express-security",
+      "category": "express",
+      "term": "Baseline hardening",
+      "short": "The defaults you set on every Express app.",
+      "medium": "helmet for headers, CORS restricted to known origins, a body size limit, rate limiting on auth endpoints, and parameterised queries. Keep dependencies patched.",
+      "detail": "Trust the proxy setting correctly behind a load balancer so rate limiting and secure cookies see the real client address and protocol.",
+      "related": "express-cheatsheet",
+      "tags": ["security"]
+    },
+    {
+      "id": "rev-express-versioning",
+      "category": "express",
+      "term": "Versioning",
+      "short": "Change the API without breaking clients.",
+      "medium": "Put the version in the path, /v1/, or in a header. Additive changes such as new optional fields are safe; removing or renaming fields is a breaking change that needs a new version.",
+      "detail": "Deprecate loudly with a sunset header and a changelog rather than removing endpoints silently.",
+      "related": "express-rest-design",
+      "tags": ["api"]
+    }
+  ]
+}

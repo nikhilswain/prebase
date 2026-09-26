@@ -1,0 +1,285 @@
+[
+  {
+    "id": "a11y-pour",
+    "slug": "wcag-pour",
+    "category": "accessibility",
+    "type": "concept",
+    "title": "WCAG and the POUR Principles",
+    "summary": "Perceivable, operable, understandable, robust: the four pillars the guidelines are organised around.",
+    "difficulty": "easy",
+    "tags": ["wcag", "standards"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-04",
+    "definition": "The Web Content Accessibility Guidelines are the standard for accessible web content, organised around four principles: Perceivable, Operable, Understandable and Robust, known as POUR. Each principle has success criteria at three conformance levels, A, AA and AAA.",
+    "explanation": [
+      "Perceivable means information must be available to the senses. Text alternatives for images, captions for video, sufficient contrast, and content that works when zoomed or when CSS is off all live here.",
+      "Operable means it must work without a mouse. Everything interactive must be reachable and usable by keyboard, focus must be visible, there must be enough time to complete tasks, and nothing should flash in a way that could trigger seizures.",
+      "Understandable means the interface and the content should be predictable and clear. Consistent navigation, clear labels, helpful error messages and identifying the language of the page all help.",
+      "Robust means it must work with a wide range of user agents and assistive technologies, now and in the future. Using valid, semantic markup is the practical expression of this principle.",
+      "AA is the level most legal requirements reference, so it is the usual target. AAA is aspirational and not always achievable for all content."
+    ],
+    "keyPoints": [
+      "Perceivable, Operable, Understandable, Robust",
+      "Levels A, AA and AAA; AA is the common target",
+      "AA is what most accessibility legislation points at",
+      "Robust means semantic, valid markup that assistive tech understands"
+    ],
+    "example": {
+      "language": "text",
+      "caption": "A few AA-level expectations.",
+      "code": "Perceivable  contrast ratio >= 4.5:1 for body text\nOperable      all interactive elements reachable by keyboard\nUnderstandable labels and error messages that explain the problem\nRobust        valid semantic HTML with correct roles and names"
+    },
+    "related": ["a11y-keyboard", "a11y-contrast", "a11y-cheatsheet"]
+  },
+  {
+    "id": "a11y-keyboard",
+    "slug": "keyboard-and-focus",
+    "category": "accessibility",
+    "type": "question",
+    "title": "How do you make an interface keyboard accessible?",
+    "summary": "Everything interactive is reachable by Tab, operable with the keyboard, and focus is always visible.",
+    "difficulty": "medium",
+    "tags": ["keyboard", "focus"],
+    "featured": true,
+    "reviewStatus": "verified",
+    "updated": "2026-09-04",
+    "shortAnswer": "Use real interactive elements so they are focusable and respond to keys, keep a logical tab order, make focus visible, and manage focus when content appears or disappears. Never remove the focus outline without replacing it with something equally clear.",
+    "explanation": [
+      "Native elements come with keyboard support for free. A button activates on Enter and Space, a link on Enter, a checkbox on Space. The moment you rebuild one from a div you have to reimplement all of it, and it is almost always incomplete.",
+      "Tab order follows the DOM order, so structure the page in the order a person would read it. Positive tabindex breaks the natural order and should be avoided; if you need to move an element in the tab order, move it in the DOM instead.",
+      "Focus must be visible. Removing the outline with outline: none and adding nothing back leaves keyboard users lost. Style :focus-visible so a clear ring appears for keyboard users without cluttering the experience for mouse users.",
+      "Manage focus for dynamic content. When a dialog opens, move focus into it and trap it there until it closes, then return focus to the element that opened it. When content is removed, move focus somewhere sensible rather than letting it fall back to the body.",
+      "Skip links let keyboard users jump past repeated navigation to the main content, and landmarks plus headings let them jump around the page with a screen reader."
+    ],
+    "keyPoints": [
+      "Use native interactive elements so keys work for free",
+      "Tab order follows the DOM; avoid positive tabindex",
+      "Never remove focus outlines without a replacement",
+      "Move and trap focus in dialogs, restore it on close"
+    ],
+    "example": {
+      "language": "css",
+      "caption": "A visible focus ring for keyboard users only.",
+      "code": ":focus-visible {\n  outline: 2px solid var(--accent);\n  outline-offset: 2px;\n}\n\n/* never do this without an alternative */\n/* button:focus { outline: none; } */"
+    },
+    "commonMistakes": [
+      "Removing focus outlines globally to make things look cleaner",
+      "Using divs with click handlers that cannot be reached by keyboard",
+      "Opening a dialog without moving focus into it"
+    ],
+    "followUps": [
+      "What is focus trapping and when do you need it?",
+      "How does :focus-visible differ from :focus?",
+      "How do you restore focus when a dialog closes?"
+    ],
+    "realWorld": "Keyboard access is the fastest accessibility check you can run: put the mouse away and try to use the whole page.",
+    "related": ["a11y-aria", "a11y-gotcha-focus-trap", "a11y-cheatsheet"]
+  },
+  {
+    "id": "a11y-aria",
+    "slug": "aria",
+    "category": "accessibility",
+    "type": "question",
+    "title": "When should you use ARIA?",
+    "summary": "Only when a native element cannot express what you built, and never as a substitute for behaviour.",
+    "difficulty": "medium",
+    "tags": ["aria", "semantics"],
+    "reviewStatus": "verified",
+    "updated": "2026-09-04",
+    "shortAnswer": "Use ARIA to fill a gap a native element cannot cover, such as naming an icon-only button or describing a custom widget's state. Do not use it to fix a div that should have been a button, and remember ARIA only changes what is announced, never what the element does. The first rule of ARIA is to prefer a native element.",
+    "explanation": [
+      "ARIA is a set of attributes that describe roles, states and properties to assistive technology. It adds no behaviour. role=button on a div does not make it focusable, clickable by keyboard, or part of a form; you still have to add all of that yourself.",
+      "It is genuinely useful in specific cases: aria-label for an icon-only button, aria-expanded on a disclosure control, aria-current on the active navigation item, aria-live for a region that updates dynamically, and aria-describedby to link a field to its hint.",
+      "It is easy to do harm. A wrong role can make a screen reader announce something misleading, and redundant ARIA such as role=button on an actual button adds noise. Bad ARIA is worse than no ARIA.",
+      "The practical test: if a native element exists that does what you need, use it and skip the ARIA. Reach for ARIA only for the custom pieces, and always pair it with the keyboard behaviour it implies."
+    ],
+    "keyPoints": [
+      "ARIA changes announcement, not behaviour",
+      "Prefer a native element over a role on a div",
+      "Useful for names, states and live regions",
+      "Bad or redundant ARIA is worse than none"
+    ],
+    "example": {
+      "language": "html",
+      "caption": "ARIA for the gap, native elements for the rest.",
+      "code": "<!-- icon-only button needs a name -->\n<button aria-label=\"Close\">\n  <svg aria-hidden=\"true\">...</svg>\n</button>\n\n<!-- disclosure reports its state -->\n<button aria-expanded=\"false\" aria-controls=\"panel\">Details</button>\n\n<!-- dynamic status -->\n<p role=\"status\">3 results found</p>"
+    },
+    "commonMistakes": [
+      "Adding role=button to a div and assuming it now behaves like one",
+      "Putting ARIA on an element that already has the right native semantics",
+      "Using aria-label to hide a visible label that does not match it"
+    ],
+    "followUps": [
+      "Why is a div with role=button still not a button?",
+      "When would you use aria-live?",
+      "What is the first rule of ARIA?"
+    ],
+    "related": ["a11y-keyboard", "a11y-names-roles-states", "a11y-cheatsheet"]
+  },
+  {
+    "id": "a11y-names-roles-states",
+    "slug": "names-roles-states",
+    "category": "accessibility",
+    "type": "concept",
+    "title": "Accessible Names, Roles and States",
+    "summary": "What a control is called, what it is, and its current condition, which is what assistive tech reads out.",
+    "difficulty": "medium",
+    "tags": ["aria", "screen-reader"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-04",
+    "definition": "Assistive technology describes every interactive element through three things: its accessible name (what it is called), its role (what kind of thing it is), and its state or properties (its current condition, such as expanded or checked). Getting these three right is most of what accessibility work actually is.",
+    "explanation": [
+      "The accessible name comes from the element's content, an associated label, an aria-label, or an aria-labelledby pointing at another element. An icon-only button has no text content, so without a name it is announced as an unlabelled button.",
+      "The role usually comes from the element itself. A button has the button role, a link has the link role. Custom widgets need an explicit role, and that role carries expectations of behaviour, so a role=tab also implies arrow-key navigation.",
+      "States are what make a control's condition legible. aria-expanded, aria-checked, aria-selected, aria-pressed and aria-disabled communicate state, and they must be kept in sync as the UI changes. A stale aria-expanded is a real bug.",
+      "The browser's accessibility tree is what screen readers read. You can inspect it in DevTools to see exactly what is announced, which turns a guessing game into a check."
+    ],
+    "keyPoints": [
+      "Name, role and state are what get announced",
+      "Icon-only controls need an explicit name",
+      "Roles carry behavioural expectations",
+      "Keep ARIA states in sync with the UI"
+    ],
+    "example": {
+      "language": "html",
+      "caption": "A toggle that reports its state correctly.",
+      "code": "<button aria-pressed=\"false\" aria-label=\"Dark mode\">\n  <svg aria-hidden=\"true\">...</svg>\n</button>\n\n<script>\n  // on toggle, update the state, not just the icon\n  button.setAttribute('aria-pressed', String(isOn));\n</script>"
+    },
+    "related": ["a11y-aria", "a11y-keyboard", "a11y-cheatsheet"]
+  },
+  {
+    "id": "a11y-contrast",
+    "slug": "color-and-contrast",
+    "category": "accessibility",
+    "type": "question",
+    "title": "What are the color contrast requirements?",
+    "summary": "4.5:1 for body text and 3:1 for large text and UI boundaries, and never color as the only signal.",
+    "difficulty": "easy",
+    "tags": ["contrast", "color"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-04",
+    "shortAnswer": "WCAG AA requires a contrast ratio of at least 4.5:1 for normal text and 3:1 for large text, which is about 24px or 18.66px bold. Non-text elements that carry meaning, such as input borders, icons and focus indicators, also need 3:1 against their background. And color must never be the only way to convey information.",
+    "explanation": [
+      "Contrast is a ratio between the relative luminance of the text and its background, from 1:1 for identical colors to 21:1 for black on white. Muted gray text on a light background is the most common failure, which is easy to fix by darkening the text a step.",
+      "Large text gets a lower threshold because it is easier to read. Disabled controls are exempt from the requirement, though making them genuinely unreadable is a usability problem regardless.",
+      "Color-only meaning is a separate rule. A form that marks errors only in red, or a chart that distinguishes series only by hue, fails for people with color vision deficiency and for anyone in bright sunlight. Add an icon, a pattern, a label or a text description.",
+      "Contrast is also about states. A focus ring that is barely visible against the background is a real barrier, and link text that only differs from body text by color should be distinguishable another way, such as an underline."
+    ],
+    "keyPoints": [
+      "4.5:1 for body text, 3:1 for large text",
+      "3:1 for meaningful icons, borders and focus indicators",
+      "Never use color alone to convey meaning",
+      "Check muted text and focus states first"
+    ],
+    "example": {
+      "language": "css",
+      "caption": "Make links distinguishable beyond color.",
+      "code": "a {\n  color: var(--accent);\n  text-decoration: underline;\n  text-underline-offset: 3px;\n}"
+    },
+    "commonMistakes": [
+      "Muted gray text that looks elegant but fails 4.5:1",
+      "Error states signalled only with red",
+      "A focus ring with too little contrast to see"
+    ],
+    "followUps": [
+      "What ratio is required for large text?",
+      "How would you fix a chart that relies on color?",
+      "Why do links need more than color to stand out?"
+    ],
+    "related": ["a11y-pour", "a11y-cheatsheet", "a11y-keyboard"]
+  },
+  {
+    "id": "a11y-gotcha-focus-trap",
+    "slug": "gotcha-focus-and-dialogs",
+    "category": "accessibility",
+    "type": "gotcha",
+    "title": "Focus that escapes, or never moves",
+    "summary": "A dialog opens without moving focus, or Tab walks out of it into the page behind.",
+    "difficulty": "medium",
+    "tags": ["focus", "dialogs", "gotcha"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-04",
+    "scenario": "A modal is opened by a button. Focus stays on the button behind the overlay, so pressing Tab moves through the page underneath, and a screen reader user has no idea the dialog appeared. When it closes, focus is lost to the top of the document.",
+    "problem": "Visually hiding the page behind an overlay does nothing for the accessibility tree or the tab order. The content underneath is still focusable, so keyboard focus wanders into it. A dialog that does not move focus on open and restore it on close disorients exactly the users who depend on a predictable order.",
+    "example": {
+      "language": "html",
+      "caption": "The native dialog element handles focus and the backdrop for you.",
+      "code": "<dialog id=\"confirm\">\n  <p>Delete this item?</p>\n  <button autofocus>Cancel</button>\n  <button>Delete</button>\n</dialog>\n\n<script>\n  dialog.showModal(); // moves focus in, traps it, dims the page\n</script>"
+    },
+    "fix": "Move focus into the dialog when it opens, keep Tab within it while it is open, and return focus to the trigger when it closes. The native dialog element with showModal does most of this for you. Also mark the rest of the page inert while a modal is open so it is neither focusable nor announced, and give the dialog a name with aria-labelledby.",
+    "keyPoints": [
+      "Opening a dialog must move focus into it",
+      "Tab must stay inside until it closes",
+      "Restore focus to the trigger on close",
+      "Prefer the native dialog element with showModal"
+    ],
+    "related": ["a11y-keyboard", "a11y-names-roles-states", "a11y-cheatsheet"]
+  },
+  {
+    "id": "a11y-cheatsheet",
+    "slug": "accessibility-cheat-sheet",
+    "category": "accessibility",
+    "type": "cheat-sheet",
+    "title": "Accessibility Cheat Sheet",
+    "summary": "The checks that catch most problems, and the patterns that prevent them.",
+    "difficulty": "easy",
+    "tags": ["reference", "cheat-sheet"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-04",
+    "description": "A quick reference for the accessibility rules that come up most in reviews and interviews.",
+    "sections": [
+      {
+        "title": "POUR",
+        "items": [
+          { "label": "Perceivable", "value": "Alt text, captions, contrast, works when zoomed" },
+          { "label": "Operable", "value": "Keyboard reachable, visible focus, enough time" },
+          { "label": "Understandable", "value": "Predictable, clear labels and errors" },
+          { "label": "Robust", "value": "Semantic, valid markup for assistive tech" }
+        ]
+      },
+      {
+        "title": "Keyboard",
+        "items": [
+          { "label": "Reachable", "value": "Everything interactive is in the tab order" },
+          { "label": "Operable", "value": "Enter and Space activate, arrows move within widgets" },
+          { "label": "Focus visible", "value": "Style :focus-visible, never remove the ring" },
+          { "label": "Tab order", "value": "Follows the DOM; avoid positive tabindex" },
+          { "label": "Dialogs", "value": "Move focus in, trap it, restore it on close" },
+          { "label": "Skip link", "value": "Jump past repeated navigation" }
+        ]
+      },
+      {
+        "title": "Names, roles, states",
+        "items": [
+          { "label": "Icon-only button", "value": "aria-label for the name" },
+          { "label": "Decorative icon", "value": "aria-hidden=\"true\"" },
+          { "label": "Disclosure", "value": "aria-expanded, aria-controls" },
+          { "label": "Toggle", "value": "aria-pressed" },
+          { "label": "Live region", "value": "role=status or aria-live=polite" }
+        ]
+      },
+      {
+        "title": "Contrast and color",
+        "items": [
+          { "label": "Body text", "value": "At least 4.5:1" },
+          { "label": "Large text", "value": "At least 3:1" },
+          { "label": "UI and focus", "value": "At least 3:1" },
+          { "label": "Color alone", "value": "Never the only signal; add text or an icon" }
+        ]
+      },
+      {
+        "title": "Testing",
+        "items": [
+          { "label": "Keyboard only", "value": "Unplug the mouse and use the page" },
+          { "label": "Zoom 200%", "value": "Check nothing is cut off" },
+          { "label": "Accessibility tree", "value": "Inspect what is actually announced" },
+          { "label": "Automated checks", "value": "axe or Lighthouse catch a subset, not everything" },
+          { "label": "Screen reader", "value": "Test with VoiceOver, NVDA or TalkBack" }
+        ]
+      }
+    ],
+    "related": ["a11y-pour", "a11y-keyboard", "a11y-aria", "a11y-contrast", "a11y-names-roles-states"]
+  }
+]

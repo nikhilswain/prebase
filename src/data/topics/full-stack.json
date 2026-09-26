@@ -1,0 +1,237 @@
+[
+  {
+    "id": "fs-request-lifecycle",
+    "slug": "request-lifecycle",
+    "category": "full-stack",
+    "type": "concept",
+    "title": "The Request Lifecycle",
+    "summary": "What happens between a user clicking and a page appearing, from DNS to database and back.",
+    "difficulty": "medium",
+    "tags": ["architecture", "network"],
+    "featured": true,
+    "reviewStatus": "verified",
+    "updated": "2026-09-05",
+    "definition": "A request travels through several layers: DNS resolves the domain, a CDN or edge may answer from cache, a load balancer routes to an application server, the server runs the handler, which queries a database or cache, and the response travels back through the same layers. Understanding each hop is how you find where latency or failure comes from.",
+    "explanation": [
+      "DNS resolution maps a name to an address and is often the first cost. Connection setup follows: TCP, then TLS for HTTPS. Connection reuse and preconnect reduce this cost, which is why a warm connection makes a second request much faster.",
+      "The CDN or edge is next. If the response is cacheable and fresh, it is served here without touching your servers, which is both faster and cheaper. Cache keys, TTLs and Vary headers decide this.",
+      "The load balancer picks a healthy application instance. The instance runs middleware, then the route handler, which is where the real work happens: validate input, check authorization, read or write data, call other services.",
+      "Data access is usually the slowest part. The handler may read a cache first, then the database, and may write to a queue for slow follow-up work. Each of these is a place to be fast, to fail, or to go stale.",
+      "The response travels back, and the client renders it. Knowing this path is what lets you answer where to cache, where to retry, where to add a timeout, and where a bug could be hiding."
+    ],
+    "keyPoints": [
+      "DNS, connection setup, edge, load balancer, server, data, back",
+      "The edge answers cacheable requests without hitting your servers",
+      "Data access is usually the slowest hop",
+      "Each hop is a place to cache, time out, retry or fail"
+    ],
+    "example": {
+      "language": "text",
+      "caption": "The path, and where to intervene at each hop.",
+      "code": "DNS        -> reduce with preconnect, fast DNS\nTLS        -> reuse connections\nCDN/edge   -> cache static and cacheable API responses\nBalancer   -> route to healthy instances, terminate TLS\nServer     -> middleware, handler, validation, authz\nData       -> cache first, then DB; queue slow work\nResponse   -> compress, cache headers, stream if large"
+    },
+    "related": ["fs-api-design", "sd-caching", "fs-cheatsheet"]
+  },
+  {
+    "id": "fs-auth-session",
+    "slug": "auth-and-sessions",
+    "category": "full-stack",
+    "type": "concept",
+    "title": "Sessions vs JWT",
+    "summary": "Server-side session state that is revocable, versus a signed token the server does not store.",
+    "difficulty": "hard",
+    "tags": ["auth", "sessions", "jwt"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-05",
+    "definition": "A session stores the user's state on the server and gives the client an opaque session id in a cookie. A JWT is a signed token that carries claims in the client, which the server verifies without storing session state. Sessions are easy to revoke; JWTs are easy to scale but hard to invalidate before they expire.",
+    "explanation": [
+      "A session id is a random pointer to server-side state, usually in a shared store such as Redis so any instance can read it. To log someone out, you delete the session, and the next request fails immediately. This revocability is the main advantage.",
+      "A JWT is self-contained: a header, a payload of claims, and a signature. The server verifies the signature and trusts the claims without a lookup. That scales well and works across services, but the token is valid until it expires, so revoking it early requires a denylist or short lifetimes, which reintroduces state.",
+      "The practical pattern combines them: a short-lived access token, often a JWT, for cheap verification, plus a long-lived refresh token stored server-side so it can be revoked. The client refreshes the access token when it expires, and logout revokes the refresh token.",
+      "Storage matters as much as the scheme. An HttpOnly cookie resists token theft by XSS but needs CSRF protection. An in-memory token resists CSRF but is lost on reload and must be paired with a refresh cookie. Whichever you choose, the server must still authorize every request."
+    ],
+    "keyPoints": [
+      "Sessions are server-side state and revocable",
+      "JWTs are self-contained, scalable and hard to revoke early",
+      "Short access token plus revocable refresh token is the common pattern",
+      "Storage choice trades XSS risk against CSRF risk"
+    ],
+    "example": {
+      "language": "text",
+      "caption": "The combined pattern.",
+      "code": "login    -> create session, set HttpOnly refresh cookie,\n            return a short-lived access token\nrequest  -> verify access token signature, no DB lookup\nrefresh  -> exchange refresh cookie for a new access token\nlogout   -> delete the session, refresh token stops working"
+    },
+    "related": ["sec-token-storage", "sec-csrf", "fs-cheatsheet"]
+  },
+  {
+    "id": "fs-api-design",
+    "slug": "client-server-contract",
+    "category": "full-stack",
+    "type": "question",
+    "title": "How do you design the contract between client and server?",
+    "summary": "Define resources, shapes, errors and loading states up front so both sides agree.",
+    "difficulty": "medium",
+    "tags": ["api", "contract", "types"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-05",
+    "shortAnswer": "Agree on the resources, the exact shape of requests and responses, the error format, and how pagination and filtering work, then share those types between client and server so a change on one side fails the build on the other. The contract is the interface, and it should be explicit and versioned, not discovered by reading the client code.",
+    "explanation": [
+      "Start from the resources and the operations the UI actually needs, not from the database tables. A screen that needs a user with their recent orders might be one endpoint that returns exactly that, rather than three round trips the client stitches together.",
+      "Make the shapes explicit. A shared type or schema, generated from the server or defined once and imported by both, means the client cannot drift from the server. Tools that generate a typed client from an OpenAPI or tRPC definition remove a whole class of mismatch bugs.",
+      "Define errors as carefully as success. One error shape across endpoints, meaningful status codes, and field-level validation details let the client show precise messages and decide what to retry. Loading and empty states are part of the contract too: the client needs to know the difference between no data and not loaded yet.",
+      "Design for the network, not against it. Paginate collections, support cancellation, and make writes idempotent so a retry is safe. Decide where the boundary between client and server logic sits: keep authorization and business rules on the server, and keep presentation and interaction on the client."
+    ],
+    "keyPoints": [
+      "Design around UI needs, not database tables",
+      "Share types or generate a client so the two sides cannot drift",
+      "Define the error shape and loading states too",
+      "Authorize on the server; never trust the client"
+    ],
+    "example": {
+      "language": "typescript",
+      "caption": "One shared type keeps both sides honest.",
+      "code": "export type Order = {\n  id: string;\n  total: number;\n  status: 'pending' | 'paid' | 'shipped';\n  createdAt: string;\n};\n\nexport type ApiError = {\n  error: { code: string; message: string; fields?: Record<string, string> };\n};"
+    },
+    "commonMistakes": [
+      "Leaking database column names straight into the API shape",
+      "Returning different error formats from different endpoints",
+      "Putting authorization rules in the client and trusting them"
+    ],
+    "followUps": [
+      "How would you keep client and server types in sync?",
+      "Where should business logic live?",
+      "How do you handle partial failures across several calls?"
+    ],
+    "related": ["fs-request-lifecycle", "express-rest-design", "fs-cheatsheet"]
+  },
+  {
+    "id": "fs-monolith-vs-microservices",
+    "slug": "monolith-vs-microservices",
+    "category": "full-stack",
+    "type": "comparison",
+    "title": "Monolith vs Microservices",
+    "summary": "One deployable application versus many small services that talk over the network.",
+    "difficulty": "hard",
+    "tags": ["architecture", "services"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-05",
+    "options": [
+      { "name": "Monolith", "summary": "One codebase and deployable unit" },
+      { "name": "Microservices", "summary": "Many independently deployed services" }
+    ],
+    "rows": [
+      { "label": "Deployment", "values": ["One artefact, deploy everything together", "Independent deploys per service"] },
+      { "label": "Complexity", "values": ["In the codebase, managed by modules", "In the network, distributed and harder to debug"] },
+      { "label": "Data", "values": ["One database, easy transactions and joins", "Per-service data, eventual consistency, sagas"] },
+      { "label": "Scaling", "values": ["Scale the whole app, even hot paths", "Scale individual services"] },
+      { "label": "Team fit", "values": ["Simple for small teams, one process", "Needs ownership boundaries and platform work"] },
+      { "label": "Failure", "values": ["One failure domain", "Partial failure; needs timeouts, retries, circuit breakers"] }
+    ],
+    "verdict": "Start with a modular monolith. It gives you transactions, one deploy and simple debugging, and clean module boundaries let you extract a service later if you actually need to. Move to microservices when independent scaling or team autonomy genuinely demands it, and accept the cost: distributed data, network failure, and far more operational surface. Splitting early for its own sake trades easy problems for hard ones.",
+    "pickWhen": [
+      { "option": "Monolith", "guidance": "You are a small team, the domain is not yet clear, or you want transactions and one deploy." },
+      { "option": "Microservices", "guidance": "Independent teams need to deploy independently, or one component must scale or fail separately." }
+    ],
+    "example": {
+      "language": "text",
+      "caption": "The modular monolith path to services.",
+      "code": "phase 1  modular monolith: clear module boundaries, one DB\nphase 2  extract the busiest module if it needs its own scaling\nphase 3  split further only when team autonomy demands it"
+    },
+    "related": ["fs-request-lifecycle", "sd-message-queues", "fs-cheatsheet"]
+  },
+  {
+    "id": "fs-gotcha-stale-cache",
+    "slug": "gotcha-stale-cache-layers",
+    "category": "full-stack",
+    "type": "gotcha",
+    "title": "Stale data across cache layers",
+    "summary": "A user updates a record, but the old value keeps appearing because a cache somewhere did not know.",
+    "difficulty": "hard",
+    "tags": ["caching", "consistency", "gotcha"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-05",
+    "scenario": "A user edits their profile, the write succeeds, but the page still shows the old name. Reloading sometimes fixes it, sometimes does not. The database has the right value, so the bug is somewhere between the database and the screen.",
+    "problem": "A full-stack app caches at many layers: the browser, a CDN or edge, an application cache such as Redis, a database query cache, and the client's own state or router cache. A write usually invalidates the database but not the others, so a stale copy survives at whichever layer the read hits first. The result is inconsistent and hard to reproduce because it depends on which layer answers.",
+    "example": {
+      "language": "text",
+      "caption": "The same value cached in five places.",
+      "code": "write -> DB updated\nread  -> browser cache  (stale)\n         edge cache     (stale)\n         app cache      (stale)\n         DB             (fresh, but never reached)"
+    },
+    "fix": "Know every layer a value passes through and invalidate the ones that matter on write. Use cache tags or keys so a mutation can purge precisely the affected entries, and prefer deleting cache entries over updating them to avoid races. For the client, refetch or invalidate after a mutation rather than trusting local state. Where strong freshness is required, shorten the TTL or bypass the cache for that request. A useful heuristic: cache aggressively for reads that tolerate staleness, and make the write path explicitly responsible for what it invalidates.",
+    "keyPoints": [
+      "Caches exist at browser, edge, app, database and client layers",
+      "A write must invalidate every layer that could serve stale data",
+      "Prefer deleting cache entries over updating them",
+      "Cache what tolerates staleness; be explicit about the rest"
+    ],
+    "related": ["sd-caching", "nextjs-caching", "fs-cheatsheet"]
+  },
+  {
+    "id": "fs-cheatsheet",
+    "slug": "full-stack-cheat-sheet",
+    "category": "full-stack",
+    "type": "cheat-sheet",
+    "title": "Full Stack Cheat Sheet",
+    "summary": "The request path, auth, data and the boundaries between client and server.",
+    "difficulty": "medium",
+    "tags": ["reference", "cheat-sheet"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-09-05",
+    "description": "A quick reference for connecting the client, the server and the data layer end to end.",
+    "sections": [
+      {
+        "title": "Request path",
+        "items": [
+          { "label": "DNS", "value": "Name to address", "note": "preconnect to warm it" },
+          { "label": "TLS", "value": "Secure connection", "note": "Reuse connections" },
+          { "label": "Edge / CDN", "value": "Answers cacheable requests" },
+          { "label": "Load balancer", "value": "Routes to healthy instances" },
+          { "label": "Server", "value": "Middleware, handler, validation, authz" },
+          { "label": "Data", "value": "Cache first, then DB; queue slow work" }
+        ]
+      },
+      {
+        "title": "Auth",
+        "items": [
+          { "label": "Session", "value": "Server state, revocable", "note": "Opaque id in a cookie" },
+          { "label": "JWT", "value": "Self-contained, hard to revoke early" },
+          { "label": "Common pattern", "value": "Short access token plus revocable refresh token" },
+          { "label": "Storage", "value": "HttpOnly cookie vs in-memory token", "note": "XSS vs CSRF trade-off" },
+          { "label": "Always", "value": "Authorize on the server for every request" }
+        ]
+      },
+      {
+        "title": "API contract",
+        "items": [
+          { "label": "Design for the UI", "value": "Endpoints that match screens, not tables" },
+          { "label": "Shared types", "value": "Generate a typed client so both sides agree" },
+          { "label": "Errors", "value": "One shape, meaningful statuses" },
+          { "label": "Pagination", "value": "Cursor for large or changing data" },
+          { "label": "Idempotency", "value": "Safe retries on writes" }
+        ]
+      },
+      {
+        "title": "Caching layers",
+        "items": [
+          { "label": "Browser", "value": "HTTP cache and client state" },
+          { "label": "Edge / CDN", "value": "TTL, cache keys, Vary" },
+          { "label": "Application", "value": "Redis, cache-aside" },
+          { "label": "Database", "value": "Query cache, materialized views" },
+          { "label": "On write", "value": "Invalidate every layer that could be stale" }
+        ]
+      },
+      {
+        "title": "Architecture",
+        "items": [
+          { "label": "Start", "value": "Modular monolith" },
+          { "label": "Extract", "value": "When a module needs its own scaling" },
+          { "label": "Split further", "value": "When team autonomy demands it" },
+          { "label": "Cost of services", "value": "Distributed data, partial failure, more ops" }
+        ]
+      }
+    ],
+    "related": ["fs-request-lifecycle", "fs-auth-session", "fs-api-design", "fs-monolith-vs-microservices", "fs-gotcha-stale-cache"]
+  }
+]

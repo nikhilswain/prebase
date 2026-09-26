@@ -1,0 +1,126 @@
+{
+  "category": "browser-internals",
+  "intro": "How the browser runs your code, schedules work and stores data.",
+  "entries": [
+    {
+      "id": "rev-browser-engine",
+      "category": "browser-internals",
+      "term": "JS engine pipeline",
+      "short": "Parse, bytecode, interpret, then JIT-compile hot code.",
+      "medium": "The interpreter starts fast so the page is interactive, and the optimising compiler catches up on hot functions. If an assumption breaks, the engine deoptimises and falls back.",
+      "detail": "The JIT optimises by object shape. Keeping objects monomorphic, always the same properties and types, keeps property access fast.",
+      "related": "browser-js-engine",
+      "tags": ["v8", "engine"]
+    },
+    {
+      "id": "rev-browser-hidden-class",
+      "category": "browser-internals",
+      "term": "Hidden classes",
+      "short": "Objects with the same shape share a fast property layout.",
+      "medium": "Creating objects the same way gives them the same hidden class, turning property access into a fast offset lookup. Adding or deleting properties, or mixing types, changes the shape and can slow access.",
+      "detail": "Initialise all properties in the constructor and avoid deleting them to stay monomorphic.",
+      "related": "browser-js-engine",
+      "tags": ["engine", "performance"]
+    },
+    {
+      "id": "rev-browser-gc",
+      "category": "browser-internals",
+      "term": "Garbage collection",
+      "short": "Generational; leaks come from references that stay reachable.",
+      "medium": "New objects are collected cheaply in a young generation; survivors are promoted. A leak is not forgotten memory but memory still referenced, usually by a lingering closure, an event listener or an unbounded cache.",
+      "detail": "Detach listeners, abort fetches and clear intervals when a component unmounts to let the collector reclaim.",
+      "related": "browser-js-engine",
+      "tags": ["memory"]
+    },
+    {
+      "id": "rev-browser-processes",
+      "category": "browser-internals",
+      "term": "Processes and threads",
+      "short": "Browser, renderer, network and GPU processes.",
+      "medium": "Each site usually gets its own renderer process for security and stability. Inside a renderer, the main thread runs JS, style, layout and paint, while the compositor, raster threads and workers run elsewhere.",
+      "detail": "Process isolation is why a crash in one tab does not take down the browser, and why cross-origin iframes are restricted.",
+      "related": "browser-processes",
+      "tags": ["processes"]
+    },
+    {
+      "id": "rev-browser-main-thread",
+      "category": "browser-internals",
+      "term": "The main thread",
+      "short": "One thread runs JS, style, layout and paint.",
+      "medium": "A long task there delays input and frames, which is what INP measures. The compositor can scroll and animate transform and opacity without the main thread, so those stay smooth.",
+      "detail": "Break up work, yield with scheduler.yield, and move heavy computation to a worker.",
+      "related": "browser-processes",
+      "tags": ["main-thread"]
+    },
+    {
+      "id": "rev-browser-storage",
+      "category": "browser-internals",
+      "term": "Client storage",
+      "short": "Cookies, localStorage, IndexedDB, Cache API.",
+      "medium": "Cookies are small and sent with requests. localStorage is synchronous and string-only. sessionStorage is per tab. IndexedDB is async and suited to large structured data. The Cache API stores responses for service workers.",
+      "detail": "Storage can be evicted under pressure. Request persistence with navigator.storage.persist when the data matters.",
+      "related": "browser-storage",
+      "tags": ["storage"]
+    },
+    {
+      "id": "rev-browser-cookies",
+      "category": "browser-internals",
+      "term": "Cookies",
+      "short": "The only storage the server sees automatically.",
+      "medium": "About 4 KB each and sent on every matching request, so they are for small values like a session id. HttpOnly, Secure and SameSite control access and sending.",
+      "detail": "They add to every request, so never store data there that the server does not need.",
+      "related": "browser-storage",
+      "tags": ["cookies"]
+    },
+    {
+      "id": "rev-browser-third-party",
+      "category": "browser-internals",
+      "term": "Third-party cookies",
+      "short": "Cross-site cookies are blocked or partitioned.",
+      "medium": "SameSite=Lax is the default, Safari blocks third-party cookies, and Chrome partitions them. Embeds, SSO and analytics that relied on a shared cross-site cookie break.",
+      "detail": "Use the Storage Access API, postMessage, tokens or FedCM instead, and design for first-party data.",
+      "related": "browser-gotcha-third-party-cookies",
+      "tags": ["privacy", "cookies"]
+    },
+    {
+      "id": "rev-browser-event-loop",
+      "category": "browser-internals",
+      "term": "Event loop",
+      "short": "Tasks, microtasks and a render step.",
+      "medium": "After each task the microtask queue drains fully, then the browser may render, then the next task runs. Rendering never happens mid-task, which is why a long task freezes the UI.",
+      "detail": "This is the same model as Node, with rendering inserted between tasks instead of I/O phases.",
+      "related": "browser-event-loop-comparison",
+      "tags": ["event-loop"]
+    },
+    {
+      "id": "rev-browser-raf",
+      "category": "browser-internals",
+      "term": "requestAnimationFrame",
+      "short": "Run a callback before the next paint.",
+      "medium": "Use it for visual updates so they align with the frame and are batched. It pauses when the tab is hidden, unlike setInterval.",
+      "detail": "Reading layout inside a rAF callback after writing can still thrash; batch reads and writes.",
+      "related": "browser-cheatsheet",
+      "tags": ["scheduling", "animation"]
+    },
+    {
+      "id": "rev-browser-workers",
+      "category": "browser-internals",
+      "term": "Web Workers",
+      "short": "Run JavaScript off the main thread.",
+      "medium": "A worker has no DOM access and communicates by message passing, with SharedArrayBuffer for shared memory. Service workers are a different kind: they act as a network proxy for offline and caching.",
+      "detail": "Offload CPU-heavy work such as parsing, image processing or encryption so the main thread stays free for input and paint.",
+      "related": "web-workers",
+      "tags": ["workers"]
+    },
+    {
+      "id": "rev-browser-security-model",
+      "category": "browser-internals",
+      "term": "The browser security model",
+      "short": "Same-origin policy plus process isolation.",
+      "medium": "Scripts are restricted to their origin for reading responses, and sites are isolated in separate processes. CORS, cookies and iframe rules all build on these two foundations.",
+      "detail": "Understanding the model explains why CORS is browser-enforced and why a server must still authorize every request.",
+      "related": "sec-cors-same-origin",
+      "tags": ["security", "browser"]
+    }
+  ]
+}

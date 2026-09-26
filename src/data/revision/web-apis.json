@@ -1,0 +1,126 @@
+{
+  "category": "web-apis",
+  "intro": "The platform APIs behind networking, observers, storage and workers.",
+  "entries": [
+    {
+      "id": "rev-web-fetch",
+      "category": "web-apis",
+      "term": "fetch",
+      "short": "Promise-based, and it does not reject on HTTP errors.",
+      "medium": "The promise fulfils for any status, so check response.ok and throw yourself. Reading the body with res.json() or res.text() is a second await.",
+      "detail": "Wrap fetch in a helper that checks ok and parses the body, so every call handles errors the same way.",
+      "related": "web-fetch",
+      "tags": ["network"]
+    },
+    {
+      "id": "rev-web-abort",
+      "category": "web-apis",
+      "term": "AbortController",
+      "short": "Cancel an in-flight request.",
+      "medium": "Pass controller.signal to fetch and call abort() to cancel, which rejects with an AbortError. AbortSignal.timeout sets a deadline, and AbortSignal.any combines signals such as a timeout and an unmount cancel.",
+      "detail": "Cancelling stale requests is how search-as-you-type avoids races where an older response overwrites a newer one.",
+      "related": "web-fetch",
+      "tags": ["network", "async"]
+    },
+    {
+      "id": "rev-web-race",
+      "category": "web-apis",
+      "term": "Request races",
+      "short": "An older response can arrive after a newer one.",
+      "medium": "Abort the previous request when a new one starts, or tag responses with a sequence and ignore stale ones. Without this, a slow earlier request can overwrite fresh data.",
+      "detail": "This is a common bug in search boxes and filters, and it is invisible on a fast network.",
+      "related": "web-fetch",
+      "tags": ["network", "async"]
+    },
+    {
+      "id": "rev-web-intersection",
+      "category": "web-apis",
+      "term": "IntersectionObserver",
+      "short": "Know when an element enters the viewport.",
+      "medium": "The modern way to do lazy loading, infinite scroll and scroll reveals. It is asynchronous and computed by the browser, so it is far cheaper than a scroll listener that reads layout.",
+      "detail": "Set rootMargin to start loading before the element is visible, and unobserve once handled.",
+      "related": "web-observers",
+      "tags": ["observers"]
+    },
+    {
+      "id": "rev-web-resize",
+      "category": "web-apis",
+      "term": "ResizeObserver",
+      "short": "React to an element's size, not just the window.",
+      "medium": "It works for any element, which is what responsive components need, such as a chart that redraws to fit its container. It replaces window resize plus manual measurement.",
+      "detail": "Guard against loops: resizing inside the callback can trigger another resize if you are not careful.",
+      "related": "web-observers",
+      "tags": ["observers"]
+    },
+    {
+      "id": "rev-web-storage",
+      "category": "web-apis",
+      "term": "Web Storage",
+      "short": "localStorage and sessionStorage: sync, string-only.",
+      "medium": "localStorage persists and is shared across tabs; sessionStorage is per tab. Both are synchronous, so large reads and writes block the main thread, and both store strings only.",
+      "detail": "The storage event fires in other tabs when localStorage changes, which is how you sync a theme or logout across tabs.",
+      "related": "web-storage-api",
+      "tags": ["storage"]
+    },
+    {
+      "id": "rev-web-indexeddb",
+      "category": "web-apis",
+      "term": "IndexedDB",
+      "short": "An async database in the browser for volume.",
+      "medium": "It supports indexes, transactions and large structured data. The raw API is verbose, so use a wrapper such as idb or Dexie. It is the right choice when localStorage is too small or too blocking.",
+      "detail": "Storage is subject to quota and eviction. Check with navigator.storage.estimate and request persistence when it matters.",
+      "related": "web-storage-api",
+      "tags": ["storage"]
+    },
+    {
+      "id": "rev-web-workers",
+      "category": "web-apis",
+      "term": "Web Workers",
+      "short": "Run JavaScript off the main thread.",
+      "medium": "No DOM access, so communicate by postMessage. Transfer ownership of large buffers to avoid copying. Use them for parsing, image processing or encryption so the UI stays responsive.",
+      "detail": "The main thread is where input and paint happen, so moving heavy work off it directly improves INP.",
+      "related": "web-workers",
+      "tags": ["workers"]
+    },
+    {
+      "id": "rev-web-service-workers",
+      "category": "web-apis",
+      "term": "Service Workers",
+      "short": "A network proxy that enables offline and fast repeat visits.",
+      "medium": "It intercepts fetch events and can serve from the Cache API. It runs on HTTPS, persists independently of the page, and powers offline, push and background sync.",
+      "detail": "Version the cache and clean up old entries, or users get stale assets indefinitely.",
+      "related": "web-workers",
+      "tags": ["workers", "offline"]
+    },
+    {
+      "id": "rev-web-broadcast",
+      "category": "web-apis",
+      "term": "BroadcastChannel",
+      "short": "Messaging between tabs of the same origin.",
+      "medium": "Any tab can post a message and all others receive it, which is useful for keeping state such as a session or theme in sync without polling.",
+      "detail": "The storage event covers localStorage changes; BroadcastChannel is the general-purpose version.",
+      "related": "web-cheatsheet",
+      "tags": ["storage"]
+    },
+    {
+      "id": "rev-web-clone",
+      "category": "web-apis",
+      "term": "structuredClone",
+      "short": "Deep clone values, including Maps and Dates.",
+      "medium": "It handles types JSON cannot, such as Map, Set, Date and ArrayBuffer, and preserves circular references. JSON.parse(JSON.stringify(x)) silently drops or mangles those.",
+      "detail": "It cannot clone functions or DOM nodes, but for plain data it is the correct deep clone.",
+      "related": "web-cheatsheet",
+      "tags": ["data"]
+    },
+    {
+      "id": "rev-web-url",
+      "category": "web-apis",
+      "term": "URL and URLSearchParams",
+      "short": "Build and parse URLs and query strings safely.",
+      "medium": "URLSearchParams handles encoding so you do not concatenate and forget to escape. It also makes it easy to add, read and remove query parameters.",
+      "detail": "Always encode user input in URLs. Concatenating query strings is how injection and broken links happen.",
+      "related": "web-cheatsheet",
+      "tags": ["data"]
+    }
+  ]
+}
