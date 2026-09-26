@@ -1,0 +1,200 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Breadcrumbs from '../components/site/Breadcrumbs.astro';
+import Section from '../components/content/Section.astro';
+import Callout from '../components/content/Callout.astro';
+import List from '../components/ui/List.astro';
+import CodeBlock from '../components/content/CodeBlock.astro';
+import { getStats } from '../lib/content';
+
+const stats = getStats();
+
+const example = `{
+  "id": "js-closures",
+  "slug": "closures",
+  "category": "javascript",
+  "type": "question",
+  "title": "What is a closure?",
+  "summary": "A function that keeps a reference to the scope it was created in.",
+  "difficulty": "easy",
+  "tags": ["scope", "functions", "memory"],
+  "shortAnswer": "A closure is a function bundled with the lexical environment it was defined in.",
+  "explanation": [
+    "When a function is created, JavaScript records the active scope chain.",
+    "The inner function holds a live reference, not a copy."
+  ],
+  "keyPoints": ["Captures bindings by reference"],
+  "example": {
+    "language": "javascript",
+    "code": "function counter() {\\n  let count = 0;\\n  return () => ++count;\\n}"
+  },
+  "commonMistakes": ["Expecting a copy of the value"],
+  "followUps": ["Give a real-world use case."],
+  "related": ["js-lexical-scope"],
+  "sources": [],
+  "reviewStatus": "unreviewed"
+}`;
+
+const types = [
+  { name: 'question', use: 'A direct interview question with a short answer and follow-ups.' },
+  { name: 'concept', use: 'A topic to understand, such as the event loop or prototypal inheritance.' },
+  { name: 'comparison', use: 'Two or more options across shared dimensions, like SSR vs SSG vs ISR.' },
+  { name: 'challenge', use: 'A coding exercise with constraints, hints and a solution.' },
+  { name: 'gotcha', use: 'A surprising behaviour, why it happens and how to fix it.' },
+  { name: 'cheat-sheet', use: 'A dense reference of short labelled entries.' },
+];
+---
+
+<BaseLayout
+  title="Contribute"
+  description="How to add questions, concepts, comparisons and challenges to prepbase. Content lives in plain JSON, separate from the application code."
+>
+  <div class="container-page py-12 sm:py-16">
+    <Breadcrumbs items={[{ name: 'Home', href: '/' }, { name: 'Contribute' }]} />
+
+    <header class="mt-6 max-w-2xl">
+      <p class="eyebrow">Open content</p>
+      <h1 class="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+        Contribute a topic
+      </h1>
+      <p class="mt-3 text-base leading-relaxed text-ink-2">
+        {stats.topics} topics today. Content is plain JSON and lives apart from the
+        UI, so a question can be added or corrected without touching a single
+        component. No Markdown, no CMS, no build changes.
+      </p>
+    </header>
+
+    <div class="mt-12 max-w-3xl space-y-10">
+      <Section label="Where content lives" id="structure">
+        <div class="overflow-hidden rounded-lg border border-line">
+          <table class="w-full border-collapse text-sm">
+            <thead>
+              <tr class="border-b border-line bg-surface-2">
+                <th scope="col" class="px-4 py-2.5 text-left font-medium">Path</th>
+                <th scope="col" class="px-4 py-2.5 text-left font-medium">Contents</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border-b border-line">
+                <td class="px-4 py-2.5 font-mono text-[13px] text-ink">src/data/categories.json</td>
+                <td class="px-4 py-2.5 text-ink-2">Categories, their order and status.</td>
+              </tr>
+              <tr class="border-b border-line">
+                <td class="px-4 py-2.5 font-mono text-[13px] text-ink">src/data/topics/*.json</td>
+                <td class="px-4 py-2.5 text-ink-2">One file per category with its questions, concepts, comparisons, challenges, gotchas and cheat sheets.</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2.5 font-mono text-[13px] text-ink">src/data/revision/*.json</td>
+                <td class="px-4 py-2.5 text-ink-2">The short, medium and detailed revision cards for Quick Revision.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <Callout class="mt-5" tone="note">
+          Adding a topic means editing one JSON file. The site generates the page,
+          metadata, breadcrumbs, search entry, related links and sitemap entry for
+          you.
+        </Callout>
+      </Section>
+
+      <Section label="The shape of a topic" id="shape">
+        <CodeBlock code={example} language="json" label="question.json" />
+        <List
+          class="mt-5"
+          variant="check"
+          items={[
+            'id is globally unique and is what related links point at',
+            'slug becomes the URL: /<category>/<slug>',
+            'summary is the one-line description used on cards and in search',
+            'shortAnswer is the thing you would say first in an interview',
+            'related takes ids of other topics, keeping the graph connected',
+          ]}
+        />
+      </Section>
+
+      <Section label="Content types" id="types">
+        <div class="overflow-hidden rounded-lg border border-line">
+          <table class="w-full border-collapse text-sm">
+            <thead>
+              <tr class="border-b border-line bg-surface-2">
+                <th scope="col" class="px-4 py-2.5 text-left font-medium">Type</th>
+                <th scope="col" class="px-4 py-2.5 text-left font-medium">Use it for</th>
+              </tr>
+            </thead>
+            <tbody>
+              {
+                types.map((entry) => (
+                  <tr class="border-b border-line last:border-b-0">
+                    <td class="px-4 py-2.5 font-mono text-[13px] text-ink">{entry.name}</td>
+                    <td class="px-4 py-2.5 text-ink-2">{entry.use}</td>
+                  </tr>
+                ))
+              }
+            </tbody>
+          </table>
+        </div>
+      </Section>
+
+      <Section label="Trust and review status" id="review">
+        <p class="text-[15px] leading-relaxed text-ink-2">
+          Every topic carries a review status so readers know how much to trust it.
+          New and AI-assisted content must be marked honestly.
+        </p>
+        <div class="mt-4 space-y-3">
+          <div class="rounded-lg border border-line bg-surface p-4">
+            <p class="font-mono text-[13px] font-medium text-medium">unreviewed</p>
+            <p class="mt-1 text-sm text-ink-2">The default for anything new, including AI-assisted drafts. Pages with generated and unreviewed content are excluded from search engines.</p>
+          </div>
+          <div class="rounded-lg border border-line bg-surface p-4">
+            <p class="font-mono text-[13px] font-medium text-accent">community-reviewed</p>
+            <p class="mt-1 text-sm text-ink-2">At least one person has read it end to end and fixed the obvious problems.</p>
+          </div>
+          <div class="rounded-lg border border-line bg-surface p-4">
+            <p class="font-mono text-[13px] font-medium text-easy">verified</p>
+            <p class="mt-1 text-sm text-ink-2">Checked for technical accuracy against a reliable source, recorded in the sources field.</p>
+          </div>
+        </div>
+        <Callout class="mt-5" tone="note">
+          Set <span class="font-mono text-sm">"generated": true</span> when a model
+          wrote the draft. AI output is never treated as authoritative on its own.
+        </Callout>
+      </Section>
+
+      <Section label="What makes a good entry" id="quality">
+        <List
+          variant="check"
+          items={[
+            'Lead with the shortest correct answer, then add depth',
+            'Prefer a small, runnable example over a long explanation',
+            'Write the follow-ups a real interviewer would ask',
+            'Link to related topics so readers can keep moving',
+            'Add a source when a claim is specific or contested',
+          ]}
+        />
+      </Section>
+
+      <Section label="Quick Revision cards" id="revision">
+        <CodeBlock
+          language="json"
+          label="revision.json"
+          code={`{
+  "category": "javascript",
+  "intro": "The essentials to skim before an interview.",
+  "entries": [
+    {
+      "id": "rev-js-closures",
+      "category": "javascript",
+      "term": "Closures",
+      "short": "A function that keeps access to the scope it was defined in.",
+      "medium": "The function holds a live reference, not a copy...",
+      "detail": "Every function closes over its lexical environment...",
+      "related": "js-closures",
+      "tags": ["scope"]
+    }
+  ]
+}`}
+        />
+      </Section>
+    </div>
+  </div>
+</BaseLayout>

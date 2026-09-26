@@ -1,0 +1,28 @@
+---
+import ListingLayout from '../components/list/ListingLayout.astro';
+import { getItemsByType } from '../lib/content';
+import { collectionJsonLd } from '../lib/seo';
+
+const items = getItemsByType('comparison');
+const title = 'Comparisons';
+const description =
+  'Side-by-side comparisons of the pairs interviewers love: == vs ===, useMemo vs useCallback, SSR vs SSG, Flexbox vs Grid and more.';
+
+const jsonLd = collectionJsonLd({
+  title,
+  description,
+  path: '/comparisons',
+  items,
+});
+---
+
+<ListingLayout
+  eyebrow="Reference"
+  title={title}
+  description={description}
+  crumbs={[{ name: 'Home', href: '/' }, { name: 'Comparisons' }]}
+  items={items}
+  jsonLd={jsonLd}
+  placeholder="Filter comparisons…"
+  emptyLabel="No comparisons match those filters yet."
+/>

@@ -1,0 +1,28 @@
+---
+import ListingLayout from '../components/list/ListingLayout.astro';
+import { getItemsByType } from '../lib/content';
+import { collectionJsonLd } from '../lib/seo';
+
+const items = getItemsByType('challenge');
+const title = 'Code Challenges';
+const description =
+  'Small, interview-shaped coding exercises with constraints, hints and a worked solution. Try it before you reveal the answer.';
+
+const jsonLd = collectionJsonLd({
+  title,
+  description,
+  path: '/challenges',
+  items,
+});
+---
+
+<ListingLayout
+  eyebrow="Practice"
+  title={title}
+  description={description}
+  crumbs={[{ name: 'Home', href: '/' }, { name: 'Challenges' }]}
+  items={items}
+  jsonLd={jsonLd}
+  placeholder="Filter challenges…"
+  emptyLabel="No challenges match those filters yet."
+/>

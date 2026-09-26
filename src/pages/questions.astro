@@ -1,0 +1,28 @@
+---
+import ListingLayout from '../components/list/ListingLayout.astro';
+import { getItemsByType } from '../lib/content';
+import { collectionJsonLd } from '../lib/seo';
+
+const items = getItemsByType('question');
+const title = 'Interview Questions';
+const description =
+  'Every interview question in the knowledge base with a short answer, an explanation, examples and the follow-ups that come next.';
+
+const jsonLd = collectionJsonLd({
+  title,
+  description,
+  path: '/questions',
+  items,
+});
+---
+
+<ListingLayout
+  eyebrow="Practice"
+  title={title}
+  description={description}
+  crumbs={[{ name: 'Home', href: '/' }, { name: 'Questions' }]}
+  items={items}
+  jsonLd={jsonLd}
+  placeholder="Filter questions…"
+  emptyLabel="No questions match those filters yet."
+/>

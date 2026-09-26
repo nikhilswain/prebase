@@ -228,6 +228,50 @@ export function getTypeLabel(type: ContentType): string {
   return labels[type];
 }
 
+export interface LiteItem {
+  id: string;
+  title: string;
+  summary: string;
+  href: string;
+  typeLabel: string;
+  categoryId: string;
+  categoryName: string;
+  accent: string;
+  difficulty?: Difficulty;
+  tags: string[];
+}
+
+export function toLiteItems(list: ResolvedItem[]): LiteItem[] {
+  return list.map((item) => ({
+    id: item.id,
+    title: item.title,
+    summary: item.summary,
+    href: item.href,
+    typeLabel: getTypeLabel(item.type),
+    categoryId: item.category,
+    categoryName: item.categoryShortName,
+    accent: item.accent,
+    difficulty: item.difficulty,
+    tags: item.tags ?? [],
+  }));
+}
+
+export function getAllTags(): { tag: string; count: number }[] {
+  const counts = new Map<string, number>();
+  for (const item of items) {
+    for (const tag of item.tags ?? []) {
+      counts.set(tag, (counts.get(tag) ?? 0) + 1);
+    }
+  }
+  return [...counts.entries()]
+    .map(([tag, count]) => ({ tag, count }))
+    .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
+}
+
+export function getItemsByTag(tag: string): ResolvedItem[] {
+  return items.filter((item) => (item.tags ?? []).includes(tag));
+}
+
 export function getStats() {
   return {
     topics: items.length,

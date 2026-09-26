@@ -1,0 +1,28 @@
+---
+import ListingLayout from '../components/list/ListingLayout.astro';
+import { getItemsByType } from '../lib/content';
+import { collectionJsonLd } from '../lib/seo';
+
+const items = getItemsByType('cheat-sheet');
+const title = 'Cheat Sheets';
+const description =
+  'Dense, scannable references for JavaScript, React, TypeScript, CSS and the frontend. The things worth re-reading the night before.';
+
+const jsonLd = collectionJsonLd({
+  title,
+  description,
+  path: '/cheat-sheets',
+  items,
+});
+---
+
+<ListingLayout
+  eyebrow="Revision"
+  title={title}
+  description={description}
+  crumbs={[{ name: 'Home', href: '/' }, { name: 'Cheat Sheets' }]}
+  items={items}
+  jsonLd={jsonLd}
+  placeholder="Filter cheat sheets…"
+  emptyLabel="No cheat sheets match those filters yet."
+/>

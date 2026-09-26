@@ -1,0 +1,66 @@
+---
+import ListingLayout from '../../components/list/ListingLayout.astro';
+import { getAllTags, getItemsByTag } from '../../lib/content';
+import { collectionJsonLd } from '../../lib/seo';
+
+export function getStaticPaths() {
+  return getAllTags().map(({ tag }) => ({
+    params: { tag },
+    props: { tag },
+  }));
+}
+
+interface Props {
+  tag: string;
+}
+
+const { tag } = Astro.props;
+const items = getItemsByTag(tag);
+const title = `Tagged “${tag}”`;
+const description = `${items.length} topic${items.length === 1 ? '' : 's'} tagged “${tag}” across the interview knowledge base.`;
+
+const related = getAllTags()
+  .filter((entry) => entry.tag !== tag)
+  .slice(0, 12);
+
+const jsonLd = collectionJsonLd({
+  title,
+  description,
+  path: `/tags/${tag}`,
+  items,
+});
+---
+
+<ListingLayout
+  eyebrow="Tag"
+  title={title}
+  description={description}
+  crumbs={[
+    { name: 'Home', href: '/' },
+    { name: 'Tags', href: '/tags' },
+    { name: tag },
+  ]}
+  items={items}
+  jsonLd={jsonLd}
+  placeholder={`Filter “${tag}” topics…`}
+  emptyLabel="No matching topics for this tag yet."
+>
+  <section class="mt-16 border-t border-line pt-8" aria-labelledby="other-tags">
+    <h2 id="other-tags" class="eyebrow">Related tags</h2>
+    <ul class="mt-4 flex flex-wrap gap-2">
+      {
+        related.map((entry) => (
+          <li>
+            <a
+              href={`/tags/${entry.tag}`}
+              class="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1 text-[13px] text-ink-2 transition duration-150 ease-out hover:border-line-strong hover:text-ink"
+            >
+              {entry.tag}
+              <span class="font-mono text-[10px] text-ink-3">{entry.count}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</ListingLayout>
