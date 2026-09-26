@@ -1,0 +1,173 @@
+[
+  {
+    "id": "frontend",
+    "name": "Frontend Development",
+    "shortName": "Frontend",
+    "description": "How browsers turn code into pixels, rendering performance, hydration and the fundamentals that sit under every framework.",
+    "accent": "#7c6cf5",
+    "order": 1,
+    "status": "live"
+  },
+  {
+    "id": "javascript",
+    "name": "JavaScript",
+    "shortName": "JavaScript",
+    "description": "Scope, closures, the event loop, prototypes and the language details interviewers keep coming back to.",
+    "accent": "#c99700",
+    "order": 2,
+    "status": "live"
+  },
+  {
+    "id": "react",
+    "name": "React",
+    "shortName": "React",
+    "description": "Rendering, reconciliation, hooks and the mental model behind modern React.",
+    "accent": "#0ea5b7",
+    "order": 3,
+    "status": "live"
+  },
+  {
+    "id": "typescript",
+    "name": "TypeScript",
+    "shortName": "TypeScript",
+    "description": "Types that scale: generics, narrowing, utility types and the difference between types and values.",
+    "accent": "#3f7ef7",
+    "order": 4,
+    "status": "live"
+  },
+  {
+    "id": "css",
+    "name": "CSS",
+    "shortName": "CSS",
+    "description": "Layout, the cascade, specificity and the parts of CSS that decide whether a page looks intentional.",
+    "accent": "#e05299",
+    "order": 5,
+    "status": "live"
+  },
+  {
+    "id": "html",
+    "name": "HTML",
+    "shortName": "HTML",
+    "description": "Semantics, document structure and the platform primitives that everything else is built on.",
+    "accent": "#8b8b96",
+    "order": 6,
+    "status": "planned"
+  },
+  {
+    "id": "nextjs",
+    "name": "Next.js",
+    "shortName": "Next.js",
+    "description": "Routing, rendering strategies and server/client boundaries in the Next.js App Router.",
+    "accent": "#8b8b96",
+    "order": 7,
+    "status": "planned"
+  },
+  {
+    "id": "nodejs",
+    "name": "Node.js",
+    "shortName": "Node.js",
+    "description": "The runtime, the event loop and building server-side JavaScript that holds up.",
+    "accent": "#8b8b96",
+    "order": 8,
+    "status": "planned"
+  },
+  {
+    "id": "express",
+    "name": "Express",
+    "shortName": "Express",
+    "description": "Routing, middleware and structuring HTTP APIs.",
+    "accent": "#8b8b96",
+    "order": 9,
+    "status": "planned"
+  },
+  {
+    "id": "databases",
+    "name": "Databases",
+    "shortName": "Databases",
+    "description": "Relational and document databases, indexing, transactions and query modelling.",
+    "accent": "#8b8b96",
+    "order": 10,
+    "status": "planned"
+  },
+  {
+    "id": "browser-internals",
+    "name": "Browser Internals",
+    "shortName": "Browser",
+    "description": "Parsing, rendering, the JS engine and how the browser schedules work.",
+    "accent": "#8b8b96",
+    "order": 11,
+    "status": "planned"
+  },
+  {
+    "id": "web-apis",
+    "name": "Web APIs",
+    "shortName": "Web APIs",
+    "description": "Fetch, storage, observers and the platform APIs available in every browser.",
+    "accent": "#8b8b96",
+    "order": 12,
+    "status": "planned"
+  },
+  {
+    "id": "performance",
+    "name": "Performance",
+    "shortName": "Performance",
+    "description": "Core Web Vitals, measurement and making interfaces feel instant.",
+    "accent": "#8b8b96",
+    "order": 13,
+    "status": "planned"
+  },
+  {
+    "id": "accessibility",
+    "name": "Accessibility",
+    "shortName": "A11y",
+    "description": "Semantics, keyboard interaction, screen readers and inclusive interfaces.",
+    "accent": "#8b8b96",
+    "order": 14,
+    "status": "planned"
+  },
+  {
+    "id": "testing",
+    "name": "Testing",
+    "shortName": "Testing",
+    "description": "Unit, integration and end-to-end testing strategy.",
+    "accent": "#8b8b96",
+    "order": 15,
+    "status": "planned"
+  },
+  {
+    "id": "security",
+    "name": "Security",
+    "shortName": "Security",
+    "description": "The web threat model: XSS, CSRF, CORS, injection and defence in depth.",
+    "accent": "#8b8b96",
+    "order": 16,
+    "status": "planned"
+  },
+  {
+    "id": "git",
+    "name": "Git",
+    "shortName": "Git",
+    "description": "Version control mental models: branching, merging, rebasing and recovery.",
+    "accent": "#8b8b96",
+    "order": 17,
+    "status": "planned"
+  },
+  {
+    "id": "system-design",
+    "name": "System Design",
+    "shortName": "System Design",
+    "description": "Scaling, caching, queues, consistency and designing systems on a whiteboard.",
+    "accent": "#8b8b96",
+    "order": 18,
+    "status": "planned"
+  },
+  {
+    "id": "full-stack",
+    "name": "Full Stack Development",
+    "shortName": "Full Stack",
+    "description": "Connecting the client, the server and the data layer end to end.",
+    "accent": "#8b8b96",
+    "order": 19,
+    "status": "planned"
+  }
+]

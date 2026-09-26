@@ -1,0 +1,602 @@
+[
+  {
+    "id": "js-closures",
+    "slug": "closures",
+    "category": "javascript",
+    "type": "question",
+    "title": "What is a closure?",
+    "summary": "A function that keeps a live reference to the scope it was created in, even after that scope has finished running.",
+    "difficulty": "easy",
+    "tags": ["scope", "functions", "memory"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-14",
+    "shortAnswer": "A closure is a function bundled with the lexical environment it was defined in. The function keeps a reference to that environment, so it can still read and write variables from an outer scope after the outer function has returned.",
+    "explanation": [
+      "When a function is created, JavaScript records the scope chain that was active at that moment. That recorded environment travels with the function no matter where it is later called.",
+      "Closures are not a special syntax. Every function closes over its surroundings. We only use the word closure when that behaviour is the interesting part of the code.",
+      "The inner function holds a live reference rather than a copy, so updates to the outer variable are visible through the closure."
+    ],
+    "keyPoints": [
+      "Closures capture bindings by reference, not by value",
+      "The captured scope stays alive for as long as the closure is reachable",
+      "They enable private state, factories, partial application and event handlers"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "count is private to each counter and survives between calls.",
+      "code": "function counter() {\n  let count = 0;\n  return function increment() {\n    count += 1;\n    return count;\n  };\n}\n\nconst next = counter();\nnext(); // 1\nnext(); // 2\nnext(); // 3"
+    },
+    "commonMistakes": [
+      "Expecting every iteration of a var loop to capture its own binding instead of sharing one",
+      "Assuming the closure copies the value at creation time",
+      "Holding large objects alive accidentally through a long-lived closure"
+    ],
+    "followUps": [
+      "Give a practical use case for a closure.",
+      "How does lexical scope relate to closures?",
+      "Can closures cause memory issues?",
+      "Implement a closure-based counter without using classes."
+    ],
+    "realWorld": "Debounced inputs, memoisation, and module private state all rely on closures holding onto variables between calls.",
+    "related": ["js-lexical-scope", "js-execution-context", "js-hoisting", "js-var-let-const"]
+  },
+  {
+    "id": "js-lexical-scope",
+    "slug": "lexical-scope",
+    "category": "javascript",
+    "type": "concept",
+    "title": "Lexical Scope",
+    "summary": "A function's scope is decided by where it is written in the source, not where it is called from.",
+    "difficulty": "easy",
+    "tags": ["scope", "execution"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-14",
+    "definition": "Lexical scope means the visibility of a variable is determined by its position in the source code. Inner scopes can read outer scopes, and the chain is fixed when the code is parsed.",
+    "explanation": [
+      "Because scope is decided at parse time, you can tell what a variable refers to just by reading the file, without tracing who called the function.",
+      "This is why a function can access variables defined next to it even when it is later passed to a completely different part of the program.",
+      "Lexical scoping is the mechanism that makes closures predictable."
+    ],
+    "keyPoints": [
+      "Scope is static and resolved at parse time",
+      "Inner functions see outer variables, never the reverse",
+      "Shadowing hides an outer binding with a closer one of the same name"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "inner can see message because of lexical scope, not because of the call site.",
+      "code": "const message = 'outer';\n\nfunction outer() {\n  const message = 'inner';\n  function inner() {\n    return message;\n  }\n  return inner;\n}\n\nouter()(); // 'inner'"
+    },
+    "related": ["js-closures", "js-execution-context", "js-hoisting"]
+  },
+  {
+    "id": "js-execution-context",
+    "slug": "execution-context",
+    "category": "javascript",
+    "type": "concept",
+    "title": "Execution Context",
+    "summary": "The environment JavaScript creates to evaluate code: its variable environment, scope chain and this binding.",
+    "difficulty": "medium",
+    "tags": ["scope", "runtime"],
+    "reviewStatus": "unreviewed",
+    "updated": "2026-08-10",
+    "definition": "An execution context is the bookkeeping the engine keeps while running code. It stores the variables in scope, the reference to the outer scope, and the value of this.",
+    "explanation": [
+      "There are three kinds: the global context created when the program starts, a function context created on every call, and the context created by eval.",
+      "Each context is built in two phases. During creation the engine registers declarations and sets up the scope chain. During execution statements run line by line.",
+      "Function contexts are stacked. The engine always runs the context on top of the stack, which is why the stack is called the call stack."
+    ],
+    "keyPoints": [
+      "Global, function and eval contexts exist",
+      "Creation phase registers variables before any statement runs",
+      "The scope chain links a context to its lexically enclosing context"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "Each call creates a fresh context; the return value is read before that context is discarded.",
+      "code": "function multiply(a, b) {\n  const result = a * b;\n  return result;\n}\n\nmultiply(2, 3);"
+    },
+    "related": ["js-hoisting", "js-lexical-scope", "js-this"]
+  },
+  {
+    "id": "js-event-loop",
+    "slug": "event-loop",
+    "category": "javascript",
+    "type": "concept",
+    "title": "The Event Loop",
+    "summary": "How a single-threaded runtime runs asynchronous code by moving work from queues onto the call stack when it is free.",
+    "difficulty": "medium",
+    "tags": ["async", "runtime", "concurrency"],
+    "featured": true,
+    "reviewStatus": "verified",
+    "updated": "2026-08-22",
+    "definition": "The event loop is the scheduling loop that keeps JavaScript single-threaded but non-blocking. It runs the current task to completion, then drains the microtask queue, then optionally renders, then picks the next task.",
+    "explanation": [
+      "Synchronous code runs on the call stack. When it finishes, the loop checks the microtask queue and runs every microtask until the queue is empty.",
+      "Only then does it move on to the next macrotask, such as a timer callback or an input event. The browser can render between tasks.",
+      "Because microtasks always run before the next task, a promise chain can starve rendering if it keeps scheduling more microtasks."
+    ],
+    "keyPoints": [
+      "Run to completion: a task never yields mid-way",
+      "Microtasks drain fully after each task",
+      "Rendering happens between tasks, not mid-task",
+      "Timers are macrotasks with a minimum delay, not a guarantee"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "Microtasks run before the timer callback even though setTimeout was scheduled first.",
+      "code": "console.log('script start');\n\nsetTimeout(() => console.log('timeout'), 0);\n\nPromise.resolve().then(() => console.log('promise'));\n\nconsole.log('script end');\n\n// script start\n// script end\n// promise\n// timeout"
+    },
+    "followUps": [
+      "Why does a long synchronous loop freeze the page?",
+      "What is the difference between a task and a microtask?",
+      "How does the loop relate to requestAnimationFrame?"
+    ],
+    "related": ["js-microtasks", "js-promises", "js-closures"]
+  },
+  {
+    "id": "js-hoisting",
+    "slug": "hoisting",
+    "category": "javascript",
+    "type": "question",
+    "title": "What is hoisting?",
+    "summary": "Declarations are processed before code runs. var starts as undefined, functions are fully available, let and const sit in a temporal dead zone.",
+    "difficulty": "medium",
+    "tags": ["scope", "declarations"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-12",
+    "shortAnswer": "Hoisting is the result of the engine registering declarations during the creation phase. var bindings are initialised to undefined, function declarations are fully available, and let, const and class are hoisted but stay in a temporal dead zone until their declaration is evaluated.",
+    "explanation": [
+      "The engine walks the scope before executing it and records every declaration it finds. That is why you can call a function declared later in the same scope.",
+      "var behaves differently from let and const. A var binding exists but holds undefined until assignment. A let binding exists but throws if you touch it before the declaration line, which we call the temporal dead zone.",
+      "Hoisting is per-scope, not per-file. Function declarations are hoisted within the function they are written in."
+    ],
+    "keyPoints": [
+      "var is hoisted and initialised to undefined",
+      "let, const and class are hoisted but uninitialised until evaluated",
+      "Function declarations are hoisted with their body, function expressions are not",
+      "Temporal dead zone errors are thrown, not silently undefined"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "var logs undefined, let throws because of the temporal dead zone.",
+      "code": "console.log(a); // undefined\nvar a = 1;\n\nconsole.log(b); // ReferenceError: Cannot access 'b' before initialization\nlet b = 2;"
+    },
+    "commonMistakes": [
+      "Saying let and const are not hoisted, when really they are hoisted but not initialised",
+      "Confusing a function expression with a function declaration",
+      "Relying on var being defined before its assignment line"
+    ],
+    "followUps": [
+      "Explain the temporal dead zone.",
+      "Why do function declarations work before their line?",
+      "How does hoisting differ inside a block?"
+    ],
+    "related": ["js-execution-context", "js-var-let-const", "js-lexical-scope"]
+  },
+  {
+    "id": "js-this",
+    "slug": "this-keyword",
+    "category": "javascript",
+    "type": "question",
+    "title": "How does this work in JavaScript?",
+    "summary": "this is set by how a function is called, not where it is defined. Arrow functions are the exception.",
+    "difficulty": "medium",
+    "tags": ["this", "functions", "binding"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-16",
+    "shortAnswer": "For a normal function, this is decided at call time by the call site. Rules in priority order: new binding, explicit binding with call or apply or bind, implicit binding to the object before the dot, and default binding which is undefined in modules and strict mode. Arrow functions have no own this and inherit it from the enclosing scope.",
+    "explanation": [
+      "Because this depends on the call site, the same function can have a different this each time it runs. Extracting a method from an object usually loses the implicit binding.",
+      "Arrow functions close over this the same way they close over any variable, which makes them convenient for callbacks but unsuitable for object methods that need a dynamic this.",
+      "bind returns a new function with this permanently fixed, which is the usual fix for lost context."
+    ],
+    "keyPoints": [
+      "Priority: new, bind and call and apply, method call, default",
+      "Arrow functions capture this lexically",
+      "In modules and strict mode the default binding is undefined, not the global object"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "Passing a method bare loses its object, so this is undefined.",
+      "code": "const user = {\n  name: 'Ada',\n  greet() {\n    return this.name;\n  },\n};\n\nuser.greet(); // 'Ada'\n\nconst greet = user.greet;\ngreet(); // undefined in a module (or throws when reading .name)"
+    },
+    "commonMistakes": [
+      "Using an arrow function as an object method that needs this",
+      "Losing the receiver when passing a method as a callback",
+      "Assuming this refers to the function itself"
+    ],
+    "followUps": [
+      "What happens to this inside a setTimeout callback?",
+      "How do call, apply and bind differ?",
+      "Why can this be undefined in a module?"
+    ],
+    "related": ["js-prototypes", "js-classes", "js-execution-context", "js-closures"]
+  },
+  {
+    "id": "js-prototypes",
+    "slug": "prototypes",
+    "category": "javascript",
+    "type": "concept",
+    "title": "Prototypal Inheritance",
+    "summary": "Objects delegate property lookups to a prototype, forming a chain that ends at Object.prototype.",
+    "difficulty": "medium",
+    "tags": ["prototypes", "objects", "inheritance"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-11",
+    "definition": "Every object has an internal link to another object called its prototype. When a property is not found on the object, the engine looks up the chain until it finds the property or reaches null.",
+    "explanation": [
+      "The link is called [[Prototype]] and is read with Object.getPrototypeOf. Accessing a missing property walks the chain, which is why every object can call methods like toString.",
+      "Constructor functions and classes set this up for you: instances delegate to the constructor's prototype object, so methods are shared instead of copied per instance.",
+      "Prototypes give behaviour reuse and memory efficiency. A class is syntax over the same mechanism, not a separate inheritance system."
+    ],
+    "keyPoints": [
+      "Property lookup walks the prototype chain",
+      "Methods live on the prototype and are shared by all instances",
+      "The chain ends at Object.prototype whose prototype is null",
+      "Object.create builds an object with a chosen prototype"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "sayHi lives on the prototype, yet is reachable from the instance.",
+      "code": "class Animal {\n  constructor(name) {\n    this.name = name;\n  }\n  sayHi() {\n    return `Hi, ${this.name}`;\n  }\n}\n\nconst cat = new Animal('Milo');\ncat.sayHi(); // 'Hi, Milo'\nObject.getPrototypeOf(cat) === Animal.prototype; // true"
+    },
+    "commonMistakes": [
+      "Confusing the prototype property of a constructor with the prototype link of an instance",
+      "Mutating built-in prototypes, which affects every object in the program",
+      "Expecting for...in to ignore inherited enumerable properties"
+    ],
+    "followUps": [
+      "How is this inside a prototype method resolved?",
+      "What is the difference between __proto__ and prototype?",
+      "How does class syntax relate to prototypes?"
+    ],
+    "related": ["js-this", "js-classes", "js-objects"]
+  },
+  {
+    "id": "js-classes",
+    "slug": "classes",
+    "category": "javascript",
+    "type": "concept",
+    "title": "Classes",
+    "summary": "Syntactic sugar over prototypes with strict mode, private fields and a cleaner constructor story.",
+    "difficulty": "medium",
+    "tags": ["classes", "prototypes", "oop"],
+    "reviewStatus": "unreviewed",
+    "updated": "2026-08-09",
+    "definition": "A class is a template for creating objects that wraps prototypal inheritance, adds an implicit strict mode and supports private fields, static members and getters.",
+    "explanation": [
+      "Methods defined in the class body are non-enumerable and live on the prototype. That means they are shared, and crucially they are still looked up through the prototype chain at call time, so this behaves as usual.",
+      "Private fields use a hash prefix and are truly inaccessible from outside the class, unlike the underscore convention.",
+      "Classes are not hoisted like function declarations. They are hoisted but uninitialised, so you cannot use them before their definition."
+    ],
+    "keyPoints": [
+      "Methods go on the prototype and are non-enumerable",
+      "Class bodies always run in strict mode",
+      "Private fields with # are enforced by the engine",
+      "extends sets up the prototype chain and super calls the parent"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "Private state that cannot be reached from outside the class.",
+      "code": "class Wallet {\n  #balance = 0;\n\n  deposit(amount) {\n    this.#balance += amount;\n    return this.#balance;\n  }\n}\n\nconst wallet = new Wallet();\nwallet.deposit(50); // 50\nwallet.#balance; // SyntaxError: private field"
+    },
+    "related": ["js-prototypes", "js-this", "js-objects"]
+  },
+  {
+    "id": "js-objects",
+    "slug": "objects-and-references",
+    "category": "javascript",
+    "type": "concept",
+    "title": "Objects, References and Copying",
+    "summary": "Objects are compared and passed by reference, so copying needs intent: shallow or deep.",
+    "difficulty": "easy",
+    "tags": ["objects", "references", "copying"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-08",
+    "definition": "In JavaScript, primitives are copied by value while objects are handled by reference. A variable holds a pointer to the object, so two variables can point at the same object.",
+    "explanation": [
+      "Assigning an object to a new variable copies the reference, not the object. Mutating through either name is visible through the other.",
+      "Spread and Object.assign create shallow copies. Nested objects are still shared, which surprises people when they mutate a nested value.",
+      "structuredClone produces a deep copy for supported values and is the modern replacement for JSON round-tripping, which loses functions, dates and undefined."
+    ],
+    "keyPoints": [
+      "Object equality with === compares references, not contents",
+      "Spread copies one level deep",
+      "structuredClone deep copies without JSON limitations",
+      "Frozen objects prevent reassignment but not mutation of nested values"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "The shallow copy still shares the nested address, so both change.",
+      "code": "const original = { name: 'Ada', address: { city: 'London' } };\nconst copy = { ...original };\n\ncopy.address.city = 'Paris';\n\noriginal.address.city; // 'Paris'\nconst deep = structuredClone(original);"
+    },
+    "related": ["js-equality", "js-classes", "js-prototypes"]
+  },
+  {
+    "id": "js-equality",
+    "slug": "double-vs-triple-equals",
+    "category": "javascript",
+    "type": "comparison",
+    "title": "== vs ===",
+    "summary": "Loose equality coerces types before comparing, strict equality does not. Prefer strict equality.",
+    "difficulty": "easy",
+    "tags": ["equality", "coercion"],
+    "featured": true,
+    "reviewStatus": "verified",
+    "updated": "2026-08-20",
+    "options": [
+      { "name": "==", "summary": "Loose equality with type coercion" },
+      { "name": "===", "summary": "Strict equality, no coercion" }
+    ],
+    "rows": [
+      { "label": "Coercion", "values": ["Coerces operands to a common type", "Never coerces"] },
+      { "label": "1 == '1'", "values": ["true", "false"] },
+      { "label": "null and undefined", "values": ["null == undefined is true", "null === undefined is false"] },
+      { "label": "NaN", "values": ["NaN == NaN is false", "NaN === NaN is false"] },
+      { "label": "0 and -0", "values": ["0 == -0 is true", "0 === -0 is true"] },
+      { "label": "Objects", "values": ["Compares references after coercion rules", "Compares references"] }
+    ],
+    "verdict": "Use === by default. The only widely accepted use of == is checking for null or undefined, because null == undefined is true and neither equals 0 or an empty string.",
+    "pickWhen": [
+      { "option": "===", "guidance": "Almost everywhere. It makes the comparison explicit and avoids surprising coercion rules." },
+      { "option": "==", "guidance": "Only for the intentional null or undefined check, written as value == null." }
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "Coercion turns an empty array and a blank string into equal values, which is rarely intended.",
+      "code": "0 == '0'; // true\n0 === '0'; // false\n\n[] == ''; // true\n[] === ''; // false\n\nvalue == null; // true for both null and undefined"
+    },
+    "related": ["js-objects", "js-var-let-const"]
+  },
+  {
+    "id": "js-promises",
+    "slug": "promises",
+    "category": "javascript",
+    "type": "concept",
+    "title": "Promises",
+    "summary": "An object representing the eventual result of an async operation: pending, fulfilled or rejected.",
+    "difficulty": "medium",
+    "tags": ["async", "promises"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-18",
+    "definition": "A Promise is a placeholder for a value that is not available yet. It settles exactly once, either fulfilled with a value or rejected with a reason, and it never changes state afterwards.",
+    "explanation": [
+      "Handlers registered with then and catch always run asynchronously as microtasks, even if the promise is already settled. That is why promise callbacks run before timers.",
+      "Chaining works because then returns a new promise, which lets you sequence async steps without nesting callbacks.",
+      "Static helpers change how you combine work: all rejects fast, allSettled waits for everything, race settles with the first result, and any settles with the first success."
+    ],
+    "keyPoints": [
+      "States: pending, fulfilled, rejected, and settle only once",
+      "then returns a new promise, enabling chaining",
+      "Rejections propagate until a catch handles them",
+      "Always handle rejections to avoid unhandled promise warnings"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "Chaining sequences the steps and centralises error handling.",
+      "code": "fetch('/api/user')\n  .then((response) => {\n    if (!response.ok) throw new Error('Request failed');\n    return response.json();\n  })\n  .then((user) => console.log(user.name))\n  .catch((error) => console.error(error));"
+    },
+    "followUps": [
+      "What is the difference between all and allSettled?",
+      "Why do then callbacks run before setTimeout?",
+      "How do promises differ from observables?"
+    ],
+    "related": ["js-event-loop", "js-microtasks", "js-map-filter-reduce"]
+  },
+  {
+    "id": "js-map-filter-reduce",
+    "slug": "map-filter-reduce",
+    "category": "javascript",
+    "type": "concept",
+    "title": "map, filter and reduce",
+    "summary": "The three array transformations that cover most data reshaping: transform each, keep some, fold into one.",
+    "difficulty": "easy",
+    "tags": ["arrays", "functional"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-06",
+    "definition": "map returns a new array with each element transformed, filter returns a new array of elements that pass a test, and reduce walks the array accumulating a single result.",
+    "explanation": [
+      "All three are pure with respect to the source array: they return new arrays instead of mutating, which makes them safe to compose.",
+      "map and filter always return a new array, so they cannot short-circuit. Use find, some or every when you need early exit.",
+      "reduce is the most general. Anything map and filter do can be expressed with reduce, but clarity usually favours the specialised methods."
+    ],
+    "keyPoints": [
+      "map keeps length, filter may shorten it, reduce collapses it",
+      "Pass an initial value to reduce to avoid surprises on empty arrays",
+      "Chaining map then filter iterates twice; combine when it matters"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "Transforming and folding a list into a total in one pipeline.",
+      "code": "const orders = [\n  { id: 1, total: 20, paid: true },\n  { id: 2, total: 35, paid: false },\n  { id: 3, total: 15, paid: true },\n];\n\nconst paidTotal = orders\n  .filter((order) => order.paid)\n  .map((order) => order.total)\n  .reduce((sum, total) => sum + total, 0);\n\npaidTotal; // 35"
+    },
+    "related": ["js-closures", "js-promises"]
+  },
+  {
+    "id": "js-var-let-const",
+    "slug": "let-vs-const-vs-var",
+    "category": "javascript",
+    "type": "comparison",
+    "title": "let vs const vs var",
+    "summary": "Block scoping and reassignment rules. Prefer const, fall back to let, avoid var.",
+    "difficulty": "easy",
+    "tags": ["declarations", "scope"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-15",
+    "options": [
+      { "name": "let", "summary": "Block scoped, reassignable" },
+      { "name": "const", "summary": "Block scoped, binding cannot be reassigned" },
+      { "name": "var", "summary": "Function scoped, legacy" }
+    ],
+    "rows": [
+      { "label": "Scope", "values": ["Block", "Block", "Function"] },
+      { "label": "Reassignable", "values": ["Yes", "No", "Yes"] },
+      { "label": "Hoisting", "values": ["Hoisted, temporal dead zone", "Hoisted, temporal dead zone", "Hoisted as undefined"] },
+      { "label": "Redeclare in same scope", "values": ["No", "No", "Yes"] },
+      { "label": "Creates global property", "values": ["No", "No", "Yes, at top level in scripts"] },
+      { "label": "Loop iteration binding", "values": ["New binding per iteration", "New binding per iteration", "One shared binding"] }
+    ],
+    "verdict": "Default to const. Use let only when the binding truly changes. var is only worth choosing when you specifically want function scoping, which is rare in modern code.",
+    "pickWhen": [
+      { "option": "const", "guidance": "The default. It documents intent and prevents accidental reassignment, though object contents can still change." },
+      { "option": "let", "guidance": "When a value is reassigned, such as an accumulator or a swap." },
+      { "option": "var", "guidance": "Legacy code and specific function-scope cases. Avoid in new code." }
+    ],
+    "related": ["js-hoisting", "js-execution-context", "js-equality"]
+  },
+  {
+    "id": "js-microtasks",
+    "slug": "microtasks-vs-macrotasks",
+    "category": "javascript",
+    "type": "question",
+    "title": "What is the difference between microtasks and macrotasks?",
+    "summary": "Microtasks drain fully after every task and before rendering; macrotasks are picked up one at a time between renders.",
+    "difficulty": "hard",
+    "tags": ["async", "event-loop", "scheduling"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-21",
+    "shortAnswer": "Microtasks come from promises, queueMicrotask and MutationObserver. They run after the current task and the microtask queue is drained completely before the browser renders or starts the next task. Macrotasks come from timers, events and I/O and are processed one per loop iteration.",
+    "explanation": [
+      "The distinction explains ordering. Promise callbacks always beat setTimeout callbacks scheduled in the same tick, because the microtask queue is drained first.",
+      "It also explains jank. A recursive promise chain keeps adding microtasks and can prevent the browser from ever painting, because rendering waits for the queue to empty.",
+      "requestAnimationFrame callbacks run before rendering in the render step, which makes them the right place for visual updates that should match a frame."
+    ],
+    "keyPoints": [
+      "Microtasks: promises, queueMicrotask, MutationObserver",
+      "Macrotasks: setTimeout, setInterval, events, I/O",
+      "The microtask queue is drained before rendering",
+      "Infinite microtask chains can starve the renderer"
+    ],
+    "example": {
+      "language": "javascript",
+      "caption": "Ordering is script, promise, timeout because microtasks drain before the next task.",
+      "code": "setTimeout(() => console.log('macrotask'), 0);\nPromise.resolve().then(() => console.log('microtask'));\nconsole.log('sync');\n\n// sync\n// microtask\n// macrotask"
+    },
+    "followUps": [
+      "Why does a long promise chain freeze the UI?",
+      "Where does requestAnimationFrame fit in the loop?",
+      "How do async functions schedule their continuations?"
+    ],
+    "related": ["js-event-loop", "js-promises"]
+  },
+  {
+    "id": "js-gotcha-nan",
+    "slug": "gotcha-nan",
+    "category": "javascript",
+    "type": "gotcha",
+    "title": "NaN is not equal to itself",
+    "summary": "NaN !== NaN by design, so equality checks silently fail. Use Number.isNaN instead.",
+    "difficulty": "medium",
+    "tags": ["numbers", "equality", "gotcha"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-07",
+    "scenario": "You parse user input with Number, get NaN for invalid values, and compare the result to NaN to detect the failure.",
+    "problem": "NaN is the only value in JavaScript that is not equal to itself, so value === NaN is always false. The check never fires and invalid input flows through the code.",
+    "example": {
+      "language": "javascript",
+      "caption": "The comparison fails even though the value really is NaN.",
+      "code": "const value = Number('abc'); // NaN\n\nvalue === NaN; // false\nvalue !== value; // true\n\nNumber.isNaN(value); // true"
+    },
+    "fix": "Use Number.isNaN, which returns true only for the actual NaN value and does not coerce. String.isNaN coerces its argument, so isNaN('abc') is true even though the string is not the NaN value.",
+    "keyPoints": [
+      "NaN is not equal to any value including itself",
+      "Number.isNaN(value) is the safe test",
+      "Global isNaN coerces first, which causes false positives"
+    ],
+    "related": ["js-equality", "js-objects"]
+  },
+  {
+    "id": "js-challenge-counter",
+    "slug": "closure-counter",
+    "category": "javascript",
+    "type": "challenge",
+    "title": "Build a closure-based counter",
+    "summary": "Implement counter factory with increment, decrement and reset using closures instead of classes.",
+    "difficulty": "medium",
+    "tags": ["closures", "functions", "exercise"],
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-19",
+    "prompt": "Implement a function createCounter that returns an object with increment, decrement and value methods. The count must be private, so it cannot be read or written from outside except through the returned methods.",
+    "constraints": [
+      "Do not use classes or module-level variables",
+      "value should return the current count",
+      "increment and decrement should return the new count"
+    ],
+    "hints": [
+      "A closure keeps a variable alive for as long as the returned methods exist.",
+      "The variable lives in the outer function scope, so callers cannot reach it directly."
+    ],
+    "solution": {
+      "code": {
+        "language": "javascript",
+        "code": "function createCounter(start = 0) {\n  let count = start;\n\n  return {\n    increment() {\n      count += 1;\n      return count;\n    },\n    decrement() {\n      count -= 1;\n      return count;\n    },\n    value() {\n      return count;\n    },\n  };\n}\n\nconst counter = createCounter(5);\ncounter.increment(); // 6\ncounter.value(); // 6"
+      },
+      "explanation": [
+        "count is declared in createCounter and referenced by the three methods in the returned object literal.",
+        "Those methods form a closure over the same binding, so they share state while count stays invisible to the outside world."
+      ]
+    },
+    "related": ["js-closures", "js-lexical-scope", "js-var-let-const"]
+  },
+  {
+    "id": "js-cheatsheet",
+    "slug": "javascript-cheat-sheet",
+    "category": "javascript",
+    "type": "cheat-sheet",
+    "title": "JavaScript Cheat Sheet",
+    "summary": "Declarations, equality, async ordering, array methods and object copying at a glance.",
+    "difficulty": "easy",
+    "tags": ["reference", "cheat-sheet"],
+    "featured": true,
+    "reviewStatus": "community-reviewed",
+    "updated": "2026-08-23",
+    "description": "A quick reference for the JavaScript details that come up most often in interviews and code review.",
+    "sections": [
+      {
+        "title": "Declarations",
+        "items": [
+          { "label": "const", "value": "Block scoped, no reassignment", "note": "Default choice" },
+          { "label": "let", "value": "Block scoped, reassignable", "note": "Use when the value changes" },
+          { "label": "var", "value": "Function scoped, hoisted as undefined", "note": "Avoid in new code" }
+        ]
+      },
+      {
+        "title": "Equality",
+        "items": [
+          { "label": "=== strict", "value": "No coercion", "note": "Prefer this" },
+          { "label": "== loose", "value": "Coerces types", "note": "Only for == null" },
+          { "label": "Number.isNaN(x)", "value": "True only for real NaN", "note": "Never x === NaN" }
+        ]
+      },
+      {
+        "title": "Async ordering",
+        "items": [
+          { "label": "Microtasks", "value": "Promises, queueMicrotask" },
+          { "label": "Macrotasks", "value": "setTimeout, events, I/O" },
+          { "label": "Order", "value": "sync, microtasks, render, next macrotask" }
+        ]
+      },
+      {
+        "title": "Arrays",
+        "items": [
+          { "label": "map", "value": "Transform each, same length" },
+          { "label": "filter", "value": "Keep matching, may shorten" },
+          { "label": "reduce", "value": "Fold to one value" },
+          { "label": "find / some / every", "value": "Short-circuiting searches" }
+        ]
+      },
+      {
+        "title": "Objects",
+        "items": [
+          { "label": "Shallow copy", "value": "{ ...obj } or Object.assign", "note": "Nested values still shared" },
+          { "label": "Deep copy", "value": "structuredClone(obj)" },
+          { "label": "Reference check", "value": "=== compares identity, not contents" }
+        ]
+      }
+    ],
+    "related": ["js-equality", "js-var-let-const", "js-map-filter-reduce"]
+  }
+]
