@@ -158,7 +158,7 @@ Set `SITE_URL` in the build environment when deploying:
 SITE_URL=https://your-domain.com npm run build
 ```
 
-It falls back to `https://prebase.ze-ro.workers.dev`. `astro.config.mjs` and
+It falls back to `https://prebase.zerro.dev`. `astro.config.mjs` and
 `src/config.ts` both read it, so canonical URLs, OpenGraph and Twitter images,
 JSON-LD, `robots.txt` and the sitemap all follow automatically.
 

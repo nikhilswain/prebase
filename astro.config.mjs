@@ -6,7 +6,7 @@ import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
-const siteUrl = process.env.SITE_URL ?? 'https://prebase.ze-ro.workers.dev';
+const siteUrl = process.env.SITE_URL ?? 'https://prebase.zerro.dev';
 
 // Tag pages are auto-generated listings. A tag with one or two topics is a thin
 // page that adds little and dilutes crawl budget, so it is kept out of the
